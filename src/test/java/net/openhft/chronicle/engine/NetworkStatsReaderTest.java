@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine;
 
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
@@ -41,7 +42,7 @@ public class NetworkStatsReaderTest {
     @Before
     public void before() throws IOException {
         SimpleQueueViewTest.deleteFiles(new File(URI));
-
+        assetTree = (new VanillaAssetTree(1)).forServer();
         TCPRegistry.reset();
         @NotNull String hostPortDescription = "NetworkStatsReaderTest-" + name;
         TCPRegistry.createServerSocketChannelFor(hostPortDescription);
@@ -52,8 +53,8 @@ public class NetworkStatsReaderTest {
     public void test() throws Exception {
 
         // YamlLogging.setAll(true);
-        try (AssetTree assetTree = (new VanillaAssetTree(1)).forServer()) {
-            @Nullable EventLoop eg = assetTree.root().findOrCreateView(EventLoop.class);
+
+        try (@Nullable EventLoop eg = assetTree.root().findOrCreateView(EventLoop.class);) {
             eg.start();
             @NotNull MapView<String, NetworkStatsSummary.Stats> mapView = assetTree.acquireMap("myStats", String.class, NetworkStatsSummary.Stats.class);
 
@@ -93,8 +94,7 @@ public class NetworkStatsReaderTest {
     @After
     public void after() throws IOException {
         SimpleQueueViewTest.deleteFiles(new File(URI));
-        ServerEndpoint se = this.serverEndpoint;
-        if (se != null)
-            se.close();
+        Closeable.closeQuietly(serverEndpoint);
+        Closeable.closeQuietly(assetTree);
     }
 }
