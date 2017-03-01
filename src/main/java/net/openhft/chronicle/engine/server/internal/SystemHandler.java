@@ -69,7 +69,6 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
 
                 return;
             }
-            skipValue(valueIn);
 
             if (!heartbeat.contentEquals(eventName) && !onClientClosing.contentEquals(eventName))
                 return;
@@ -81,10 +80,14 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
 
             writeData(inWire, out -> {
 
-                if (heartbeat.contentEquals(eventName))
+                if (heartbeat.contentEquals(eventName)) {
                     outWire.write(EventId.heartbeatReply).int64(valueIn.int64());
+                    return;
+                }
 
-                else if (onClientClosing.contentEquals(eventName)) {
+                skipValue(valueIn);
+
+                if (onClientClosing.contentEquals(eventName)) {
                     hasClientClosed = true;
                     outWire.write(EventId.onClosingReply).text("");
                 }
