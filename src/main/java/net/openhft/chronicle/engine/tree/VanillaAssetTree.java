@@ -134,7 +134,7 @@ public class VanillaAssetTree implements AssetTree {
     }
 
     /**
-     * creates an asset tree that connects to a remove server via tcp/ip
+     * creates an asset tree that connects to a remote server via tcp/ip
      *
      * @param hostPortDescription     the primary host and other failover hosts
      * @param wire                    the type of wire
