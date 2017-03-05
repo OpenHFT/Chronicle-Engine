@@ -136,6 +136,7 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
 
         @Override
         public ReadMarshallable apply(Class aClass) {
+            assert aClass != null;
             return map.computeIfAbsent(aClass, ObjectUtils::newInstance);
         }
     };
@@ -144,7 +145,8 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IORuntimeException {
         index = wire.read(() -> "index").int64();
-        v = wire.read(() -> "v").typedMarshallable(reuseFunction);
+        ValueIn read = wire.read(() -> "v");
+        v = read.typedMarshallable(reuseFunction);
         timePublished = wire.read(() -> "timePublished").int64();
         maxIndex = wire.read(() -> "maxIndex").int64();
     }
