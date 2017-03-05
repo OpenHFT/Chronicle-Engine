@@ -19,12 +19,14 @@ package net.openhft.chronicle.engine.api.query;
 
 import net.openhft.chronicle.core.annotation.UsedViaReflection;
 import net.openhft.chronicle.core.io.IORuntimeException;
-import net.openhft.chronicle.wire.Demarshallable;
-import net.openhft.chronicle.wire.Marshallable;
-import net.openhft.chronicle.wire.WireIn;
-import net.openhft.chronicle.wire.WireOut;
+import net.openhft.chronicle.core.util.ObjectUtils;
+import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 /**
  * Created by rob on 27/04/2016.
@@ -38,7 +40,7 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
     private V v;
     private transient Object k;
 
-    IndexedValue() {
+    public IndexedValue() {
     }
 
     @UsedViaReflection
@@ -123,15 +125,26 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
     }
 
     @NotNull
-    public IndexedValue timePublished(long timePublished) {
+    IndexedValue timePublished(long timePublished) {
         this.timePublished = timePublished;
         return this;
     }
 
+
+    private final Function<Class, ReadMarshallable> reuseFunction = new Function<Class, ReadMarshallable>() {
+        private final Map<Class<? extends ReadMarshallable>, ReadMarshallable> map = new ConcurrentHashMap<>();
+
+        @Override
+        public ReadMarshallable apply(Class aClass) {
+            return map.computeIfAbsent(aClass, ObjectUtils::newInstance);
+        }
+    };
+
+
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IORuntimeException {
         index = wire.read(() -> "index").int64();
-        v =  wire.read(() -> "v").typedMarshallable();
+        v = wire.read(() -> "v").typedMarshallable(reuseFunction);
         timePublished = wire.read(() -> "timePublished").int64();
         maxIndex = wire.read(() -> "maxIndex").int64();
     }

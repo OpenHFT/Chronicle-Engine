@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.server.internal.IndexQueueViewHandler.EventId.*;
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
@@ -98,6 +99,9 @@ public class RemoteIndexQueueView<K extends Marshallable, V extends Marshallable
                         .typedMarshallable(q);
             }
 
+            private final IndexedValue<V> instance = new IndexedValue<V>();
+            private final Function<Class, ReadMarshallable> reuseFunction = c -> instance;
+
             @Override
             public void onConsumer(@NotNull final WireIn inWire) {
 
@@ -110,7 +114,7 @@ public class RemoteIndexQueueView<K extends Marshallable, V extends Marshallable
 
                     if (reply.contentEquals(sb))
                         try {
-                            @Nullable final IndexedValue<V> e = valueIn.typedMarshallable();
+                            @Nullable final IndexedValue<V> e = valueIn.typedMarshallable(reuseFunction);
                             fromIndex = Math.max(fromIndex, e.index());
                             subscriber.onMessage(e);
                         } catch (InvalidSubscriberException e) {
