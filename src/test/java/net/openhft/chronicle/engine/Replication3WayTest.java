@@ -117,12 +117,12 @@ public class Replication3WayTest extends ThreadMonitoringTest {
         if (serverEndpoint3 != null)
             serverEndpoint3.close();
 
-        if (tree1 != null)
-            tree1.close();
-        if (tree2 != null)
-            tree2.close();
         if (tree3 != null)
             tree3.close();
+        if (tree2 != null)
+            tree2.close();
+        if (tree1 != null)
+            tree1.close();
 
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
