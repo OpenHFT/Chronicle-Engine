@@ -109,10 +109,10 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
 
     @Override
     public void writeMarshallable(@NotNull WireOut wire) {
-        wire.write("index").int64_0x(index);
+        wire.write("i").int64_0x(index);
         wire.write("v").typedMarshallable(v);
-        wire.write("timePublished").int64(timePublished);
-        wire.write("maxIndex").int64(maxIndex);
+        wire.write("t").int64(timePublished);
+        wire.write("m").int64(maxIndex);
     }
 
     @Override
@@ -144,11 +144,11 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
 
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IORuntimeException {
-        index = wire.read(() -> "index").int64();
+        index = wire.read(() -> "i").int64();
         ValueIn read = wire.read(() -> "v");
         v = read.typedMarshallable(reuseFunction);
-        timePublished = wire.read(() -> "timePublished").int64();
-        maxIndex = wire.read(() -> "maxIndex").int64();
+        timePublished = wire.read(() -> "t").int64();
+        maxIndex = wire.read(() -> "m").int64();
     }
 
 }
