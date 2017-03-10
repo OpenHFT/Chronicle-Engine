@@ -48,6 +48,7 @@ import net.openhft.chronicle.queue.ExcerptTailer;
 import net.openhft.chronicle.queue.impl.RollingChronicleQueue;
 import net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder;
 import net.openhft.chronicle.wire.*;
+import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -863,7 +864,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
             queueView.registerTopicSubscriber((topic, message) -> {
                 if (message == null)
                     super.remove(topic);
-                else
+                else if (topic != null)
                     super.put(topic, message);
             });
 

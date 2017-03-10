@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine.api.column;
 
 import net.openhft.chronicle.wire.AbstractMarshallable;
+import net.openhft.chronicle.wire.WireOut;
 import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,9 +45,14 @@ public class Row extends AbstractMarshallable {
     }
 
 
+    @Override
+    public void writeMarshallable(@NotNull WireOut wire) {
+        super.writeMarshallable(wire);
+    }
+
     @NotNull
     public <R> R copyTo(@NotNull R using) {
-        Wires.copyTo(data,using);
+        Wires.copyTo(data, using);
         return using;
     }
 

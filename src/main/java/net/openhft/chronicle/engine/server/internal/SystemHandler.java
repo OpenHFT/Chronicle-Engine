@@ -84,8 +84,8 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
                     outWire.write(EventId.heartbeatReply).int64(valueIn.int64());
                     return;
                 }
-
-                skipValue(valueIn);
+                while (inWire.hasMore())
+                    skipValue(valueIn);
 
                 if (onClientClosing.contentEquals(eventName)) {
                     hasClientClosed = true;

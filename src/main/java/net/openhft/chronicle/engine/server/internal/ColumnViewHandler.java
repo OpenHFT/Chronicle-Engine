@@ -60,7 +60,7 @@ class ColumnViewHandler extends AbstractHandler {
             @NotNull final ValueIn valueIn = inWire.readEventName(eventName);
 
             try {
-                assert startEnforceInValueReadCheck(inWire);
+
                 outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
 
                 writeData(inWire, out -> {
@@ -120,8 +120,6 @@ class ColumnViewHandler extends AbstractHandler {
 
             } catch (Exception e) {
                 Jvm.warn().on(getClass(), e);
-            } finally {
-                assert endEnforceInValueReadCheck(inWire);
             }
 
         }
