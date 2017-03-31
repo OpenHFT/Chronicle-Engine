@@ -222,14 +222,14 @@ public class ReplicationHandler<E> extends AbstractHandler {
                     return false;
                 }
 
-                if (!mi.hasNext()) {
+                if (startBufferFullTimeStamp != 0) {
+                    long timetaken = System.currentTimeMillis() - startBufferFullTimeStamp;
+                    if (timetaken > 100)
+                        LOG.info("blocked - outbound buffer full, time-taken=" + timetaken + "ms");
+                    startBufferFullTimeStamp = 0;
+                }
 
-                    if (startBufferFullTimeStamp != 0) {
-                        long timetaken = System.currentTimeMillis() - startBufferFullTimeStamp;
-                        if (timetaken > 100)
-                            LOG.info("blocked - outbound buffer full, timetaken=" + timetaken + "ms");
-                        startBufferFullTimeStamp = 0;
-                    }
+                if (!mi.hasNext()) {
 
                     // because events arrive in a bitset ( aka random ) order ( not necessary in
                     // time order ) we can only be assured that the latest time of
