@@ -82,7 +82,7 @@ public class ChronicleMapKeyValueStoreTest {
         tree2.close();
         tree3.close();
 
-        if (!exceptions.isEmpty()) {
+        if (Jvm.hasException(exceptions)) {
             Jvm.dumpException(exceptions);
             Assert.fail();
         }

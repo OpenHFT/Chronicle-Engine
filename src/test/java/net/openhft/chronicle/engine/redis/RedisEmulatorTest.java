@@ -92,7 +92,7 @@ public class RedisEmulatorTest {
 
     @After
     public void afterMethod() {
-        if (!exceptions.isEmpty()) {
+        if (Jvm.hasException(exceptions)) {
             Jvm.dumpException(exceptions);
             Assert.fail();
         }
