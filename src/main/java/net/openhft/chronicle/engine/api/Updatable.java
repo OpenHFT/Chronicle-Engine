@@ -39,7 +39,7 @@ public interface Updatable<E> {
     }
 
     /**
-     * Update an Updatable potentially asynchronously.  This function is assumed to update Updateable.
+     * Update an Updatable potentially asynchronously.  This function is assumed to update Updatable.
      *
      * @param updateFunction to apply.
      */
@@ -71,7 +71,7 @@ public interface Updatable<E> {
     }
 
     /**
-     * Update an Updatable potentially asynchronously.  This function is assumed to update Updateable.
+     * Update an Updatable potentially asynchronously.  This function is assumed to update Updatable.
      *
      * @param updateFunction to apply.
      */

@@ -51,9 +51,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
     private static final StringBuilderPool SBP = new StringBuilderPool();
     private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
     private final StringBuilder eventName = new StringBuilder();
-    private final StringBuilder cpsBuff = new StringBuilder();
     private final CspManager cspManager;
-
 
     private BiConsumer<ValueOut, V> vToWire;
     @Nullable
@@ -76,7 +74,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
             try {
                 eventName.setLength(0);
                 @NotNull final ValueIn valueIn = inWire.readEventName(eventName);
-
+                assert startEnforceInValueReadCheck(inWire);
                 if (put.contentEquals(eventName)) {
                     valueIn.marshallable(wire -> {
                         @NotNull final Params[] params = put.params();
@@ -112,9 +110,10 @@ public class MapWireHandler<K, V> extends AbstractHandler {
 
                 outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
 
-                writeData(inWire , out -> {
+                writeData(inWire, out -> {
 
                     if (clear.contentEquals(eventName)) {
+                        skipValue(valueIn);
                         map.clear();
                         return;
                     }
@@ -146,6 +145,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                     }
 
                     if (size.contentEquals(eventName)) {
+                        skipValue(valueIn);
                         outWire.writeEventName(reply).int64(map.longSize());
                         return;
                     }
@@ -153,6 +153,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                     if (keySet.contentEquals(eventName) ||
                             values.contentEquals(eventName) ||
                             entrySet.contentEquals(eventName)) {
+                        skipValue(valueIn);
                         cspManager.createProxy(eventName.toString());
                         return;
                     }
@@ -266,6 +267,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                     }
 
                     if (hashCode.contentEquals(eventName)) {
+                        skipValue(valueIn);
                         outWire.writeEventName(reply).int32(map.hashCode());
                         return;
                     }
@@ -298,6 +300,8 @@ public class MapWireHandler<K, V> extends AbstractHandler {
 
             } catch (Exception e) {
                 Jvm.warn().on(getClass(), e);
+            } finally {
+                assert endEnforceInValueReadCheck(inWire );
             }
         }
     };

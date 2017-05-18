@@ -65,7 +65,7 @@ public class ColumnViewIteratorHandler extends AbstractHandler {
             @NotNull final ValueIn valueIn = inWire.readEventName(eventName);
 
             try {
-
+                assert startEnforceInValueReadCheck(inWire);
                 outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
 
                 writeData(inWire, out -> {
@@ -87,6 +87,7 @@ public class ColumnViewIteratorHandler extends AbstractHandler {
                     }
 
                     if (close.contentEquals(eventName)) {
+                        skipValue(valueIn);
                         cspManager.removeCid(cid);
                         return;
                     }
@@ -96,6 +97,8 @@ public class ColumnViewIteratorHandler extends AbstractHandler {
 
             } catch (Exception e) {
                 Jvm.warn().on(getClass(), e);
+            }finally {
+                assert endEnforceInValueReadCheck(inWire);
             }
         }
     };

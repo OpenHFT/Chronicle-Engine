@@ -1,8 +1,10 @@
 # Chronicle-Engine
 A high performance, low latency, reactive processing framework
 
+[Chronicle Engine usage heatmap](http://jrvis.com/red-dwarf/?user=openhft&repo=Chronicle-Engine)
+
 ## Feature comparison
-| Features                                           | Chronicle Engine | Chronicle Enterprise |
+| Features                                           | Chronicle Engine | Chronicle Engine Enterprise |
 | ------------------------------------------ | ------------------ | ---------------------- |
 | Hierarchical Data Organisation             | tree structure      | tree structure          |
 | Remote access to Custom server side code | yes               | yes                       |

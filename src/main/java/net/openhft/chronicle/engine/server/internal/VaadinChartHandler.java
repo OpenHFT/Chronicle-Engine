@@ -44,7 +44,7 @@ public class VaadinChartHandler extends AbstractHandler {
 
             eventName.setLength(0);
             inWire.readEventName(eventName);
-
+            assert startEnforceInValueReadCheck(inWire);
             try {
 
                 outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
@@ -77,6 +77,8 @@ public class VaadinChartHandler extends AbstractHandler {
 
             } catch (Exception e) {
                 Jvm.warn().on(getClass(), e);
+            } finally {
+                assert endEnforceInValueReadCheck(inWire);
             }
 
 

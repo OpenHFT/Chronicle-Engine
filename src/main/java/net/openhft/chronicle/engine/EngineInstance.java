@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static net.openhft.chronicle.core.Jvm.setExceptionsHandlers;
 import static net.openhft.chronicle.core.onoes.PrintExceptionHandler.WARN;
 import static net.openhft.chronicle.engine.api.tree.RequestContext.loadDefaultAliases;
 
@@ -39,7 +38,7 @@ public class EngineInstance {
 
     static {
         try {
-            setExceptionsHandlers(WARN, WARN, null);
+            net.openhft.chronicle.core.Jvm.setExceptionsHandlers(WARN, WARN, null);
             loadDefaultAliases();
         } catch (Exception e) {
             e.printStackTrace();
@@ -47,10 +46,10 @@ public class EngineInstance {
         }
     }
 
-    public static VanillaAssetTree engineMain(final int hostId, final String name) {
+    public static VanillaAssetTree engineMain(final int hostId, final String yamlConfigFile) {
         try {
 
-            @NotNull TextWire yaml = TextWire.fromFile(name);
+            @NotNull TextWire yaml = TextWire.fromFile(yamlConfigFile);
 
             @NotNull EngineCfg installable = (EngineCfg) yaml.readObject();
 

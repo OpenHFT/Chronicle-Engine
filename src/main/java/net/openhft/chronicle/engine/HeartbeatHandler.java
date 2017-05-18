@@ -43,7 +43,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 /**
- * will periodically send a heatbeat message, the period of this message is defined by {@link
+ * will periodically send a heartbeat message, the period of this message is defined by {@link
  * HeartbeatHandler#heartbeatIntervalMs} once the heart beat is
  *
  * @author Rob Austin.
@@ -63,7 +63,7 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
     private Timer timer;
 
     @UsedViaReflection
-    protected HeartbeatHandler(@NotNull WireIn w) {
+    public HeartbeatHandler(@NotNull WireIn w) {
         heartbeatTimeoutMs = w.read(() -> "heartbeatTimeoutMs").int64();
         heartbeatIntervalMs = w.read(() -> "heartbeatIntervalMs").int64();
         assert heartbeatTimeoutMs >= 1000 :

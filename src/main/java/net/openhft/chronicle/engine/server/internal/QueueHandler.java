@@ -56,56 +56,61 @@ public class QueueHandler<T, M> extends TopicPublisherHandler<T, M> {
 
             eventName.setLength(0);
             @NotNull final ValueIn valueIn = inWire.readEventName(eventName);
+            assert startEnforceInValueReadCheck(inWire);
+            try {
+                if (registerTopicSubscriber.contentEquals(eventName)) {
 
-            if (registerTopicSubscriber.contentEquals(eventName)) {
+                    @NotNull final TopicSubscriber listener = new TopicSubscriber() {
 
-                @NotNull final TopicSubscriber listener = new TopicSubscriber() {
+                        @Override
+                        public void onMessage(final Object topic, final Object message) {
 
-                    @Override
-                    public void onMessage(final Object topic, final Object message) {
-
-                        synchronized (publisher) {
-                            publisher.put(topic, publish -> {
-                                publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
-                                        (inputTid));
-                                publish.writeNotCompleteDocument(false, wire -> wire.writeEventName(reply)
-                                        .marshallable(m -> {
-                                            m.write(() -> "topic").object(topic);
-                                            m.write(() -> "message").object(message);
-                                        }));
-                            });
+                            synchronized (publisher) {
+                                publisher.put(topic, publish -> {
+                                    publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
+                                            (inputTid));
+                                    publish.writeNotCompleteDocument(false, wire -> wire.writeEventName(reply)
+                                            .marshallable(m -> {
+                                                m.write(() -> "topic").object(topic);
+                                                m.write(() -> "message").object(message);
+                                            }));
+                                });
+                            }
                         }
-                    }
 
-                    public void onEndOfSubscription() {
-                        synchronized (publisher) {
-                            publisher.put(null, publish -> {
-                                publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
-                                        (inputTid));
-                                publish.writeNotCompleteDocument(false, wire -> wire.writeEventName
-                                        (EventId.onEndOfSubscription).text(""));
+                        public void onEndOfSubscription() {
+                            synchronized (publisher) {
+                                publisher.put(null, publish -> {
+                                    publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
+                                            (inputTid));
+                                    publish.writeNotCompleteDocument(false, wire -> wire.writeEventName
+                                            (EventId.onEndOfSubscription).text(""));
 
-                            });
+                                });
+                            }
                         }
-                    }
 
-                };
+                    };
 
-                valueIn.marshallable(m -> view.registerTopicSubscriber(listener));
-                return;
-            }
+                    valueIn.marshallable(m -> view.registerTopicSubscriber(listener));
+                    return;
+                }
 
-            if (publish.contentEquals(eventName)) {
+                if (publish.contentEquals(eventName)) {
 
-                valueIn.marshallable(wire -> {
-                    @NotNull final Params[] params = publish.params();
-                    final T topic = wireToT.apply(wire.read(params[0]));
-                    final M message = wireToM.apply(wire.read(params[1]));
-                    nullCheck(topic);
-                    nullCheck(message);
-                    view.publish(topic, message);
-                });
+                    valueIn.marshallable(wire -> {
+                        @NotNull final Params[] params = publish.params();
+                        final T topic = wireToT.apply(wire.read(params[0]));
+                        final M message = wireToM.apply(wire.read(params[1]));
+                        nullCheck(topic);
+                        nullCheck(message);
+                        view.publish(topic, message);
+                    });
 
+                }
+
+            } finally {
+                assert endEnforceInValueReadCheck(inWire);
             }
         }
     };

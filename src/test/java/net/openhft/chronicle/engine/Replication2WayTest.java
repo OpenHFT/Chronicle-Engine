@@ -19,6 +19,7 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.api.EngineReplication;
@@ -105,15 +106,11 @@ public class Replication2WayTest extends ThreadMonitoringTest {
 
     @After
     public void preAfter() {
-        if (serverEndpoint1 != null)
-            serverEndpoint1.close();
-        if (serverEndpoint2 != null)
-            serverEndpoint2.close();
+        Closeable.closeQuietly(tree1);
+        Closeable.closeQuietly(tree2);
 
-        if (tree1 != null)
-            tree1.close();
-        if (tree2 != null)
-            tree2.close();
+        Closeable.closeQuietly(serverEndpoint1);
+        Closeable.closeQuietly(serverEndpoint2);
 
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();

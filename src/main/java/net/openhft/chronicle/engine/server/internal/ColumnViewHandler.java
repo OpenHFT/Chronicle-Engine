@@ -66,6 +66,7 @@ class ColumnViewHandler extends AbstractHandler {
                 writeData(inWire, out -> {
 
                     if (columns.contentEquals(eventName)) {
+                        skipValue(valueIn);
                         outWire.writeEventName(reply).object(columnView.columns());
                         return;
                     }
@@ -91,6 +92,7 @@ class ColumnViewHandler extends AbstractHandler {
                     }
 
                     if (canDeleteRows.contentEquals(eventName)) {
+                        skipValue(valueIn);
                         outWire.writeEventName(reply).bool(columnView.canDeleteRows());
                         return;
                     }
@@ -100,7 +102,6 @@ class ColumnViewHandler extends AbstractHandler {
                         @Nullable final List keys = valueIn.object(keysList, List.class);
                         final boolean result = columnView.containsRowWithKey(keys);
                         outWire.writeEventName(reply).bool(result);
-
                         return;
                     }
 

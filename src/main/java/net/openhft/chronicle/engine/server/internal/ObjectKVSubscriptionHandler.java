@@ -46,77 +46,85 @@ public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subsc
 
         eventName.setLength(0);
         @NotNull final ValueIn valueIn = inWire.readEventName(eventName);
+        assert startEnforceInValueReadCheck(inWire);
+        try {
+            if (registerTopicSubscriber.contentEquals(eventName)) {
 
-        if (registerTopicSubscriber.contentEquals(eventName)) {
-            if (tidToListener.containsKey(tid)) {
-                LOG.info("Duplicate topic registration for tid " + tid);
-                return;
-            }
-
-            @NotNull final TopicSubscriber listener = new TopicSubscriber() {
-                volatile boolean subscriptionEnded;
-
-                @Override
-                public void onMessage(final Object topic, final Object message) {
-                    synchronized (publisher) {
-                        publisher.put(topic, publish -> {
-                            publish.writeDocument(true, wire -> wire.writeEventName(tid).int64(inputTid));
-                            publish.writeNotCompleteDocument(false, wire -> wire.writeEventName(reply)
-                                    .marshallable(m -> {
-                                        m.write(() -> "topic").object(topic);
-                                        m.write(() -> "message").object(message);
-                                    }));
-                        });
-                    }
+                if (tidToListener.containsKey(tid)) {
+                    skipValue(valueIn);
+                    LOG.info("Duplicate topic registration for tid " + tid);
+                    return;
                 }
 
-                public void onEndOfSubscription() {
-                    subscriptionEnded = true;
-                    synchronized (publisher) {
-                        if (!publisher.isClosed()) {
-                            publisher.put(null, publish -> {
-                                publish.writeDocument(true, wire ->
-                                        wire.writeEventName(tid).int64(inputTid));
-                                publish.writeDocument(false, wire ->
-                                        wire.writeEventName(EventId.onEndOfSubscription).text(""));
+                @NotNull final TopicSubscriber listener = new TopicSubscriber() {
+                    volatile boolean subscriptionEnded;
+
+                    @Override
+                    public void onMessage(final Object topic, final Object message) {
+                        synchronized (publisher) {
+                            publisher.put(topic, publish -> {
+                                publish.writeDocument(true, wire -> wire.writeEventName(tid).int64(inputTid));
+                                publish.writeNotCompleteDocument(false, wire -> wire.writeEventName(reply)
+                                        .marshallable(m -> {
+                                            m.write(() -> "topic").object(topic);
+                                            m.write(() -> "message").object(message);
+                                        }));
                             });
                         }
                     }
-                }
-            };
 
-            valueIn.marshallable(m -> {
-                final Class kClass = m.read(() -> "keyType").typeLiteral();
-                final Class vClass = m.read(() -> "valueType").typeLiteral();
+                    public void onEndOfSubscription() {
+                        subscriptionEnded = true;
+                        synchronized (publisher) {
+                            if (!publisher.isClosed()) {
+                                publisher.put(null, publish -> {
+                                    publish.writeDocument(true, wire ->
+                                            wire.writeEventName(tid).int64(inputTid));
+                                    publish.writeDocument(false, wire ->
+                                            wire.writeEventName(EventId.onEndOfSubscription).text(""));
+                                });
+                            }
+                        }
+                    }
+                };
 
-                final StringBuilder eventName = Wires.acquireStringBuilder();
+                valueIn.marshallable(m -> {
+                    final Class kClass = m.read(() -> "keyType").typeLiteral();
+                    final Class vClass = m.read(() -> "valueType").typeLiteral();
 
-                @NotNull final ValueIn bootstrap = m.readEventName(eventName);
-                assert listener != null;
-                tidToListener.put(inputTid, listener);
+                    final StringBuilder eventName = Wires.acquireStringBuilder();
 
-                if ("bootstrap".contentEquals(eventName))
-                    asset.registerTopicSubscriber(requestContext.fullName()
-                            + "?bootstrap=" + bootstrap.bool(), kClass, vClass, listener);
-                else
-                    asset.registerTopicSubscriber(requestContext.fullName(), kClass,
-                            vClass, listener);
-            });
-            return;
-        }
+                    @NotNull final ValueIn bootstrap = m.readEventName(eventName);
+                    assert listener != null;
+                    tidToListener.put(inputTid, listener);
 
-        if (EventId.unregisterTopicSubscriber.contentEquals(eventName)) {
-            @NotNull TopicSubscriber listener = (TopicSubscriber) tidToListener.remove(inputTid);
-            if (listener == null) {
-                Jvm.debug().on(getClass(), "No subscriber to present to unsubscribe (" + inputTid + ")");
+                    if ("bootstrap".contentEquals(eventName))
+                        asset.registerTopicSubscriber(requestContext.fullName()
+                                + "?bootstrap=" + bootstrap.bool(), kClass, vClass, listener);
+                    else
+                        asset.registerTopicSubscriber(requestContext.fullName(), kClass,
+                                vClass, listener);
+                });
                 return;
             }
-            asset.unregisterTopicSubscriber(requestContext, listener);
 
-            return;
+            if (EventId.unregisterTopicSubscriber.contentEquals(eventName)) {
+                skipValue(valueIn);
+                @NotNull TopicSubscriber listener = (TopicSubscriber) tidToListener.remove(inputTid);
+                if (listener == null) {
+                    Jvm.debug().on(getClass(), "No subscriber to present to unsubscribe (" + inputTid + ")");
+                    return;
+                }
+                asset.unregisterTopicSubscriber(requestContext, listener);
+
+                return;
+            }
+
+            if (before(inputTid, valueIn)) return;
+
+        } finally {
+            assert endEnforceInValueReadCheck(inWire);
         }
-
-        if (before(inputTid, valueIn)) return;
 
         outWire.writeDocument(true, wire -> outWire.writeEventName(tid).int64(inputTid));
 

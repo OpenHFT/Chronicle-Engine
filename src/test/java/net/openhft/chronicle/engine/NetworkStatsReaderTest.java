@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine;
 
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
@@ -34,64 +35,66 @@ public class NetworkStatsReaderTest {
     public TestName name = new TestName();
 
     private AssetTree assetTree;
-    public static final String URI = "queue/networkStats";
+    private static final String URI = "queue/networkStats";
+    private ServerEndpoint serverEndpoint;
 
 
     @Before
     public void before() throws IOException {
         SimpleQueueViewTest.deleteFiles(new File(URI));
         assetTree = (new VanillaAssetTree(1)).forServer();
-
+        TCPRegistry.reset();
         @NotNull String hostPortDescription = "NetworkStatsReaderTest-" + name;
         TCPRegistry.createServerSocketChannelFor(hostPortDescription);
-        new ServerEndpoint(hostPortDescription, assetTree);
-
-
+        serverEndpoint = new ServerEndpoint(hostPortDescription, assetTree);
     }
 
     @Test
     public void test() throws Exception {
 
-       // YamlLogging.setAll(true);
+        // YamlLogging.setAll(true);
 
-        @Nullable EventLoop eg = assetTree.root().findOrCreateView(EventLoop.class);
-        eg.start();
-        @NotNull MapView<String, NetworkStatsSummary.Stats> mapView = assetTree.acquireMap("myStats", String.class, NetworkStatsSummary.Stats.class);
+        try (@Nullable EventLoop eg = assetTree.root().findOrCreateView(EventLoop.class);) {
+            eg.start();
+            @NotNull MapView<String, NetworkStatsSummary.Stats> mapView = assetTree.acquireMap("myStats", String.class, NetworkStatsSummary.Stats.class);
 
 
-        @NotNull ArrayBlockingQueue<String> queue = new ArrayBlockingQueue<>(10);
-        mapView.registerSubscriber((e) -> queue.add(e.getValue().toString()));
+            @NotNull ArrayBlockingQueue<String> queue = new ArrayBlockingQueue<>(10);
+            mapView.registerSubscriber((e) -> queue.add(e.getValue().toString()));
 
-        eg.addHandler(new NetworkStatsSummary((ChronicleQueueView) assetTree.acquireAsset(URI).acquireView(QueueView.class), mapView));
+            eg.addHandler(new NetworkStatsSummary((ChronicleQueueView) assetTree.acquireAsset(URI).acquireView(QueueView.class), mapView));
 
-        {
-            @NotNull TopicPublisher<String, NetworkStats> publisher = assetTree.acquireTopicPublisher(URI,
-                    String.class, NetworkStats.class);
-            @NotNull WireNetworkStats networkStats = new WireNetworkStats(0);
-            networkStats.clientId(UUID.randomUUID());
-            networkStats.isConnected(true);
-            publisher.publish("NetworkStats", networkStats.writeBps(1).userId("1"));
-            publisher.publish("NetworkStats", networkStats.writeBps(2).timestamp(1000));
-            publisher.publish("NetworkStats", networkStats.writeBps(3).timestamp(2000));
-            publisher.publish("NetworkStats", networkStats.writeBps(4).timestamp(3000));
-        }
-
-        String result = "";
-        for (; ; ) {
-            String pollValue = queue.poll(1, TimeUnit.SECONDS);
-            if (pollValue == null) {
-                Assert.assertTrue(result.contains("writeEma: 3.98"));
-                break;
+            {
+                @NotNull TopicPublisher<String, NetworkStats> publisher = assetTree.acquireTopicPublisher(URI,
+                        String.class, NetworkStats.class);
+                @NotNull WireNetworkStats networkStats = new WireNetworkStats(0);
+                networkStats.clientId(UUID.randomUUID());
+                networkStats.isConnected(true);
+                publisher.publish("NetworkStats", networkStats.writeBps(1).userId("1"));
+                publisher.publish("NetworkStats", networkStats.writeBps(2).timestamp(1000));
+                publisher.publish("NetworkStats", networkStats.writeBps(3).timestamp(2000));
+                publisher.publish("NetworkStats", networkStats.writeBps(4).timestamp(3000));
             }
-            result = pollValue;
-            System.out.println(result);
-        }
 
+            String result = "";
+            for (; ; ) {
+                String pollValue = queue.poll(1, TimeUnit.SECONDS);
+                if (pollValue == null) {
+                    Assert.assertTrue(result.contains("writeEma: 3.98"));
+                    break;
+                }
+                result = pollValue;
+                System.out.println(result);
+            }
+
+        }
     }
 
 
     @After
     public void after() throws IOException {
         SimpleQueueViewTest.deleteFiles(new File(URI));
+        Closeable.closeQuietly(serverEndpoint);
+        Closeable.closeQuietly(assetTree);
     }
 }

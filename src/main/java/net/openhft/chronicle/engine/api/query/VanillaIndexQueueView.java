@@ -326,42 +326,34 @@ public class VanillaIndexQueueView<V extends Marshallable>
             throw Jvm.rethrow(new InvalidEventHandlerException("shutdown"));
 
         try (DocumentContext dc = tailer.readingDocument()) {
+            try {
+                if (!dc.isPresent())
+                    return null;
 
-            if (!dc.isPresent())
-                return null;
+                if (LOG.isDebugEnabled())
+                    Jvm.debug().on(getClass(), "processing the following message=" + fromSizePrefixedBlobs(dc));
 
-            if (LOG.isDebugEnabled())
-                Jvm.debug().on(getClass(), "processing the following message=" + fromSizePrefixedBlobs(dc));
+                // we may have just been restated and have not yet caught up
+                if (from > dc.index())
+                    return null;
 
-            // we may have just been restated and have not yet caught up
-            if (from > dc.index())
-                return null;
-
-
-            for (; ; ) {
-
-                dc.wire().consumePadding();
-
-                if (dc.wire().bytes().readRemaining() == 0)
-                    break;
-
-                final StringBuilder sb = acquireStringBuilder();
-                @NotNull final ValueIn valueIn = dc.wire().read(sb);
-                if (!eventName.contentEquals(sb)) {
-                    valueIn.skipValue();
-                    continue;
-                }
-
-                Class<? extends Marshallable> type = typeToString.toType(sb);
+                Class<? extends Marshallable> type = typeToString.toType(eventName);
                 if (type == null)
-                    continue;
+                    return null;
+
+                //final StringBuilder eventName = acquireStringBuilder();
+                @NotNull final ValueIn valueIn = dc.wire().read(eventName);
+
+                if (valueIn instanceof DefaultValueIn)
+                    return null;
+
 
                 @NotNull final V v = (V) VanillaObjectCacheFactory.INSTANCE.get()
                         .apply(type);
                 valueIn.marshallable(v);
 
                 if (!filter.test(v))
-                    continue;
+                    return null;
 
                 final IndexedValue<V> indexedValue = this.indexedValue.get();
                 long index = dc.index();
@@ -370,9 +362,17 @@ public class VanillaIndexQueueView<V extends Marshallable>
                 indexedValue.timePublished(System.currentTimeMillis());
                 indexedValue.maxIndex(Math.max(dc.index(), lastIndexRead));
                 return indexedValue;
+
+            } finally {
+                if (dc.isPresent() )
+                    // required for delta-wire, as it has to consume all the the fields
+                    while (dc.wire().hasMore()) {
+                        dc.wire().read().skipValue();
+                    }
             }
+
         }
-        return null;
+
     }
 
     public void unregisterSubscriber(@NotNull ConsumingSubscriber<IndexedValue<V>> listener) {

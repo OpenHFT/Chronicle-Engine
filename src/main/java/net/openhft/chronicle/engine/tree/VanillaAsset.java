@@ -45,6 +45,7 @@ import net.openhft.chronicle.engine.session.VanillaSessionProvider;
 import net.openhft.chronicle.engine.set.RemoteKeySetView;
 import net.openhft.chronicle.engine.set.VanillaKeySetView;
 import net.openhft.chronicle.network.ClientSessionProvider;
+import net.openhft.chronicle.network.ConnectionStrategy;
 import net.openhft.chronicle.network.VanillaSessionDetails;
 import net.openhft.chronicle.network.api.session.SessionProvider;
 import net.openhft.chronicle.network.connection.ClientConnectionMonitor;
@@ -265,7 +266,8 @@ public class VanillaAsset implements Asset, Closeable {
     public void forRemoteAccess(@NotNull String[] hostPortDescriptions,
                                 @NotNull WireType wire,
                                 @NotNull VanillaSessionDetails sessionDetails,
-                                @Nullable ClientConnectionMonitor clientConnectionMonitor) throws AssetNotFoundException {
+                                @Nullable ClientConnectionMonitor clientConnectionMonitor,
+                                @NotNull final ConnectionStrategy connectionStrategy) throws AssetNotFoundException {
 
         standardStack(true, false);
         configMapRemote();
@@ -290,7 +292,7 @@ public class VanillaAsset implements Asset, Closeable {
 
             TcpChannelHub view = Threads.withThreadGroup(findView(ThreadGroup.class),
                     () -> new TcpChannelHub(sessionProvider, eventLoop, wire, name.isEmpty() ? "/" : name,
-                            socketAddressSupplier, true, clientConnectionMonitor, HandlerPriority.TIMER));
+                            socketAddressSupplier, true, clientConnectionMonitor, HandlerPriority.TIMER, connectionStrategy));
             addView(TcpChannelHub.class, view);
         }
     }

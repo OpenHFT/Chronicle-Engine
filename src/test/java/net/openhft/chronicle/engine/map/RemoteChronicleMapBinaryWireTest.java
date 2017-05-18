@@ -17,11 +17,13 @@
 
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
+import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
@@ -80,6 +82,12 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
                 assetTree.close();
             }
         };
+    }
+
+
+    public void preAfter() {
+        TCPRegistry.reset();
+        Closeable.closeQuietly(assetTree);
     }
 
     @NotNull

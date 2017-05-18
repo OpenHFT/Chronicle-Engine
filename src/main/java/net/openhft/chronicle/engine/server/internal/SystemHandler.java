@@ -53,40 +53,48 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
     private final BiConsumer<WireIn, Long> dataConsumer = (inWire, tid) -> {
         eventName.setLength(0);
         @NotNull final ValueIn valueIn = inWire.readEventName(eventName);
+        try {
+            assert startEnforceInValueReadCheck(inWire);
 
-        if (EventId.userId.contentEquals(eventName)) {
-            this.sessionDetails.userId(valueIn.text());
-            if (this.monitoringMap != null) {
-                @NotNull UserStat userStat = new UserStat();
-                userStat.setLoggedIn(LocalTime.now());
-                monitoringMap.put(sessionDetails.userId(), userStat);
+            if (EventId.userId.contentEquals(eventName)) {
+                this.sessionDetails.userId(valueIn.text());
+                if (this.monitoringMap != null) {
+                    @NotNull UserStat userStat = new UserStat();
+                    userStat.setLoggedIn(LocalTime.now());
+                    monitoringMap.put(sessionDetails.userId(), userStat);
+                }
+
+                while (inWire.bytes().readRemaining() > 0)
+                    wireParser.parseOne(inWire, null);
+
+                return;
             }
 
-            while (inWire.bytes().readRemaining() > 0)
-                wireParser.parseOne(inWire, null);
+            if (!heartbeat.contentEquals(eventName) && !onClientClosing.contentEquals(eventName))
+                return;
 
-            return;
+            wasHeartBeat = true;
+
+            //noinspection ConstantConditions
+            outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
+
+            writeData(inWire, out -> {
+
+                if (heartbeat.contentEquals(eventName)) {
+                    outWire.write(EventId.heartbeatReply).int64(valueIn.int64());
+                    return;
+                }
+                while (inWire.hasMore())
+                    skipValue(valueIn);
+
+                if (onClientClosing.contentEquals(eventName)) {
+                    hasClientClosed = true;
+                    outWire.write(EventId.onClosingReply).text("");
+                }
+            });
+        } finally {
+            assert endEnforceInValueReadCheck(inWire);
         }
-
-        if (!heartbeat.contentEquals(eventName) && !onClientClosing.contentEquals(eventName)) {
-            return;
-        }
-
-        wasHeartBeat = true;
-
-        //noinspection ConstantConditions
-        outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
-
-        writeData(inWire, out -> {
-
-            if (heartbeat.contentEquals(eventName))
-                outWire.write(EventId.heartbeatReply).int64(valueIn.int64());
-
-            else if (onClientClosing.contentEquals(eventName)) {
-                hasClientClosed = true;
-                outWire.write(EventId.onClosingReply).text("");
-            }
-        });
     };
 
     public boolean wasHeartBeat() {

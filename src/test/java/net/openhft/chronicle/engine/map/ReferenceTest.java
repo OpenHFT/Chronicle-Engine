@@ -61,7 +61,7 @@ public class ReferenceTest {
     @NotNull
     @Rule
     public TestName name = new TestName();
-    @NotNull
+    
     WireType wireType;
     VanillaAssetTree serverAssetTree;
     AssetTree assetTree;
@@ -70,7 +70,7 @@ public class ReferenceTest {
     private String hostPortToken;
     private ThreadDump threadDump;
 
-    public ReferenceTest(boolean isRemote, @NotNull WireType wireType) {
+    public ReferenceTest(boolean isRemote, @Nullable  WireType wireType) {
         this.wireType = wireType;
         this.isRemote = isRemote;
         YamlLogging.setAll(false);

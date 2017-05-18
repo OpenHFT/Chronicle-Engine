@@ -356,10 +356,7 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
     @Override
     public int rowCount(@NotNull SortedFilter filters) {
 
-        long fromSequenceNumber = filters.fromIndex;
         long countFromEnd = filters.countFromEnd;
-
-        assert countFromEnd != 0 && fromSequenceNumber == 0;
 
         if (countFromEnd > 0) {
             int count0 = 0;

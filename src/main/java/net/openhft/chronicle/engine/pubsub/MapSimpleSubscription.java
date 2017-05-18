@@ -26,6 +26,7 @@ import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.query.Filter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +43,7 @@ public class MapSimpleSubscription<E> implements SimpleSubscription<E> {
     private final Set<Subscriber<E>> subscribers = new CopyOnWriteArraySet<>();
     private final Reference<E> currentValue;
     private final Function<Object, E> valueReader;
+    private volatile boolean closed = true;
 
     public MapSimpleSubscription(Reference<E> reference, Function<Object, E> valueReader) {
         this.currentValue = reference;
@@ -90,7 +92,7 @@ public class MapSimpleSubscription<E> implements SimpleSubscription<E> {
     @Override
     public void notifyMessage(Object e) {
         try {
-            @NotNull E ee = e instanceof BytesStore ? valueReader.apply(e) : (E) e;
+            @Nullable E ee = e instanceof BytesStore ? valueReader.apply(e) : (E) e;
             SubscriptionConsumer.notifyEachSubscriber(subscribers, s -> s.onMessage(ee));
         } catch (ClassCastException e1) {
             if (LOG.isDebugEnabled())
@@ -101,6 +103,10 @@ public class MapSimpleSubscription<E> implements SimpleSubscription<E> {
 
     @Override
     public void close() {
+        if (isClosed())
+            return;
+        closed = true;
+
         for (@NotNull Subscriber<E> subscriber : subscribers) {
             try {
                 subscriber.onEndOfSubscription();
@@ -108,5 +114,10 @@ public class MapSimpleSubscription<E> implements SimpleSubscription<E> {
                 Jvm.debug().on(getClass(), e);
             }
         }
+    }
+
+    @Override
+    public boolean isClosed() {
+        return closed;
     }
 }

@@ -30,7 +30,6 @@ import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -117,6 +116,7 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
             return true;
         }
         if (unregisterSubscriber.contentEquals(eventName)) {
+            skipValue(valueIn);
             @NotNull Subscriber<Object> listener = (Subscriber) tidToListener.remove(tid);
             if (listener == null) {
                 Jvm.debug().on(getClass(), "No subscriber to present to unregisterSubscriber (" + tid + ")");

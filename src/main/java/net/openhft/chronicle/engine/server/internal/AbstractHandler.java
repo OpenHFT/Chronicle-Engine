@@ -41,6 +41,34 @@ abstract class AbstractHandler {
     WireOut outWire = null;
     volatile boolean connectionClosed = false;
     RequestContext requestContext;
+    long readPosAfterValueIn = -1;
+    private boolean hasSkipped;
+
+    boolean startEnforceInValueReadCheck(WireIn w) {
+        assert readPosAfterValueIn == -1;
+        readPosAfterValueIn = w.bytes().readPosition();
+        hasSkipped = false;
+        return true;
+    }
+
+    void skipValue(ValueIn valueIn) {
+        assert (hasSkipped = true) == true;
+        valueIn.skipValue();
+    }
+
+    boolean endEnforceInValueReadCheck(WireIn w) {
+
+        try {
+            assert readPosAfterValueIn != -1;
+
+            if (hasSkipped)
+                return true;
+
+           return  w.bytes().readPosition() > readPosAfterValueIn;
+        } finally {
+            readPosAfterValueIn = -1;
+        }
+    }
 
     static void nullCheck(@Nullable Object o) {
         if (o == null)
@@ -151,7 +179,7 @@ abstract class AbstractHandler {
     /**
      * @param publisher
      * @return If the throttlePeriodMs is set returns a throttled wire out publisher, otherwise the
-     * origional
+     * original
      */
     @NotNull
     WireOutPublisher publisher(@NotNull final WireOutPublisher publisher) {

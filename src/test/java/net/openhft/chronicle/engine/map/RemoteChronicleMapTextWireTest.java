@@ -17,6 +17,7 @@
 
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
@@ -25,10 +26,7 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.TestName;
 
 import java.io.IOException;
@@ -42,7 +40,7 @@ import static org.junit.Assert.*;
 
 public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
 
-    private static int s_port = 11050;
+
     @NotNull
     private final AssetTree assetTree = new VanillaAssetTree();
     @NotNull
@@ -51,7 +49,13 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
 
     @AfterClass
     public static void testTearDown() {
+
         TCPRegistry.assertAllServersStopped();
+    }
+
+    @After
+    public void after2() {
+        Closeable.closeQuietly(assetTree);
     }
 
     @Before
@@ -355,7 +359,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
      */
     @Test(timeout = 50000)
     public void testPutAll() throws IOException {
-        int port = s_port++;
+
         try (@NotNull ClosableMapSupplier<Integer, String> emptySupplier = newIntString("test")) {
             final Map<Integer, String> empty = emptySupplier.get();
             try (@NotNull ClosableMapSupplier<Integer, String> supplier = map5()) {

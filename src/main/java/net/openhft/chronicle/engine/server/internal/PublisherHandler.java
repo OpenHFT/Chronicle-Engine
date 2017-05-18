@@ -51,46 +51,51 @@ public class PublisherHandler<E> extends AbstractHandler {
 
             eventName.setLength(0);
             @NotNull final ValueIn valueIn = inWire.readEventName(eventName);
+            assert startEnforceInValueReadCheck(inWire);
+            try {
+                if (registerSubscriber.contentEquals(eventName)) {
+                    final Object key = view;
+                    @NotNull final Subscriber listener = message -> {
+                        synchronized (publisher) {
+                            publisher.put(key, publish -> {
 
-            if (registerSubscriber.contentEquals(eventName)) {
-                final Object key = view;
-                @NotNull final Subscriber listener = message -> {
-                    synchronized (publisher) {
-                        publisher.put(key, publish -> {
+                                publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
+                                        (inputTid));
+                                publish.writeNotCompleteDocument(false, wire -> wire.writeEventName(reply)
+                                        .marshallable(m -> m.write(Params.message).object(message)));
+                            });
+                        }
+                    };
 
-                            publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
-                                    (inputTid));
-                            publish.writeNotCompleteDocument(false, wire -> wire.writeEventName(reply)
-                                    .marshallable(m -> m.write(Params.message).object(message)));
-                        });
+                    // TODO CE-101 get the true value from the CSP
+                    boolean bootstrap = true;
+
+                    try {
+                        valueIn.marshallable(m -> view.registerSubscriber(bootstrap,
+                                requestContext.throttlePeriodMs(), listener));
+
+                    } catch (Exception e) {
+                        throw new AssertionError(e);
                     }
-                };
-
-                // TODO CE-101 get the true value from the CSP
-                boolean bootstrap = true;
-
-                try {
-                    valueIn.marshallable(m -> view.registerSubscriber(bootstrap,
-                            requestContext.throttlePeriodMs(), listener));
-
-                } catch (Exception e) {
-                    throw new AssertionError(e);
+                    return;
                 }
-                return;
-            }
 
-            if (publish.contentEquals(eventName)) {
+                if (publish.contentEquals(eventName)) {
 
-                valueIn.marshallable(w -> {
-                    @NotNull final Params[] params = publish.params();
+                    valueIn.marshallable(w -> {
+                        @NotNull final Params[] params = publish.params();
 
-                    final Params param = params[0];
-                    @NotNull final ValueIn read = w.read(param);
-                    final E message = wireToE.apply(read);
+                        final Params param = params[0];
+                        @NotNull final ValueIn read = w.read(param);
+                        final E message = wireToE.apply(read);
 
-                    nullCheck(message);
-                    view.publish(message);
-                });
+                        nullCheck(message);
+                        view.publish(message);
+                    });
+                }
+
+            } finally {
+                assert endEnforceInValueReadCheck(inWire);
             }
         }
     };

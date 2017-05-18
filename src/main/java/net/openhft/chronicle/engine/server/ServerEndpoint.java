@@ -71,13 +71,13 @@ public class ServerEndpoint implements Closeable {
                           @NotNull AssetTree assetTree) throws IOException {
         this(hostPortDescription, assetTree, new NetworkStatsListener() {
 
+            private String host;
+            private long port;
+
             @Override
             public void close() {
                 LOG.info(" host=" + host + ", port=" + port + ", isConnected=false");
             }
-
-            private String host;
-            private long port;
 
             @Override
             public void networkContext(NetworkContext networkContext) {
@@ -144,7 +144,7 @@ public class ServerEndpoint implements Closeable {
                     = x -> new HeaderTcpHandler<>(handler, consumer, x);
 
             @NotNull final WireTypeSniffingTcpHandler sniffer = new
-                    WireTypeSniffingTcpHandler<>(handler, nc, f);
+                    WireTypeSniffingTcpHandler<>(handler, f);
 
             handler.tcpHandler(sniffer);
             return handler;
