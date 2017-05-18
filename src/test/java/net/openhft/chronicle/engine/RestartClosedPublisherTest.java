@@ -60,7 +60,7 @@ public class RestartClosedPublisherTest {
     }
 
     public void afterMethod() {
-        if (!exceptions.isEmpty()) {
+        if (Jvm.hasException(exceptions)) {
             Jvm.dumpException(exceptions);
             Assert.fail();
         }
@@ -86,7 +86,7 @@ public class RestartClosedPublisherTest {
 
         threadDump.assertNoNewThreads();
 
-        if (!exceptions.isEmpty()) {
+        if (Jvm.hasException(exceptions)) {
             Jvm.dumpException(exceptions);
             Assert.fail();
         }

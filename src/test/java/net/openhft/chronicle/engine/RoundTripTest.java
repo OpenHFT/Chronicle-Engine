@@ -137,7 +137,7 @@ public class RoundTripTest {
     }
 
     private void checkForThrowablesInOtherThreads() {
-        if (!exceptions.isEmpty()) {
+        if (Jvm.hasException(exceptions)) {
             Jvm.dumpException(exceptions);
             Jvm.resetExceptionHandlers();
             Assert.fail();

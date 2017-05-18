@@ -34,6 +34,8 @@ import org.junit.Test;
 
 import java.util.Map;
 
+import static org.junit.Assert.assertEquals;
+
 /**
  * Created by peter on 12/06/15.
  */
@@ -56,10 +58,12 @@ public class ConfigurationFSTest {
     @Before
     public void recordException() {
         exceptions = Jvm.recordExceptions();
+        Jvm.dumpException(exceptions);
+        assertEquals(0, exceptions.size());
     }
     @After
     public void afterMethod() {
-        if (!exceptions.isEmpty()) {
+        if (Jvm.hasException(exceptions)) {
             Jvm.dumpException(exceptions);
             Jvm.resetExceptionHandlers();
             Assert.fail();

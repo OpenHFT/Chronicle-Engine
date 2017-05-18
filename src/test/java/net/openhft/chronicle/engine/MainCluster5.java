@@ -135,7 +135,7 @@ public class MainCluster5 {
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
         // TODO TCPRegistery.assertAllServersStopped();
-        if (!exceptions.isEmpty()) {
+        if (Jvm.hasException(exceptions)) {
             Jvm.dumpException(exceptions);
             Jvm.resetExceptionHandlers();
             Assert.fail();
