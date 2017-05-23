@@ -70,7 +70,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     }
 
     @Override
-    public boolean remove(K key) {
+    public boolean remove(@NotNull K key) {
         if (subscriptions.needsPrevious()) {
             return getAndRemove(key) != null;
         }

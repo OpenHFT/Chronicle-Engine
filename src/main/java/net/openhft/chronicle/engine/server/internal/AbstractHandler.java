@@ -44,19 +44,19 @@ abstract class AbstractHandler {
     long readPosAfterValueIn = -1;
     private boolean hasSkipped;
 
-    boolean startEnforceInValueReadCheck(WireIn w) {
+    boolean startEnforceInValueReadCheck(@NotNull WireIn w) {
         assert readPosAfterValueIn == -1;
         readPosAfterValueIn = w.bytes().readPosition();
         hasSkipped = false;
         return true;
     }
 
-    void skipValue(ValueIn valueIn) {
+    void skipValue(@NotNull ValueIn valueIn) {
         assert (hasSkipped = true) == true;
         valueIn.skipValue();
     }
 
-    boolean endEnforceInValueReadCheck(WireIn w) {
+    boolean endEnforceInValueReadCheck(@NotNull WireIn w) {
 
         try {
             assert readPosAfterValueIn != -1;

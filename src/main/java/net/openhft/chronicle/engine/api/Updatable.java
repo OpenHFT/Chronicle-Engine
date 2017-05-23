@@ -22,6 +22,7 @@ import net.openhft.chronicle.core.util.SerializableFunction;
 import net.openhft.chronicle.core.util.SerializableUpdater;
 import net.openhft.chronicle.core.util.SerializableUpdaterWithArg;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * This interface assumes that the resource visited is mutable and will be update rather than replaced.
@@ -34,6 +35,7 @@ public interface Updatable<E> {
      * @param <R>      return type.
      * @return derived data.
      */
+    @Nullable
     default <R> R applyTo(@NotNull SerializableFunction<E, R> function) {
         return function.apply((E) this);
     }
@@ -54,6 +56,7 @@ public interface Updatable<E> {
      * @param returnFunction to derive some data
      * @return value derived.
      */
+    @Nullable
     default <R> R syncUpdate(@NotNull SerializableUpdater<E> updateFunction, @NotNull SerializableFunction<E, R> returnFunction) {
         updateFunction.accept((E) this);
         return returnFunction.apply((E) this);
@@ -66,6 +69,7 @@ public interface Updatable<E> {
      * @param <R>      return type.
      * @return derived data.
      */
+    @Nullable
     default <A, R> R applyTo(@NotNull SerializableBiFunction<E, A, R> function, A arg) {
         return function.apply((E) this, arg);
     }
@@ -86,6 +90,7 @@ public interface Updatable<E> {
      * @param returnFunction to derive some data
      * @return value derived.
      */
+    @Nullable
     default <UA, RA, R> R syncUpdate(@NotNull SerializableUpdaterWithArg<E, UA> updateFunction, UA ua, @NotNull SerializableBiFunction<E, RA, R> returnFunction, RA ra) {
         updateFunction.accept((E) this, ua);
         return returnFunction.apply((E) this, ra);

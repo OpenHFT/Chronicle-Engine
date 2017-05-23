@@ -53,6 +53,7 @@ public interface KeyedVisitable<K, E> {
      * @param <R>      data type to return.
      * @return the result of the code called.
      */
+    @Nullable
     default <R> R applyToKey(K key, @NotNull SerializableFunction<E, R> function) {
         return function.apply(get(key));
     }
@@ -77,6 +78,7 @@ public interface KeyedVisitable<K, E> {
      * @param <R>            data type to return.
      * @return the result of the code called.
      */
+    @Nullable
     default <R> R syncUpdateKey(K key, @NotNull SerializableFunction<E, E> updateFunction, @NotNull SerializableFunction<E, R> returnFunction) {
         E e = updateFunction.apply(get(key));
         set(key, e);
@@ -93,6 +95,7 @@ public interface KeyedVisitable<K, E> {
      * @param <R>      type of the return value.
      * @return data derived.
      */
+    @Nullable
     default <T, R> R applyToKey(K key, @NotNull SerializableBiFunction<E, T, R> function, T argument) {
         return function.apply(get(key), argument);
     }
@@ -120,6 +123,7 @@ public interface KeyedVisitable<K, E> {
      * @param <R>            data type to return.
      * @return the result of the code called.
      */
+    @Nullable
     default <T, RT, R> R syncUpdateKey(K key, @NotNull SerializableBiFunction<E, T, E> updateFunction, @Nullable T updateArgument,
                                        @NotNull SerializableBiFunction<E, RT, R> returnFunction, @Nullable RT returnArgument) {
         E e = updateFunction.apply(get(key), updateArgument);

@@ -52,6 +52,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
     private final int localIdentifier;
     @NotNull
     private AtomicBoolean isClosing = new AtomicBoolean();
+    @Nullable
     private ConnectionChangedNotifier connectionChangedNotifier;
     private Asset rootAsset;
     @NotNull

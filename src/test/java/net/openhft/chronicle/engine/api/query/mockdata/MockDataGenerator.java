@@ -6,20 +6,22 @@ import net.openhft.chronicle.engine.api.query.events.EventProcessor;
 import net.openhft.chronicle.engine.api.query.events.instrumentdata.CorpBondStaticLoadEvent;
 import net.openhft.chronicle.engine.api.query.events.marketdata.MarketDataEvent;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Rob Austin.
  */
 public class MockDataGenerator {
 
+    @NotNull
     private final Timer t;
 
-    public MockDataGenerator(AssetTree tree) {
+    public MockDataGenerator(@NotNull AssetTree tree) {
         final EventLoop eventLoop = tree.root().acquireView(EventLoop.class);
         t = new Timer(eventLoop);
     }
 
-    public void createMockData(EventProcessor ep) {
+    public void createMockData(@NotNull EventProcessor ep) {
         ep.onMarketDataChanged(new MarketDataEvent("VOD.L", "REUTERS", -1, 216.25));
         ep.onMarketDataChanged(new MarketDataEvent("BT.L", "REUTERS", 1, 363.60));
         ep.onMarketDataChanged(new MarketDataEvent("VOD.L", "REUTERS", -2, 217.25));

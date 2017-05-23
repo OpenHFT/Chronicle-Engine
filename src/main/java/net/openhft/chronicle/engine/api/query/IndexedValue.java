@@ -135,7 +135,7 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
         private final Map<Class<? extends ReadMarshallable>, ReadMarshallable> map = new ConcurrentHashMap<>();
 
         @Override
-        public ReadMarshallable apply(Class aClass) {
+        public ReadMarshallable apply(@NotNull Class aClass) {
             assert aClass != null;
             return map.computeIfAbsent(aClass, ObjectUtils::newInstance);
         }

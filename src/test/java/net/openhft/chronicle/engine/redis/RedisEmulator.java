@@ -108,6 +108,7 @@ public class RedisEmulator {
         });
     }
 
+    @Nullable
     public static <T> T brpoplpush(@NotNull MapView<String, BlockingDeque<T>> deques, String d1, String d2, int timeoutMS) {
         return deques.applyTo(ds -> {
             try {
@@ -251,7 +252,7 @@ public class RedisEmulator {
      * @reply Array reply: list of fields and their values stored in the hash, or
      * an empty list when key does not exist.
      */
-    public static <K, V> void hgetall(@NotNull MapView<K, V> map, Consumer<Map.Entry<K, V>> entryConsumer) {
+    public static <K, V> void hgetall(@NotNull MapView<K, V> map, @NotNull Consumer<Map.Entry<K, V>> entryConsumer) {
         map.entrySet().forEach(entryConsumer);
     }
 
@@ -270,7 +271,7 @@ public class RedisEmulator {
         map.asyncUpdateKey(key, v -> v + toAdd);
     }
 
-    public static <K, V> void hkeys(@NotNull MapView<K, V> map, Consumer<K> keyConsumer) {
+    public static <K, V> void hkeys(@NotNull MapView<K, V> map, @NotNull Consumer<K> keyConsumer) {
         map.keySet().forEach(keyConsumer);
     }
 
@@ -287,6 +288,7 @@ public class RedisEmulator {
      * @return Array reply: list of values associated with the given fields,
      * in the same order as they are requested.
      */
+    @Nullable
     public static Map<String, Object> hmget(@NotNull MapView<String, Object> map, @NotNull String... keys) {
         return map.applyTo(m -> {
             @NotNull Map<String, Object> ret = new LinkedHashMap<String, Object>();
@@ -342,7 +344,7 @@ public class RedisEmulator {
         return map.applyToKey(key, String::length);
     }
 
-    public static <K, V> void hvals(@NotNull MapView<K, V> map, Consumer<V> valueConsumer) {
+    public static <K, V> void hvals(@NotNull MapView<K, V> map, @NotNull Consumer<V> valueConsumer) {
         map.values().forEach(valueConsumer);
     }
 
@@ -385,6 +387,7 @@ public class RedisEmulator {
         return map.syncUpdateKey(key, v -> v + toAdd, v -> v);
     }
 
+    @Nullable
     public static Set<String> keys(@NotNull MapView<String, ?> map, @NotNull String pattern) {
         return map.applyTo(m -> {
             Pattern compile = Pattern.compile(pattern);
@@ -394,6 +397,7 @@ public class RedisEmulator {
         });
     }
 
+    @Nullable
     public static <V> V lindex(@NotNull MapView<String, List<V>> map, String name, int index) {
         return map.applyToKey(name, l -> l.get(index));
     }
@@ -413,6 +417,7 @@ public class RedisEmulator {
         return map.applyToKey(name, l -> l.size());
     }
 
+    @Nullable
     public static <V> V lpop(@NotNull MapView<String, List<V>> map, String name) {
         return map.applyToKey(name, l -> l.remove(0));
     }
@@ -433,6 +438,7 @@ public class RedisEmulator {
         });
     }
 
+    @Nullable
     public static <V> List<V> lrange(@NotNull MapView<String, List<V>> map, String name, int start, int stop) {
         return map.applyToKey(name, l -> l.subList(start, stop));
     }
@@ -444,6 +450,7 @@ public class RedisEmulator {
         });
     }
 
+    @Nullable
     public static Map<String, Object> mget(@NotNull MapView<String, Object> map, String... keys) {
         return hmget(map, keys);
     }
@@ -464,10 +471,12 @@ public class RedisEmulator {
         map.asyncUpdate(m -> m.computeIfAbsent(to, k -> m.remove(from)));
     }
 
+    @Nullable
     public static <V> V rpop(@NotNull MapView<String, Deque<V>> map, String key) {
         return map.applyToKey(key, Deque::removeLast);
     }
 
+    @Nullable
     public static <V> V rpoplpush(@NotNull MapView<String, Deque<V>> deques, String from, String to) {
         return deques.applyTo(ds -> {
             V t = ds.get(from).poll();

@@ -60,7 +60,7 @@ public class EngineConnectionManager implements ConnectionManager {
     }
 
     @Override
-    public synchronized void onConnectionChanged(boolean isConnected, final NetworkContext nc) {
+    public synchronized void onConnectionChanged(boolean isConnected, @NotNull final NetworkContext nc) {
 
         @NotNull final Function<NetworkContext, AtomicBoolean> f = v -> new AtomicBoolean();
         boolean wasConnected = this.isConnected.computeIfAbsent(nc, f).getAndSet

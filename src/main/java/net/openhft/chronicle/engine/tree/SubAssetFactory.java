@@ -18,10 +18,12 @@
 package net.openhft.chronicle.engine.tree;
 
 import net.openhft.chronicle.engine.api.tree.Asset;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by peter on 17/09/15.
  */
 public interface SubAssetFactory {
+    @Nullable
     <E> Asset createSubAsset(VanillaAsset vanillaAsset, String name, Class<E> valueType);
 }

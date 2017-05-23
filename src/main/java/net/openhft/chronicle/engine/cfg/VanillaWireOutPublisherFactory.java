@@ -40,7 +40,7 @@ public class VanillaWireOutPublisherFactory implements MarshallableFunction<Wire
 
     @NotNull
     @Override
-    public WireOutPublisher apply(WireType wireType) {
+    public WireOutPublisher apply(@NotNull WireType wireType) {
         return new VanillaWireOutPublisher(wireType);
     }
 

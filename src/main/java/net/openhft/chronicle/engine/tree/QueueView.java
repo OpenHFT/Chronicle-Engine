@@ -42,6 +42,7 @@ public interface QueueView<T, M> extends TopicPublisher<T, M>, KeyedView, Assett
      * @param topic next excerpt that has this topic
      * @return the except
      */
+    @Nullable
     Excerpt<T, M> getExcerpt(T topic);
 
     /**
@@ -54,8 +55,10 @@ public interface QueueView<T, M> extends TopicPublisher<T, M>, KeyedView, Assett
     long publishAndIndex(@NotNull T topic, @NotNull M message);
 
     interface Excerpt<T, M> {
+        @Nullable
         T topic();
 
+        @Nullable
         M message();
 
         long index();

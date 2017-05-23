@@ -188,6 +188,7 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
         return histogram;
     }
 
+    @NotNull
     private static ThreadLocal<SimpleDateFormat> HH_MM_SS = ThreadLocal.withInitial(() -> new
             SimpleDateFormat
             ("HH:mm.ss"));

@@ -2,6 +2,7 @@ package net.openhft.chronicle.engine.api.query.events.instrumentdata;
 
 
 import net.openhft.chronicle.wire.Marshallable;
+import org.jetbrains.annotations.NotNull;
 
 import static net.openhft.chronicle.wire.WireType.TEXT;
 
@@ -37,6 +38,7 @@ public class CorpBondStaticLoadEvent extends CorpBondStaticKey implements Marsha
                     minimumPiece);
         }
 
+        @NotNull
         public Builder minimumPiece(float minimumPiece) {
             this.minimumPiece = minimumPiece;
             return this;

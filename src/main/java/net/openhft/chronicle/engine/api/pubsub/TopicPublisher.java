@@ -48,6 +48,7 @@ public interface TopicPublisher<T, M> extends KeyedView {
      */
     void unregisterTopicSubscriber(@NotNull TopicSubscriber<T, M> topicSubscriber);
 
+    @NotNull
     Publisher<M> publisher(@NotNull T topic);
 
     void registerSubscriber(@NotNull T topic, @NotNull Subscriber<M> subscriber);

@@ -364,6 +364,7 @@ public class SubscriptionModelFilePerKeyPerformanceTest {
         private AtomicInteger _noOfUpdateEvents = new AtomicInteger(0);
         @NotNull
         private AtomicInteger _noOfRemoveEvents = new AtomicInteger(0);
+        @NotNull
         private Set<String> mapsUpdated = Collections.synchronizedSet(new TreeSet<>());
 
         private String _mapName;

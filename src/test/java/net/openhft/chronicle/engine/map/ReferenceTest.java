@@ -62,6 +62,7 @@ public class ReferenceTest {
     @Rule
     public TestName name = new TestName();
     
+    @Nullable
     WireType wireType;
     VanillaAssetTree serverAssetTree;
     AssetTree assetTree;

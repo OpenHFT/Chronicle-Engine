@@ -62,6 +62,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
     private static final Iterator EMPTY_ITERATOR = Collections.EMPTY_LIST.iterator();
 
 
+    @Nullable
     private final ChronicleQueue chronicleQueue;
     private final Map<String, ConcurrentMap<Object, IndexedValue<V>>> multiMap = new ConcurrentHashMap<>();
     private final Map<Subscriber<IndexedValue<V>>, AtomicBoolean> activeSubscriptions

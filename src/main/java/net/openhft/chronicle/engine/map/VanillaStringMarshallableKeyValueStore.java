@@ -88,7 +88,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
         if (type == String.class)
             return (t, bytes) -> (Bytes) bytes.appendUtf8((String) t);
         if (Marshallable.class.isAssignableFrom(type))
-            return (t, bytes) -> {
+            return (@Nullable t, bytes) -> {
                 t = acquireInstance(type, t);
                 ((Marshallable) t).writeMarshallable(wireType.apply(bytes));
                 return bytes;
@@ -107,7 +107,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
         if (type == String.class)
             return (t, bytes) -> (T) (bytes == null ? null : bytes.toString());
         if (Marshallable.class.isAssignableFrom(type))
-            return (bytes,   t) -> {
+            return (bytes, @Nullable t) -> {
                 if (bytes == null)
                     return null;
 

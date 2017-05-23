@@ -16,6 +16,7 @@ import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.impl.RollingChronicleQueue;
 import net.openhft.chronicle.wire.Marshallable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -40,7 +41,8 @@ public class VanillaIndexQueueViewTest {
         ClassLookup.create().addAlias(MarketDataEvent.class);
     }
 
-    private RollingChronicleQueue queue(@NotNull AssetTree assetTree, final String uri) {
+    @Nullable
+    private RollingChronicleQueue queue(@NotNull AssetTree assetTree, @NotNull final String uri) {
         return ((ChronicleQueueView) assetTree.acquireQueue(uri, String.class, Marshallable.class, "clusterTwo"))
                 .chronicleQueue();
     }

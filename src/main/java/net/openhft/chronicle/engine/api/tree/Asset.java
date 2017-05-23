@@ -411,6 +411,7 @@ public interface Asset extends Closeable {
     /**
      * @return the current view types that are available at this asset.
      */
+    @NotNull
     default Set<Class> viewTypes() {
         return Collections.emptySet();
     }

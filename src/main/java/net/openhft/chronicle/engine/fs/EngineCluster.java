@@ -31,7 +31,7 @@ public class EngineCluster extends Cluster<EngineHostDetails, EngineClusterConte
         super(clusterName);
     }
 
-    void assetRoot(Asset assetRoot) {
+    void assetRoot(@NotNull Asset assetRoot) {
         EngineClusterContext context = clusterContext();
         if (context != null)
             context.assetRoot(assetRoot);

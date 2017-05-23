@@ -79,6 +79,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
     private final Class<T> messageTypeClass;
     @NotNull
     private final Class<M> elementTypeClass;
+    @NotNull
     private final ThreadLocal<ThreadLocalData> threadLocal;
     @NotNull
     private final String defaultPath;

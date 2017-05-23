@@ -14,9 +14,10 @@ import org.jetbrains.annotations.NotNull;
  */
 public class WriterGateway implements EventProcessor {
 
+    @NotNull
     private final EventProcessor actions;
 
-    public WriterGateway(ChronicleQueue q) {
+    public WriterGateway(@NotNull ChronicleQueue q) {
         // This creates an interface proxy so each message called is written to a file for replay
         actions = q.acquireAppender().methodWriter(EventProcessor.class);
     }

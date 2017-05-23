@@ -14,9 +14,10 @@ import org.jetbrains.annotations.NotNull;
  */
 public class Gateway implements EventProcessor {
 
+    @NotNull
     private final EventProcessor actions;
 
-    public Gateway(ChronicleQueue q, EventProcessor reader) {
+    public Gateway(@NotNull ChronicleQueue q, EventProcessor reader) {
         actions = q.acquireAppender().methodWriter(EventProcessor.class);
         q.createTailer().methodReader(reader);
     }

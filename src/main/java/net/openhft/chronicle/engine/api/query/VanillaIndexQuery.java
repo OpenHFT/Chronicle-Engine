@@ -138,6 +138,7 @@ public class VanillaIndexQuery<V> extends AbstractMarshallable implements Demars
                 '}';
     }
 
+    @NotNull
     public VanillaIndexQuery bootstrap(boolean bootstrap) {
         this.bootstrap = bootstrap;
         return this;
@@ -151,7 +152,9 @@ public class VanillaIndexQuery<V> extends AbstractMarshallable implements Demars
                 ConcurrentHashMap<>();
         @NotNull
         private static AtomicLong uniqueClassId = new AtomicLong();
+        @NotNull
         private static Pattern p = Pattern.compile("\"");
+        @NotNull
         private static ThreadLocal<StringBuffer> sbTl = ThreadLocal.withInitial(StringBuffer::new);
 
         private static Predicate newInstance(final Class clazz0, final String select) {

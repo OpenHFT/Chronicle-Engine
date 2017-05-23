@@ -186,7 +186,7 @@ public interface AssetTree extends Closeable {
     }
 
     @NotNull
-    default <T, E> TopicPublisher<T, E> acquireTopicPublisher(@NotNull String uri, File baseDir,
+    default <T, E> TopicPublisher<T, E> acquireTopicPublisher(@NotNull String uri, @NotNull File baseDir,
                                                               Class<T> topicClass, Class<E> messageClass)
             throws AssetNotFoundException {
         return acquireTopicPublisher(uri, baseDir.getAbsolutePath(), topicClass, messageClass);
@@ -262,7 +262,7 @@ public interface AssetTree extends Closeable {
         kvsSubscription.registerTopicSubscriber(rc, subscriber);
     }
 
-    default <T, E> void registerTopicSubscriber(@NotNull String uri, File baseFile, Class<T> topicClass,
+    default <T, E> void registerTopicSubscriber(@NotNull String uri, @NotNull File baseFile, Class<T> topicClass,
                                                 Class<E> messageClass, @NotNull TopicSubscriber<T, E> subscriber)
             throws AssetNotFoundException {
         registerTopicSubscriber(uri, baseFile.getAbsolutePath(), topicClass, messageClass, subscriber);
@@ -396,6 +396,7 @@ public interface AssetTree extends Closeable {
         return this;
     }
 
+    @NotNull
     AssetTreeStats getUsageStats();
 
     @NotNull

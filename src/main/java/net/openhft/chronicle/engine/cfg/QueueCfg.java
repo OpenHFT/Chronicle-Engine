@@ -22,12 +22,18 @@ import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContex
 public class QueueCfg extends AbstractMarshallableCfg implements Installable {
 
     private int masterId = 1;
+    @Nullable
     private String basePath = null;
+    @NotNull
     private Class topicClass = String.class;
+    @NotNull
     private Class messageClass = String.class;
     private boolean acknowledgment = false;
+    @Nullable
     private MessageAdaptor messageAdaptor = null;
+    @NotNull
     private WireType wireType = WireType.BINARY;
+    @NotNull
     private String cluster = "";
 
     @Nullable
