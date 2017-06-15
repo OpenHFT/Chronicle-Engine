@@ -38,7 +38,11 @@ import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestName;
 
 import java.io.File;
@@ -185,7 +189,7 @@ public class Replication3WayTest extends ThreadMonitoringTest {
             Jvm.pause(300);
         }
 
-        for (@NotNull Map m : new Map[]{map1, map2}) {
+        for (@NotNull Map m : new Map[]{map1, map2, map3}) {
             Assert.assertEquals("world1", m.get("hello1"));
             Assert.assertEquals("world2", m.get("hello2"));
             Assert.assertEquals("world3", m.get("hello3"));

@@ -175,66 +175,7 @@ public class CMap2EngineReplicator implements EngineReplication,
         final EngineModificationIterator instance = engineReplicationLang
                 .acquireEngineModificationIterator(remoteIdentifier);
 
-        return new ModificationIterator() {
-
-            public boolean hasNext() {
-                return instance.hasNext();
-            }
-
-            public boolean nextEntry(@NotNull Consumer<ReplicationEntry> consumer) {
-                return nextEntry(entry -> {
-                    consumer.accept(entry);
-                    return true;
-                });
-            }
-
-            boolean nextEntry(@NotNull final EntryCallback callback) {
-                return instance.nextEntry((key, value, timestamp,
-                                           identifier, isDeleted,
-                                           bootStrapTimeStamp) ->
-                {
-                    final KvBytes threadLocal = kvBytesThreadLocal.get();
-                    @NotNull VanillaReplicatedEntry entry = new VanillaReplicatedEntry(
-                            toKey(key, threadLocal.key(key.remaining())),
-                            toValue(value, threadLocal.value(value.remaining())),
-                            timestamp,
-                            identifier,
-                            isDeleted,
-                            bootStrapTimeStamp,
-                            remoteIdentifier);
-                    return callback.onEntry(entry);
-                });
-
-            }
-
-            @NotNull
-            private PointerBytesStore toKey(final @NotNull net.openhft.lang.io.Bytes key,
-                                            @NotNull final PointerBytesStore pbs) {
-                pbs.set(key.address(), key.capacity());
-                return pbs;
-            }
-
-            @Nullable
-            private BytesStore toValue(final @Nullable net.openhft.lang.io.Bytes value,
-                                       @NotNull final PointerBytesStore pbs) {
-                if (value == null)
-                    return null;
-
-                pbs.set(value.address(), value.capacity());
-                return pbs;
-            }
-
-            @Override
-            public void dirtyEntries(final long fromTimeStamp) {
-                instance.dirtyEntries(fromTimeStamp);
-            }
-
-            @Override
-            public void setModificationNotifier(
-                    @NotNull final ModificationNotifier modificationNotifier) {
-                instance.setModificationNotifier(modificationNotifier::onChange);
-            }
-        };
+        return new EngineModificationIteratorAdaptor(instance, remoteIdentifier);
     }
 
     /**
@@ -434,6 +375,91 @@ public class CMap2EngineReplicator implements EngineReplication,
             new TextWire(bytes).writeDocument(false, d -> d.write().typedMarshallable(this));
             return "\n" + Wires.fromSizePrefixedBlobs(bytes);
 
+        }
+    }
+
+    private class EngineModificationIteratorAdaptor implements ModificationIterator
+    {
+        private final EngineModificationIterator instance;
+        private final byte remoteIdentifier;
+        private Consumer<ReplicationEntry> replicationEntryListener;
+        private volatile Thread consumerThread;
+
+        private EngineModificationIteratorAdaptor(final EngineModificationIterator instance, final byte remoteIdentifier)
+        {
+            this.instance = instance;
+            this.remoteIdentifier = remoteIdentifier;
+        }
+
+        public boolean hasNext() {
+            return instance.hasNext();
+        }
+
+        public boolean nextEntry(@NotNull Consumer<ReplicationEntry> consumer) {
+            //noinspection AssertWithSideEffects
+            assert consumerAccessIsSingleThreaded();
+            replicationEntryListener = consumer;
+
+            return instance.nextEntry(this::onEntry);
+        }
+
+        private boolean onEntry(@NotNull net.openhft.lang.io.Bytes key,
+                                @Nullable net.openhft.lang.io.Bytes value, long timestamp,
+                                byte identifier,
+                                boolean isDeleted,
+                                long bootStrapTimeStamp) {
+            final KvBytes threadLocal = kvBytesThreadLocal.get();
+            @NotNull VanillaReplicatedEntry entry = new VanillaReplicatedEntry(
+                    toKey(key, threadLocal.key(key.remaining())),
+                    toValue(value, threadLocal.value(value.remaining())),
+                    timestamp,
+                    identifier,
+                    isDeleted,
+                    bootStrapTimeStamp,
+                    remoteIdentifier);
+            replicationEntryListener.accept(entry);
+            return true;
+        }
+
+        @Override
+        public void dirtyEntries(final long fromTimeStamp) {
+            instance.dirtyEntries(fromTimeStamp);
+        }
+
+        @Override
+        public void setModificationNotifier(
+                @NotNull final ModificationNotifier modificationNotifier) {
+            instance.setModificationNotifier(modificationNotifier::onChange);
+        }
+
+        private boolean consumerAccessIsSingleThreaded() {
+            final Thread currentThread = Thread.currentThread();
+            if (consumerThread == null) {
+                consumerThread = currentThread;
+            } else {
+                if (currentThread != consumerThread) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        @NotNull
+        private PointerBytesStore toKey(final @NotNull net.openhft.lang.io.Bytes key,
+                                        @NotNull final PointerBytesStore pbs) {
+            pbs.set(key.address(), key.capacity());
+            return pbs;
+        }
+
+        @Nullable
+        private BytesStore toValue(final @Nullable net.openhft.lang.io.Bytes value,
+                                   @NotNull final PointerBytesStore pbs) {
+            if (value == null)
+                return null;
+
+            pbs.set(value.address(), value.capacity());
+            return pbs;
         }
     }
 }

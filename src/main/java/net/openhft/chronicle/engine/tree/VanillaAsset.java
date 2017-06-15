@@ -579,8 +579,6 @@ public class VanillaAsset implements Asset, Closeable {
 
     @Nullable
     protected Asset createAsset(@NotNull String name) {
-        if (name.length() == 0)
-            System.out.println("");
         assert name.length() > 0;
         return children.computeIfAbsent(name, keyedAsset != Boolean.TRUE
                 ? n -> new VanillaAsset(this, name)
