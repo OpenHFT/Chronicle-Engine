@@ -20,6 +20,7 @@ package net.openhft.chronicle.engine.api.query;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.pool.StringBuilderPool;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.core.threads.InvalidEventHandlerException;
 import net.openhft.chronicle.core.time.SystemTimeProvider;
@@ -75,6 +76,8 @@ public class VanillaIndexQueueView<V extends Marshallable>
     private final TypeToString typeToString;
     @NotNull
     private final Asset asset;
+    @NotNull
+    private final StringBuilderPool eventNameDeserialiserPool = new StringBuilderPool();
     private volatile long lastIndexRead = 0;
     private long lastSecond = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     private long messagesReadPerSecond = 0;
@@ -322,7 +325,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
         final String eventName = vanillaIndexQuery.eventName();
         final Predicate<V> filter = vanillaIndexQuery.filter();
-
         if (isClosed.get())
             throw Jvm.rethrow(new InvalidEventHandlerException("shutdown"));
 
@@ -342,12 +344,15 @@ public class VanillaIndexQueueView<V extends Marshallable>
                 if (type == null)
                     return null;
 
-                //final StringBuilder eventName = acquireStringBuilder();
-                @NotNull final ValueIn valueIn = dc.wire().read(eventName);
+                final StringBuilder serialisedEventName = eventNameDeserialiserPool.acquireStringBuilder();
+                @NotNull final ValueIn valueIn = dc.wire().read(serialisedEventName);
 
                 if (valueIn instanceof DefaultValueIn)
                     return null;
 
+                if (!eventNamesMatch(serialisedEventName, eventName)) {
+                    return null;
+                }
 
                 @NotNull final V v = (V) VanillaObjectCacheFactory.INSTANCE.get()
                         .apply(type);
@@ -387,5 +392,19 @@ public class VanillaIndexQueueView<V extends Marshallable>
         activeSubscriptions.values().forEach(v -> v.set(true));
         chronicleQueue.close();
     }
-}
 
+    private static boolean eventNamesMatch(final CharSequence serialisedEventName,
+                                           final CharSequence queryEventName) {
+        if (serialisedEventName.length() != queryEventName.length()) {
+            return false;
+        }
+
+        for (int i = 0; i < serialisedEventName.length(); i++) {
+            if (serialisedEventName.charAt(i) != queryEventName.charAt(i)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+}

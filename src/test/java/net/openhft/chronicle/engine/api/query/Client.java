@@ -29,11 +29,11 @@ public class Client implements Closeable {
 
     public <T extends Marshallable> void subscribes(final @NotNull Class<T> valueClass,
                                                     final @NotNull String filter,
-                                                    final long formIndex,
+                                                    final long fromIndex,
                                                     final @NotNull Consumer<IndexedValue<T>> consumer) {
         @NotNull final VanillaIndexQuery indexQuery = new VanillaIndexQuery<>();
         indexQuery.select(valueClass, filter);
-        indexQuery.fromIndex(formIndex);
+        indexQuery.fromIndex(fromIndex);
         indexQuery.eventName(typeToString.typeToString(valueClass));
         @NotNull Subscriber<IndexedValue<Marshallable>> accept = t1 -> consumer.accept(
                 (IndexedValue) t1.deepCopy());
