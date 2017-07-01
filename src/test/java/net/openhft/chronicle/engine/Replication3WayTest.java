@@ -38,11 +38,7 @@ import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.TestName;
 
 import java.io.File;
@@ -123,13 +119,10 @@ public class Replication3WayTest extends ThreadMonitoringTest {
         Closeable.closeQuietly(serverEndpoint2);
         Closeable.closeQuietly(serverEndpoint3);
 
-
-
-
-
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
 
+        threadDump.ignore("queue-thread-local-cleaner-daemon");
         threadDump.ignore("tree-1/Heartbeat");
         threadDump.ignore("tree-2/Heartbeat");
         threadDump.ignore("tree-3/Heartbeat");

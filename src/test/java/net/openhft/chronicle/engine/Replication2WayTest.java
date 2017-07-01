@@ -115,6 +115,7 @@ public class Replication2WayTest extends ThreadMonitoringTest {
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
 
+        threadDump.ignore("queue-thread-local-cleaner-daemon");
         threadDump.ignore("tree-1/Heartbeat");
         threadDump.ignore("tree-2/Heartbeat");
         threadDump.ignore("tree-3/Heartbeat");
