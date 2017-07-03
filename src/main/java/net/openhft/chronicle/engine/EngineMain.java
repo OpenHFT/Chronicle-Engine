@@ -17,10 +17,19 @@
 
 package net.openhft.chronicle.engine;
 
+import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.api.management.mbean.ChronicleConfig;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
-import net.openhft.chronicle.engine.cfg.*;
+import net.openhft.chronicle.engine.cfg.ChronicleMapCfg;
+import net.openhft.chronicle.engine.cfg.ClustersCfg;
+import net.openhft.chronicle.engine.cfg.EngineCfg;
+import net.openhft.chronicle.engine.cfg.FilePerKeyMapCfg;
+import net.openhft.chronicle.engine.cfg.InMemoryMapCfg;
+import net.openhft.chronicle.engine.cfg.Installable;
+import net.openhft.chronicle.engine.cfg.JmxCfg;
+import net.openhft.chronicle.engine.cfg.MonitorCfg;
+import net.openhft.chronicle.engine.cfg.ServerCfg;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.TextWire;
@@ -28,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -52,7 +62,7 @@ public class EngineMain {
         addClass(ChronicleMapCfg.class);
         addClass(MonitorCfg.class);
 
-        @NotNull String name = args.length > 0 ? args[0] : "engine.yaml";
+        @NotNull String name = args.length > 0 ? args[0] : resolveConfigurationFile();
         @NotNull TextWire yaml = TextWire.fromFile(name);
         @NotNull Installable installable = (Installable) yaml.readObject();
         @NotNull AssetTree assetTree = new VanillaAssetTree(HOST_ID).forServer(false);
@@ -65,5 +75,14 @@ public class EngineMain {
             LOGGER.error("Error starting a component, stopping", e);
             assetTree.close();
         }
+    }
+
+    @NotNull
+    private static String resolveConfigurationFile() {
+        final File expectedDemoConfig = new File(OS.USER_DIR, "demo/src/main/resources/engine.yaml");
+        if (expectedDemoConfig.exists()) {
+            return expectedDemoConfig.getAbsolutePath();
+        }
+        return "engine.yaml";
     }
 }
