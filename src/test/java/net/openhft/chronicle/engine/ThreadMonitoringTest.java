@@ -73,6 +73,7 @@ public class ThreadMonitoringTest {
         preAfter();
 
         TCPRegistry.reset();
+        threadDump.ignore("queue-thread-local-cleaner-daemon");
         threadDump.ignore("main/ChronicleMapKeyValueStore Closer");
         threadDump.ignore("tree-1/Heartbeat");
         threadDump.ignore("tree-2/Heartbeat");
