@@ -28,7 +28,7 @@
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>chronicle-engine-demo</artifactId>
-    <version>1.8.0</version>
+    <version>1.8.1-SNAPSHOT</version>
     <name>OpenHFT/Chronicle-Engine-Demo</name>
     <description>Chronicle Engine Demo</description>
 
@@ -39,16 +39,22 @@
                 <groupId>net.openhft</groupId>
                 <artifactId>third-party-bom</artifactId>
                 <type>pom</type>
-                <version>3.6.0-SNAPSHOT</version>
+                <version>3.5.9</version>
                 <scope>import</scope>
             </dependency>
 
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>chronicle-bom</artifactId>
-                <version>1.14.28-SNAPSHOT</version>
+                <version>1.14.27</version>
                 <type>pom</type>
                 <scope>import</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>net.openhft</groupId>
+                        <artifactId>chronicle-engine</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
         </dependencies>
@@ -58,6 +64,7 @@
         <dependency>
             <groupId>net.openhft</groupId>
             <artifactId>chronicle-engine</artifactId>
+            <version>1.14.4-SNAPSHOT</version>
         </dependency>
 
         <dependency>
@@ -85,6 +92,16 @@
                     <source>1.8</source>
                     <target>1.8</target>
                     <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>net.openhft.engine.chronicle.demo.RunEngineMain</mainClass>
+                    <arguments>
+                        <argument>./src/main/resources/engine.yaml</argument>
+                    </arguments>
                 </configuration>
             </plugin>
         </plugins>
