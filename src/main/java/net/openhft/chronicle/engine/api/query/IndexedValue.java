@@ -168,7 +168,7 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
      * if no data is available on the index queue then nothing will be returned.
      * A message will contain this flag to denote that this message is the
      * last message in a batch of messages that makes up the snapshot, and may be on a message
-     * that has arrive recently, ( by recently we mean since asking for the snapshot )
+     * that has arrive to chronicle engine since you asked for the snapshot
      */
     public boolean isEndOfSnapshot() {
         return isEndOfSnapshot;
