@@ -22,7 +22,6 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -79,6 +78,48 @@ public class VanillaIndexQueueViewTest {
             }
         }
     }
+
+    @Test
+    public void testIsEndOfSnapshot() throws InterruptedException, IOException {
+        TCPRegistry.reset();
+        TCPRegistry.createServerSocketChannelFor("host.port1", "host.port2");
+        try (VanillaAssetTree tree = EngineInstance.engineMain(1, "indexView-engine.yaml")) {
+            ChronicleQueue queue = null;
+            try {
+                assert tree != null;
+                final GenericTypesToString typesToString = new GenericTypesToString(EventProcessor.class);
+                tree.root().addView(TypeToString.class, typesToString);
+
+                queue = acquireQueue(tree, URI);
+                final EventProcessor eventProcessor = new WriterGateway(queue);
+
+                // The reader event processor, e.g. pricing engine, will tail the input and process events received.
+                // Methods on the event processor will be invoked directly.
+//            q.createTailer().methodReader(new PricingEngine());
+
+                new MockDataGenerator(tree).createMockData(eventProcessor);
+                Thread.sleep(100);
+                tree.acquireAsset(URI).acquireView(IndexQueueView.class);
+
+                /// CLIENT
+                final Client client = new Client(URI, new String[]{"host.port1"}, typesToString);
+
+                BlockingQueue<CorpBondStaticLoadEvent> eventCollector = new ArrayBlockingQueue<>(1);
+                client.subscribes(CorpBondStaticLoadEvent.class, "true", FROM_START, v -> {
+                    System.out.println(v);
+                });
+
+                Thread.sleep(10_000);
+            } finally {
+                final File file = queue.file();
+                tree.close();
+                if (file.isDirectory())
+                    IOTools.shallowDeleteDirWithFiles((file));
+
+            }
+        }
+    }
+
 
     @Test
     public void shouldReceiveEventViaSubscription() throws InterruptedException, IOException {

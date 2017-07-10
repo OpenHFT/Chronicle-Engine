@@ -273,28 +273,30 @@ public class VanillaIndexQueueView<V extends Marshallable>
     }
 
     /**
-     * used to return the max index that will make up this snapshot and to act as a fromIndex predicate
+     * used to return the index that will make up this snapshot and to act as a fromIndex predicate
      */
     private static class CheckPointPredicate implements Predicate<IndexedValue>, LongSupplier {
         private long fromIndex;
-        private long max;
+        private long indexGreaterThanFromIndex = -1;
 
         private CheckPointPredicate(long fromIndex) {
             this.fromIndex = fromIndex;
         }
 
         /**
-         * @return the max index that will make up this snapshot
+         * @return the indexGreaterThanFromIndex index that will make up this snapshot
          */
         @Override
         public long getAsLong() {
-            return max;
+            return indexGreaterThanFromIndex;
         }
 
         @Override
         public boolean test(IndexedValue i) {
-            max = Math.max(max, i.index());
-            return i.index() < fromIndex;
+            boolean success = i.index() < fromIndex;
+            if (!success)
+                indexGreaterThanFromIndex = Math.max(indexGreaterThanFromIndex, i.index());
+            return success;
         }
     }
 
@@ -353,8 +355,13 @@ public class VanillaIndexQueueView<V extends Marshallable>
             // we have to also check that we are on the last message
             // because the value returned  by lastIndexOfSnapshot may change on each call
             // as more of the maps is understood
-            boolean endOfSnapshot = !iterator.hasNext() && lastIndexOfSnapshot.getAsLong() == indexedValue.index();
-            indexedValue.isEndOfSnapshot(endOfSnapshot);
+
+            if (!iterator.hasNext()) {
+                if (lastIndexOfSnapshot.getAsLong() == -1)
+                    indexedValue.isEndOfSnapshot(true);
+            } else {
+                indexedValue.isEndOfSnapshot(false);
+            }
             return indexedValue;
         }
 
