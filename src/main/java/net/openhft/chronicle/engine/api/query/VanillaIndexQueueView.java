@@ -47,6 +47,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.LongSupplier;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -271,6 +272,34 @@ public class VanillaIndexQueueView<V extends Marshallable>
         throw new InvalidEventHandlerException();
     }
 
+
+    private static class CheckPointPredicate implements Predicate<IndexedValue>, LongSupplier {
+        private long fromIndex0;
+        private long max0;
+
+        private CheckPointPredicate(long fromIndex0) {
+            this.fromIndex0 = fromIndex0;
+        }
+
+        @Override
+        public long getAsLong() {
+            return max0;
+        }
+
+
+        @Override
+        public boolean test(IndexedValue i) {
+
+            if (i.index() >= fromIndex0) {
+                max0 = Math.max(max0, i.index());
+                return false;
+            }
+
+            return true;
+        }
+    }
+
+
     private void registerSubscriber(@NotNull ConsumingSubscriber<IndexedValue<V>> sub, @NotNull IndexQuery<V> vanillaIndexQuery, @NotNull ExcerptTailer tailer, long fromIndex) {
         @NotNull final AtomicBoolean isClosed = new AtomicBoolean();
         activeSubscriptions.put(sub, isClosed);
@@ -285,15 +314,15 @@ public class VanillaIndexQueueView<V extends Marshallable>
         final ConcurrentMap<Object, IndexedValue<V>> map = multiMap.computeIfAbsent(eventName, k -> new ConcurrentHashMap<>());
 
         final long fromIndex0 = fromIndex;
-
+        CheckPointPredicate checkPointPredicate = new CheckPointPredicate(fromIndex0);
         iterator = (vanillaIndexQuery.bootstrap())
                 ? map.values().stream().filter(
-                i -> i.index() < fromIndex0 && filter.test(i.v())).iterator()
+                i -> filter.test(i.v()) && checkPointPredicate.test(i)).iterator()
                 : EMPTY_ITERATOR;
 
         try {
             @NotNull final Supplier<Marshallable> supplier = excerptConsumer(vanillaIndexQuery,
-                    tailer, iterator, fromIndex);
+                    tailer, iterator, fromIndex, checkPointPredicate);
             sub.addSupplier(supplier);
 
         } catch (RuntimeException e) {
@@ -306,20 +335,27 @@ public class VanillaIndexQueueView<V extends Marshallable>
     private Supplier<Marshallable> excerptConsumer(@NotNull IndexQuery<V> vanillaIndexQuery,
                                                    @NotNull ExcerptTailer tailer,
                                                    @NotNull Iterator<IndexedValue<V>> iterator,
-                                                   final long fromIndex) {
-        return () -> VanillaIndexQueueView.this.value(vanillaIndexQuery, tailer, iterator, fromIndex);
+                                                   final long fromIndex,
+                                                   LongSupplier lastIndexOfSnapshot) {
+        return () -> VanillaIndexQueueView.this.value(vanillaIndexQuery, tailer, iterator, fromIndex, lastIndexOfSnapshot);
     }
 
     @Nullable
     private Marshallable value(@NotNull IndexQuery<V> vanillaIndexQuery,
                                @NotNull ExcerptTailer tailer,
                                @NotNull Iterator<IndexedValue<V>> iterator,
-                               final long from) {
+                               final long from,
+                               @NotNull final LongSupplier lastIndexOfSnapshot) {
 
         if (iterator.hasNext()) {
             IndexedValue<V> indexedValue = iterator.next();
             indexedValue.timePublished(System.currentTimeMillis());
             indexedValue.maxIndex(lastIndexRead);
+            // we have to also check that we are on the last message
+            // because the value returned  by lastIndexOfSnapshot may change on each call
+            // as more of the maps is understood
+            boolean endOfSnapshot = !iterator.hasNext() && lastIndexOfSnapshot.getAsLong() == indexedValue.index();
+            indexedValue.isEndOfSnapshot(endOfSnapshot);
             return indexedValue;
         }
 
@@ -366,11 +402,12 @@ public class VanillaIndexQueueView<V extends Marshallable>
                 indexedValue.index(index);
                 indexedValue.v(v);
                 indexedValue.timePublished(System.currentTimeMillis());
+                indexedValue.isEndOfSnapshot(indexedValue == lastIndexOfSnapshot);
                 indexedValue.maxIndex(Math.max(dc.index(), lastIndexRead));
                 return indexedValue;
 
             } finally {
-                if (dc.isPresent() )
+                if (dc.isPresent())
                     // required for delta-wire, as it has to consume all the the fields
                     while (dc.wire().hasMore()) {
                         dc.wire().read().skipValue();

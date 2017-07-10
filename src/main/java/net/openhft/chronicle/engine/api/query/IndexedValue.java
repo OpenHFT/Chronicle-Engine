@@ -36,8 +36,13 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
     private long index;
     private long timePublished;
     private long maxIndex;
+    private boolean isEndOfSnapshot;
+
     @Nullable
     private V v;
+    private boolean isSnapshot;
+
+
     private transient Object k;
 
     public IndexedValue() {
@@ -61,14 +66,17 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
 
     /**
      * @return the maximum index that is currently available, you can compare this index with the
-     * {@code index} to see how many records the currently even is behind.
+     * {@code index} to see how many records the currently even is behind. However you should avoid using this to
+     * determine when you have reached the end of a snapshot because with illiquid data that has a aggressive filter,
+     * you may never ( or only after a long time ), receive a message that has an index larger than {@code maxIndex}, as such you should use
+     * net.openhft.chronicle.engine.api.query.IndexedValue#isEndOfSnapshot instead
      */
     public long maxIndex() {
         return maxIndex;
     }
 
     @NotNull
-    public IndexedValue maxIndex(long maxIndex) {
+    IndexedValue maxIndex(long maxIndex) {
         this.maxIndex = maxIndex;
         return this;
     }
@@ -113,6 +121,8 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
         wire.write("v").typedMarshallable(v);
         wire.write("t").int64(timePublished);
         wire.write("m").int64(maxIndex);
+        wire.write("e").bool(isEndOfSnapshot);
+
     }
 
     @Override
@@ -149,7 +159,26 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
         v = read.typedMarshallable(reuseFunction);
         timePublished = wire.read(() -> "t").int64();
         maxIndex = wire.read(() -> "m").int64();
+        isEndOfSnapshot = wire.read(() -> "e").bool();
     }
+
+
+    /**
+     * @return {@code true} may be received in response to a subscription,
+     * if no data is available on the index queue then nothing will be returned.
+     * A message will contain this flag to denote that this message is the
+     * last message in a batch of messages that makes up the snapshot, and may be on a message
+     * that has arrive recently, ( by recently we mean since asking for the snapshot )
+     */
+    public boolean isEndOfSnapshot() {
+        return isEndOfSnapshot;
+    }
+
+    IndexedValue isEndOfSnapshot(boolean endOfSnapshot) {
+        isEndOfSnapshot = endOfSnapshot;
+        return this;
+    }
+
 
 }
 
