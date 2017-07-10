@@ -272,30 +272,29 @@ public class VanillaIndexQueueView<V extends Marshallable>
         throw new InvalidEventHandlerException();
     }
 
-
+    /**
+     * used to return the max index that will make up this snapshot and to act as a fromIndex predicate
+     */
     private static class CheckPointPredicate implements Predicate<IndexedValue>, LongSupplier {
-        private long fromIndex0;
-        private long max0;
+        private long fromIndex;
+        private long max;
 
-        private CheckPointPredicate(long fromIndex0) {
-            this.fromIndex0 = fromIndex0;
+        private CheckPointPredicate(long fromIndex) {
+            this.fromIndex = fromIndex;
         }
 
+        /**
+         * @return the max index that will make up this snapshot
+         */
         @Override
         public long getAsLong() {
-            return max0;
+            return max;
         }
-
 
         @Override
         public boolean test(IndexedValue i) {
-
-            if (i.index() >= fromIndex0) {
-                max0 = Math.max(max0, i.index());
-                return false;
-            }
-
-            return true;
+            max = Math.max(max, i.index());
+            return i.index() < fromIndex;
         }
     }
 
