@@ -22,6 +22,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -103,13 +104,20 @@ public class VanillaIndexQueueViewTest {
 
                 /// CLIENT
                 final Client client = new Client(URI, new String[]{"host.port1"}, typesToString);
-
-                BlockingQueue<CorpBondStaticLoadEvent> eventCollector = new ArrayBlockingQueue<>(1);
-                client.subscribes(CorpBondStaticLoadEvent.class, "true", FROM_START, v -> {
-                    System.out.println(v);
+                ArrayDeque<IndexedValue> q = new ArrayDeque<IndexedValue>(20);
+                client.subscribes(MarketDataEvent.class, "true", FROM_END, v -> {
+                    q.add(v);
                 });
 
-                Thread.sleep(10_000);
+                while (q.size() < 2) {
+                    Thread.yield();
+                }
+
+                IndexedValue o = q.pollLast();
+                Assert.assertNotNull(o);
+                Assert.assertTrue(o.isEndOfSnapshot());
+
+
             } finally {
                 final File file = queue.file();
                 tree.close();
@@ -118,6 +126,7 @@ public class VanillaIndexQueueViewTest {
 
             }
         }
+
     }
 
 
