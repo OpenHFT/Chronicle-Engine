@@ -61,6 +61,7 @@ public class ConfigurationFSTest {
         Jvm.dumpException(exceptions);
         assertEquals(0, exceptions.size());
     }
+
     @After
     public void afterMethod() {
         if (Jvm.hasException(exceptions)) {

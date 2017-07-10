@@ -16,7 +16,31 @@ The benefit of this is your configuration files can change format and the way th
 - save a configuration after you have changed it.
 
 ## To Run.
-To run from your IDE, search for RunEngineMain, and run it.
+
+### Pre-requisites
+
+Chronicle-Engine binaries are not published to maven central, so it is necessary to build locally from source.
+
+To run the demo from the command-line, follow these steps:
+
+```
+# clone the repository
+$ git clone https://github.com/OpenHFT/Chronicle-Engine.git
+$ cd Chronicle-Engine
+
+# install into local maven repository
+$ mvn install
+
+# run the demo
+$ cd demo
+$ mvn exec:java
+
+```
+
+
+Once the Chronicle-Engine project has been installed locally, you will be able to run the demo from your IDE.
+
+Search for the RunEngineMain class, and execute it.
 
 The source for the main is [RunEngineMain](https://github.com/OpenHFT/Chronicle-Engine/blob/master/demo/src/main/java/net/openhft/engine/chronicle/demo/RunEngineMain.java) which calls [EngineMain](https://github.com/OpenHFT/Chronicle-Engine/blob/master/src/main/java/net/openhft/chronicle/engine/EngineMain.java)
 
