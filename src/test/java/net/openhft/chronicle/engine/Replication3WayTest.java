@@ -128,7 +128,7 @@ public class Replication3WayTest extends ThreadMonitoringTest {
     }
 
     @NotNull
-    private AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
+    private AssetTree create(final int hostId, WireType writeType, final String clusterName) {
         @NotNull AssetTree tree = new VanillaAssetTree((byte) hostId)
                 .forTesting()
                 .withConfig(resourcesDir() + "/3way", OS.TARGET + "/" + hostId);
