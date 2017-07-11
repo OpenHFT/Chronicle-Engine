@@ -33,17 +33,25 @@
         host1: {
            hostId: 1,
            tcpBufferSize: 65536,
-           connectUri: host.port1,
-           timeoutMs: 5000,
-        },
-        host2: {
-           hostId: 2,
-           tcpBufferSize: 65536,
-           connectUri: host.port2,
+           connectUri: host.port,
            timeoutMs: 5000,
         }
       }
 
     }
+  },
+  queue: {
+    # pre defended queues
+    trades: !QueueCfg {
+      masterId: 1,
+      basePath: "tradesQ",
+      cluster: clusterTwo,
+      topicClass: !type String,
+      messageClass: !type String,
+      acknowledgment: false,
+      messageAdaptor: !!null "",
+      wireType: !WireType BINARY,
+    },
   }
+
 }

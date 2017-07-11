@@ -16,7 +16,7 @@ public class GenericTypesToString implements TypeToString {
     private final Map<String, Class> cache1 = new ConcurrentHashMap<>();
     private final Map<Class, String> cache2 = new ConcurrentHashMap<>();
 
-    GenericTypesToString(@NotNull Class... clazzes) {
+    public GenericTypesToString(@NotNull Class... clazzes) {
 
         for (@NotNull Class clazz : clazzes) {
 

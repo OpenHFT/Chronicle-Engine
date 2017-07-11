@@ -170,15 +170,18 @@ public class VanillaIndexQueueView<V extends Marshallable>
                             return false;
                         }
 
-                        final Object k;
+                        Object k;
                         if (v instanceof KeyedMarshallable) {
                             final Bytes bytes = Wires.acquireBytes();
                             ((KeyedMarshallable) v).writeKey(bytes);
-                            k = bytesToKey.computeIfAbsent(bytes, Bytes::copy);
-                        } else
-                            continue;
 
-                        if (k == null)
+                            k = bytesToKey.get(bytes);
+                            if (k == null) {
+                                BytesStore copy = bytes.copy();
+                                bytesToKey.put(copy.bytesForRead(), copy);
+                                k = copy;
+                            }
+                        } else
                             continue;
 
                         messagesReadPerSecond++;
@@ -237,13 +240,17 @@ public class VanillaIndexQueueView<V extends Marshallable>
         fromIndex0 = Math.min(fromIndex0, endIndex);
         fromIndex0 = Math.max(fromIndex0, start);
 
-        final long fromIndex = fromIndex0;
-        final boolean success = tailer.moveToIndex(fromIndex);
+        long fromIndex = fromIndex0;
 
-        assert success || (fromIndex == endIndex) : "fromIndex=" + Long.toHexString(fromIndex)
+        if (fromIndex == endIndex && endIndex!=-1L)
+            fromIndex--;
+
+        final boolean success = tailer.index() != fromIndex ? tailer.moveToIndex(fromIndex) : true;
+
+        assert success : "fromIndex=" + Long.toHexString(fromIndex)
                 + ", start=" + Long.toHexString(start) + ",end=" + Long.toHexString(endIndex);
 
-        if (fromIndex <= endIndex) {
+        if (fromIndex <= lastIndexRead) {
             registerSubscriber(sub, vanillaIndexQuery, tailer, fromIndex);
             return;
         }
@@ -255,7 +262,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
     private void ensureAllDataIsLoadedBeforeRegistingSubsribe(@NotNull ConsumingSubscriber<IndexedValue<V>> sub, @NotNull IndexQuery<V> vanillaIndexQuery, @NotNull ExcerptTailer tailer, long endIndex, long fromIndex) {
         @Nullable final EventLoop eventLoop = asset.root().getView(EventLoop.class);
-        eventLoop.addHandler(() -> endOfTailCheckedRegisterSubscriber(sub, vanillaIndexQuery, tailer, endIndex, fromIndex));
+        eventLoop.addHandler(() -> endOfTailCheckedRegisterSubscriber(sub, vanillaIndexQuery, tailer, fromIndex));
     }
 
     /**
@@ -264,8 +271,8 @@ public class VanillaIndexQueueView<V extends Marshallable>
     private boolean endOfTailCheckedRegisterSubscriber(@NotNull ConsumingSubscriber<IndexedValue<V>> sub,
                                                        @NotNull IndexQuery<V> vanillaIndexQuery,
                                                        @NotNull ExcerptTailer tailer,
-                                                       long endIndex, long fromIndex) throws InvalidEventHandlerException {
-        if (lastIndexRead > endIndex)
+                                                       long fromIndex) throws InvalidEventHandlerException {
+        if (fromIndex > lastIndexRead)
             return false;
 
         registerSubscriber(sub, vanillaIndexQuery, tailer, fromIndex);
@@ -301,7 +308,10 @@ public class VanillaIndexQueueView<V extends Marshallable>
     }
 
 
-    private void registerSubscriber(@NotNull ConsumingSubscriber<IndexedValue<V>> sub, @NotNull IndexQuery<V> vanillaIndexQuery, @NotNull ExcerptTailer tailer, long fromIndex) {
+    private void registerSubscriber(@NotNull ConsumingSubscriber<IndexedValue<V>> sub,
+                                    @NotNull IndexQuery<V> vanillaIndexQuery,
+                                    @NotNull ExcerptTailer tailer,
+                                    long fromIndex) {
         @NotNull final AtomicBoolean isClosed = new AtomicBoolean();
         activeSubscriptions.put(sub, isClosed);
 
@@ -372,7 +382,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
         try (DocumentContext dc = tailer.readingDocument()) {
             try {
-                if (!dc.isPresent())
+                if (!dc.isData())
                     return null;
 
                 if (LOG.isDebugEnabled())
@@ -414,7 +424,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
             } finally {
                 if (dc.isPresent())
-                    // required for delta-wire, as it has to consume all the the fields
+                // required for delta-wire, as it has to consume all the the fields
                     while (dc.wire().hasMore()) {
                         dc.wire().read().skipValue();
                     }
