@@ -18,10 +18,13 @@ public final class ChronicleMapV3KeyValueStore<K, V> implements KeyValueStore<K,
     @NotNull
     private final Asset asset;
 
-    ChronicleMapV3KeyValueStore(final RequestContext requestContext,
-                                @NotNull final Asset asset, final byte replicaId) {
+    public ChronicleMapV3KeyValueStore(final RequestContext requestContext,
+                                @NotNull final Asset asset, final int replicaId) {
         this.asset = asset;
-        delegate = createReplicatedMap(requestContext, replicaId);
+        if (replicaId > 127) {
+            throw new IllegalArgumentException();
+        }
+        delegate = createReplicatedMap(requestContext, (byte) replicaId);
     }
 
     @Override
@@ -61,7 +64,7 @@ public final class ChronicleMapV3KeyValueStore<K, V> implements KeyValueStore<K,
 
     @Override
     public void keysFor(final int segment, final SubscriptionConsumer<K> kConsumer) throws InvalidSubscriberException {
-        throw new UnsupportedOperationException();
+        SubscriptionConsumer.notifyEachEvent(delegate.keySet(), kConsumer);
     }
 
     @Override
@@ -71,7 +74,8 @@ public final class ChronicleMapV3KeyValueStore<K, V> implements KeyValueStore<K,
 
     @Override
     public void entriesFor(final int segment, final SubscriptionConsumer<MapEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
-        throw new UnsupportedOperationException();
+        SubscriptionConsumer.notifyEachEvent(delegate.entrySet(),
+                e -> kvConsumer.accept(InsertedEvent.of(asset.fullName(), e.getKey(), e.getValue(), false)));
     }
 
     @Override
@@ -106,9 +110,12 @@ public final class ChronicleMapV3KeyValueStore<K, V> implements KeyValueStore<K,
     }
 
     private static <K, V> ReplicatedChronicleMap<K, V, ?> createReplicatedMap(final RequestContext requestContext, final byte replicaId) {
+
         final ChronicleMapBuilder<K, V> builder =
-                ChronicleMap.of((Class<K>) requestContext.keyType(), (Class<V>) requestContext.valueType())
-                        .entries(requestContext.getEntries()).
+                ChronicleMap.of((Class<K>) requestContext.keyType(), (Class<V>) requestContext.valueType()).
+                        entries(requestContext.getEntries()).
+                        averageValueSize(requestContext.getAverageValueSize()).
+                        averageKeySize(requestContext.getAverageKeySize()).
                         replication(replicaId);
 
         final ChronicleMap<K, V> map = builder.create();

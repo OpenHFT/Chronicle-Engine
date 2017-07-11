@@ -97,8 +97,8 @@ public class ReferenceChronicleTest {
         serverAssetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore", VanillaMapView::new, KeyValueStore.class);
 
         // TODO mark.price replace with v3 map
-//        serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
-//                new ChronicleMapKeyValueStore(context.basePath(OS.TARGET).entries(50).averageValueSize(2_000_000), asset));
+        serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
+                new ChronicleMapV3KeyValueStore(context.basePath(OS.TARGET).entries(50).averageValueSize(2_000_000), asset, 1));
 
         @NotNull ServerEndpoint serverEndpoint = new ServerEndpoint(hostPortToken, serverAssetTree);
         @NotNull AssetTree clientAssetTree = new VanillaAssetTree().forRemoteAccess(hostPortToken, WireType.BINARY);
@@ -120,8 +120,8 @@ public class ReferenceChronicleTest {
         serverAssetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore", VanillaMapView::new, KeyValueStore.class);
 
         // TODO mark.price replace with v3 map
-//        serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
-//                new ChronicleMapKeyValueStore(context.basePath(OS.TARGET).entries(50).averageValueSize(2_000_000), asset));
+        serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
+                new ChronicleMapV3KeyValueStore(context.entries(50).averageValueSize(2_000_000), asset, 1));
 
         test(serverAssetTree);
         serverAssetTree.close();

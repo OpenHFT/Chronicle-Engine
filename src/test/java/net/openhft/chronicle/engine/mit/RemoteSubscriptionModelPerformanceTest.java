@@ -29,6 +29,7 @@ import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionCollection;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
+import net.openhft.chronicle.engine.map.ChronicleMapV3KeyValueStore;
 import net.openhft.chronicle.engine.map.KVSSubscription;
 import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
@@ -84,8 +85,8 @@ public class RemoteSubscriptionModelPerformanceTest {
         serverAssetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore", VanillaMapView::new, KeyValueStore.class);
 
         // TODO mark.price replace with v3 map
-//        serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
-//                new ChronicleMapKeyValueStore(context.basePath(OS.TARGET).entries(_noOfPuts).averageValueSize(_twoMbTestStringLength), asset));
+        serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
+                new ChronicleMapV3KeyValueStore(context.basePath(OS.TARGET).entries(_noOfPuts).averageValueSize(_twoMbTestStringLength), asset, 1));
 
         TCPRegistry.createServerSocketChannelFor("RemoteSubscriptionModelPerformanceTest.port");
         serverEndpoint = new ServerEndpoint("RemoteSubscriptionModelPerformanceTest.port", serverAssetTree);

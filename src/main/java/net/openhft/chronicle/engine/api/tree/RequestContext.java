@@ -143,6 +143,7 @@ public class RequestContext implements Cloneable {
             nullOldValueOnUpdateEvent = null,
             endSubscriptionAfterBootstrap = null,
             bootstrap = null;
+    private double averageKeySize;
     private double averageValueSize;
     private long entries;
     private Boolean recurse;
@@ -422,6 +423,17 @@ public class RequestContext implements Cloneable {
     public RequestContext averageValueSize(double averageValueSize) {
         checkSealed();
         this.averageValueSize = averageValueSize;
+        return this;
+    }
+
+    public double getAverageKeySize() {
+        return averageKeySize;
+    }
+
+    @NotNull
+    public RequestContext averageKeySize(double averageKeySize) {
+        checkSealed();
+        this.averageKeySize = averageKeySize;
         return this;
     }
 

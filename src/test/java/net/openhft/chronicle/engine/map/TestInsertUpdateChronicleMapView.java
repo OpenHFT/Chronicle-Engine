@@ -84,9 +84,9 @@ public class TestInsertUpdateChronicleMapView extends ThreadMonitoringTest {
                 VanillaMapView::new, KeyValueStore.class);
 
         // TODO mark.price replace with v3 map
-//        serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
-//                new ChronicleMapKeyValueStore(context.basePath(null).entries(100)
-//                        .putReturnsNull(false), asset));
+        serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
+                new ChronicleMapV3KeyValueStore(context.basePath(null).entries(100)
+                        .putReturnsNull(false).averageKeySize(20).averageValueSize(120), asset, 1));
 
         clientAssetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType);
     }
