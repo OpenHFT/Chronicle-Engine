@@ -83,7 +83,6 @@ public class TestInsertUpdateChronicleMapView extends ThreadMonitoringTest {
         serverAssetTree.root().addWrappingRule(MapView.class, "map directly to " + "KeyValueStore",
                 VanillaMapView::new, KeyValueStore.class);
 
-        // TODO mark.price replace with v3 map
         serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
                 new ChronicleMapV3KeyValueStore(context.basePath(null).entries(100)
                         .putReturnsNull(false).averageKeySize(20).averageValueSize(120), asset, 1));
@@ -122,6 +121,26 @@ public class TestInsertUpdateChronicleMapView extends ThreadMonitoringTest {
             final MapEvent event = events.poll(10, SECONDS);
             Assert.assertTrue(event instanceof UpdatedEvent);
         }
+    }
+
+    @Test
+    public void shouldSendRemoveEventWhenEntryIsRemoved() throws Exception {
+        @NotNull final MapView<String, String> serverMap = serverAssetTree.acquireMap
+                ("name?putReturnsNull=false",
+                        String.class, String
+                                .class);
+
+        @NotNull final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(1);
+        clientAssetTree.registerSubscriber("name?putReturnsNull=false&bootstrap=false", MapEvent.class,
+                events::add);
+        Jvm.pause(500);
+        serverMap.put("hello", "world");
+        MapEvent event = events.poll(10, SECONDS);
+        Assert.assertTrue(event instanceof InsertedEvent);
+
+        serverMap.remove("hello");
+        event = events.poll(10, SECONDS);
+        Assert.assertTrue(event instanceof RemovedEvent);
     }
 
     @Test

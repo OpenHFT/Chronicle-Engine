@@ -121,7 +121,7 @@ public class ReferenceChronicleTest {
 
         // TODO mark.price replace with v3 map
         serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
-                new ChronicleMapV3KeyValueStore(context.entries(50).averageValueSize(2_000_000), asset, 1));
+                new ChronicleMapV3KeyValueStore(context.entries(50).averageKeySize(64).averageValueSize(2_000_000), asset, 1));
 
         test(serverAssetTree);
         serverAssetTree.close();
