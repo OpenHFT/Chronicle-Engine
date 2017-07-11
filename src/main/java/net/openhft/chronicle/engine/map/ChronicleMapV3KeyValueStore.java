@@ -1,12 +1,15 @@
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.tree.Asset;
+import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.ReplicatedChronicleMap;
@@ -18,6 +21,7 @@ public final class ChronicleMapV3KeyValueStore<K, V> implements KeyValueStore<K,
     @NotNull
     private final Asset asset;
     private final KVSSubscription<K, V> subscriptions;
+    private EngineReplication engineReplicator;
 
     public ChronicleMapV3KeyValueStore(final RequestContext requestContext,
                                 @NotNull final Asset asset, final int replicaId) {
@@ -29,6 +33,23 @@ public final class ChronicleMapV3KeyValueStore<K, V> implements KeyValueStore<K,
         //noinspection unchecked
         subscriptions = asset.acquireView(ObjectSubscription.class, requestContext);
         subscriptions.setKvStore(this);
+
+        @Nullable HostIdentifier hostIdentifier = null;
+        try {
+            this.engineReplicator = asset.acquireView(EngineReplication.class);
+
+//            @Nullable final EngineReplicationLangBytesConsumer langBytesConsumer = asset.findView
+//                    (EngineReplicationLangBytesConsumer.class);
+
+            hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
+            assert hostIdentifier != null;
+
+        } catch (AssetNotFoundException anfe) {
+//            if (LOG.isDebugEnabled())
+//                Jvm.debug().on(getClass(), "replication not enabled ", anfe);
+        }
+
+
     }
 
     @Override
@@ -106,6 +127,8 @@ public final class ChronicleMapV3KeyValueStore<K, V> implements KeyValueStore<K,
 
     @Override
     public void accept(final EngineReplication.ReplicationEntry replicationEntry) {
+        // TODO mark.price
+        System.out.printf(Thread.currentThread().getName() + "|++!! replicationEntry: %s%n", replicationEntry);
         throw new UnsupportedOperationException();
     }
 
