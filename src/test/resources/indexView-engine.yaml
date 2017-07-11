@@ -33,7 +33,7 @@
         host1: {
            hostId: 1,
            tcpBufferSize: 65536,
-           connectUri: host.port,
+           connectUri: host.port1,
            timeoutMs: 5000,
         }
       }

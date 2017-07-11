@@ -42,7 +42,7 @@ public class TestIndexQueueView {
     @Test
     public void test() throws IOException, InterruptedException {
 
-        TCPRegistry.createServerSocketChannelFor("host.port");
+        TCPRegistry.createServerSocketChannelFor(" host.port1");
         ClassAliasPool.CLASS_ALIASES.addAlias(Trade.class, "TRADE_M");
         String uri = "/queue/trades";
 
@@ -51,7 +51,7 @@ public class TestIndexQueueView {
 
         startEngine();
 
-        AssetTree assetTree = (new VanillaAssetTree()).forRemoteAccess("host.port", WireType.BINARY);
+        AssetTree assetTree = (new VanillaAssetTree()).forRemoteAccess(" host.port1", WireType.BINARY);
 
 
         VanillaAsset asset = (VanillaAsset) assetTree.acquireAsset(uri);
@@ -134,7 +134,7 @@ public class TestIndexQueueView {
 
 
     private void startEngine() {
-        VanillaAssetTree serverTree = EngineInstance.engineMain(1, "indexview-engine.yaml");
+        VanillaAssetTree serverTree = EngineInstance.engineMain(1, "indexView-engine.yaml");
 
         final TypeToString typesToString = new TypeToString() {
             @Override
