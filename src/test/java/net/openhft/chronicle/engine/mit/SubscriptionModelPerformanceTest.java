@@ -27,7 +27,6 @@ import net.openhft.chronicle.engine.api.map.MapEventListener;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
-import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
@@ -116,8 +115,9 @@ public class SubscriptionModelPerformanceTest {
         TCPRegistry.createServerSocketChannelFor(hostPortDescription);
         serverAssetTree = new VanillaAssetTree(14).forTesting();
 
-        serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
-                new ChronicleMapKeyValueStore(context.basePath(OS.TARGET).entries(50).averageValueSize(2 << 20), asset));
+        // TODO mark.price replace with v3 map
+//        serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
+//                new ChronicleMapKeyValueStore(context.basePath(OS.TARGET).entries(50).averageValueSize(2 << 20), asset));
         serverEndpoint = new ServerEndpoint(hostPortDescription, serverAssetTree);
         clientAssetTree = new VanillaAssetTree(15).forRemoteAccess(hostPortDescription, wireType);
     }

@@ -28,8 +28,6 @@ import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.fs.*;
-import net.openhft.chronicle.engine.map.CMap2EngineReplicator;
-import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
@@ -93,14 +91,17 @@ public class RoundTripTest {
         tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
                 VanillaMapView::new,
                 KeyValueStore.class);
-        tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",
-                CMap2EngineReplicator::new);
-        tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
-                new ChronicleMapKeyValueStore(context.wireType(writeType)
-                        .cluster("test")
-                        .entries(ENTRIES)
-                        .averageValueSize(VALUE_SIZE),
-                        asset));
+
+        // TODO mark.price replace with v3 map
+
+//        tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",
+//                CMap2EngineReplicator::new);
+//        tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
+//                new ChronicleMapKeyValueStore(context.wireType(writeType)
+//                        .cluster("test")
+//                        .entries(ENTRIES)
+//                        .averageValueSize(VALUE_SIZE),
+//                        asset));
 
         @NotNull Asset asset1 = tree.acquireAsset(SIMPLE_NAME);
         asset1.addView(Clusters.class, testCluster);

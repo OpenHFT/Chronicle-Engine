@@ -26,7 +26,6 @@ import net.openhft.chronicle.core.threads.InvalidEventHandlerException;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
-import net.openhft.chronicle.engine.map.CMap2EngineReplicator.VanillaReplicatedEntry;
 import net.openhft.chronicle.engine.map.replication.Bootstrap;
 import net.openhft.chronicle.engine.server.internal.MapWireHandler;
 import net.openhft.chronicle.engine.server.internal.ReplicationHandler2.EventId;
@@ -47,7 +46,7 @@ import static net.openhft.chronicle.engine.server.internal.ReplicationHandler2.E
  * Created by Rob Austin
  */
 class ReplicationHub extends AbstractStatelessClient {
-    private static final Logger LOG = LoggerFactory.getLogger(ChronicleMapKeyValueStore.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ReplicationHub.class);
     final ThreadLocal<VanillaReplicatedEntry> vre = ThreadLocal.withInitial(VanillaReplicatedEntry::new);
     @NotNull
     private final EventLoop eventLoop;

@@ -29,8 +29,6 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.fs.ChronicleMapGroupFS;
 import net.openhft.chronicle.engine.fs.FilePerKeyGroupFS;
-import net.openhft.chronicle.engine.map.CMap2EngineReplicator;
-import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
@@ -131,11 +129,13 @@ public class MaunualReplication2WayTest {
                 VanillaMapView::new,
                 KeyValueStore.class);
 
-        testBootstrap.addLeafRule(EngineReplication.class, "Engine replication holder",
-                CMap2EngineReplicator::new);
-        tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
-                new ChronicleMapKeyValueStore(context.wireType(writeType).cluster(clusterNam),
-                        asset));
+        // TODO mark.price
+
+//        testBootstrap.addLeafRule(EngineReplication.class, "Engine replication holder",
+//                CMap2EngineReplicator::new);
+//        tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
+//                new ChronicleMapKeyValueStore(context.wireType(writeType).cluster(clusterNam),
+//                        asset));
 
         tree.withConfig(resourcesDir() + "/2way", OS.TARGET + "/" + hostId);
 

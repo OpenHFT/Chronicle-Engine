@@ -21,7 +21,6 @@ import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.engine.api.management.mbean.ChronicleConfig;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
-import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
@@ -68,8 +67,11 @@ public class SimpleEngineMain {
             LOGGER.info("Persistence enabled");
             assetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
                     VanillaMapView::new, KeyValueStore.class);
-            assetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
-                    new ChronicleMapKeyValueStore(context.basePath(OS.TARGET), asset));
+
+
+            // TODO mark.price use a v3 chronicle map
+//            assetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
+//                    new ChronicleMapKeyValueStore(context.basePath(OS.TARGET), asset));
         }
 
         serverEndpoint = new ServerEndpoint("*:" + PORT, assetTree);

@@ -27,8 +27,6 @@ import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.fs.ChronicleMapGroupFS;
 import net.openhft.chronicle.engine.fs.FilePerKeyGroupFS;
-import net.openhft.chronicle.engine.map.CMap2EngineReplicator;
-import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
@@ -151,11 +149,14 @@ public class MainCluster5 {
         tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
                 VanillaMapView::new,
                 KeyValueStore.class);
-        tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",
-                CMap2EngineReplicator::new);
-        tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
-                new ChronicleMapKeyValueStore(context.wireType(writeType).cluster(clusterTwo),
-                        asset));
+
+        // TODO mark.price
+
+//        tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",
+//                CMap2EngineReplicator::new);
+//        tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
+//                new ChronicleMapKeyValueStore(context.wireType(writeType).cluster(clusterTwo),
+//                        asset));
 
         //  VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
 

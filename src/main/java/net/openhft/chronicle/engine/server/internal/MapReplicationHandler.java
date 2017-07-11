@@ -27,7 +27,7 @@ import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.engine.api.pubsub.Replication;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
-import net.openhft.chronicle.engine.map.CMap2EngineReplicator.VanillaReplicatedEntry;
+import net.openhft.chronicle.engine.map.VanillaReplicatedEntry;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.network.cluster.AbstractSubHandler;
 import net.openhft.chronicle.network.connection.CoreFields;

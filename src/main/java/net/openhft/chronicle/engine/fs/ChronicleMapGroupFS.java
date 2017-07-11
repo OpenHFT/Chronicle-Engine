@@ -19,7 +19,7 @@ package net.openhft.chronicle.engine.fs;
 
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.tree.*;
-import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
+import net.openhft.chronicle.engine.map.VanillaKeyValueStore;
 import net.openhft.chronicle.engine.tree.VanillaAsset;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
@@ -80,6 +80,8 @@ public class ChronicleMapGroupFS implements Marshallable, MountPoint, LeafViewFa
     @NotNull
     @Override
     public KeyValueStore create(@NotNull final RequestContext requestContext, @NotNull final Asset asset) throws AssetNotFoundException {
-        return new ChronicleMapKeyValueStore(requestContext.basePath(basePath), asset);
+        // TODO mark.price use a v3 chronicle map
+//        return new ChronicleMapKeyValueStore(requestContext.basePath(basePath), asset);
+        return new VanillaKeyValueStore(requestContext, asset);
     }
 }
