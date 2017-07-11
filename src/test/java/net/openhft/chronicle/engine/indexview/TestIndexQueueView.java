@@ -29,7 +29,7 @@ import java.util.function.Function;
 
 public class TestIndexQueueView {
 
-    private static final int COUNT = 100_000;
+    private static final int COUNT = 10_000;
     private static final String TRADES = "TRADES";
 
     private static final Random random = new Random();
