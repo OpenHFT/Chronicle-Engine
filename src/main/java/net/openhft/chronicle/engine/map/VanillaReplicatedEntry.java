@@ -34,7 +34,7 @@ public class VanillaReplicatedEntry implements EngineReplication.ReplicationEntr
      * @param remoteIdentifier   the identifier of the server we are sending data to ( only used
      *                           as a comment )
      */
-    VanillaReplicatedEntry(@NotNull final BytesStore key,
+    public VanillaReplicatedEntry(@NotNull final BytesStore key,
                            @Nullable final BytesStore value,
                            final long timestamp,
                            final byte identifier,

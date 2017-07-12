@@ -13,6 +13,7 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.fs.Clusters;
 import net.openhft.chronicle.engine.fs.EngineCluster;
 import net.openhft.chronicle.engine.fs.EngineHostDetails;
+import net.openhft.chronicle.engine.server.internal.MapReplicationHandler;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
@@ -24,8 +25,14 @@ import net.openhft.chronicle.network.cluster.ConnectionManager;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public final class ChronicleMapV3KeyValueStore<K, V> implements KeyValueStore<K, V> {
+import java.util.function.Supplier;
+
+public final class ChronicleMapV3KeyValueStore<K, V> implements KeyValueStore<K, V>, Supplier<EngineReplication> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ChronicleMapV3KeyValueStore.class);
+
     private final ReplicatedChronicleMap<K, V, ?> delegate;
     @NotNull
     private final Asset asset;
@@ -49,6 +56,7 @@ public final class ChronicleMapV3KeyValueStore<K, V> implements KeyValueStore<K,
         @Nullable HostIdentifier hostIdentifier = null;
         try {
             this.engineReplicator = asset.acquireView(EngineReplication.class);
+
 
 //            @Nullable final EngineReplicationLangBytesConsumer langBytesConsumer = asset.findView
 //                    (EngineReplicationLangBytesConsumer.class);
@@ -87,9 +95,13 @@ public final class ChronicleMapV3KeyValueStore<K, V> implements KeyValueStore<K,
         byte localIdentifier = hostIdentifier.hostId();
         delegate = createReplicatedMap(requestContext, localIdentifier);
 
+        ((ChronicleMapV3EngineReplication) engineReplicator).setChronicleMap(delegate);
+
+
 //        if (LOG.isDebugEnabled())
 //            Jvm.debug().on(getClass(), "hostDetails : localIdentifier=" + localIdentifier + ",cluster=" + engineCluster.hostDetails());
 
+        final byte hostId = hostIdentifier.hostId();
         for (@NotNull EngineHostDetails hostDetails : engineCluster.hostDetails()) {
             try {
                 // its the identifier with the larger values that will establish the connection
@@ -120,12 +132,11 @@ public final class ChronicleMapV3KeyValueStore<K, V> implements KeyValueStore<K,
 
                     WireOutPublisher publisher = nc.wireOutPublisher();
 
+                    LOGGER.info("Map on {} publishing a replication handler to {}",
+                            hostId, nc);
                     // TODO mark.price
-                    System.out.printf(Thread.currentThread().getName() + "|++!! new network context: %s%n",
-                            nc);
-
-                    // TODO mark.price
-//                    publisher.publish(newMapReplicationHandler(lastUpdateTime, keyType, valueType, csp, nc.newCid()));
+                    publisher.publish(MapReplicationHandler.newMapReplicationHandler(lastUpdateTime,
+                            delegate.keyClass(), delegate.valueClass(), csp, nc.newCid()));
                 });
 
 
@@ -212,8 +223,7 @@ public final class ChronicleMapV3KeyValueStore<K, V> implements KeyValueStore<K,
 
     @Override
     public void accept(final EngineReplication.ReplicationEntry replicationEntry) {
-        // TODO mark.price
-        System.out.printf(Thread.currentThread().getName() + "|++!! replicationEntry: %s%n", replicationEntry);
+        LOGGER.info("replicationEntry: {}", replicationEntry);
         throw new UnsupportedOperationException();
     }
 
@@ -231,6 +241,12 @@ public final class ChronicleMapV3KeyValueStore<K, V> implements KeyValueStore<K,
     @Override
     public KeyValueStore<K, V> underlying() {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public EngineReplication get() {
+        LOGGER.info("Returning replication {}", engineReplicator);
+        return engineReplicator;
     }
 
     private void notifyRemove(final K key, final V value) {

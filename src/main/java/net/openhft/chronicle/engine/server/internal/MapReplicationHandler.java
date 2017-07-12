@@ -48,7 +48,7 @@ import static net.openhft.chronicle.network.connection.CoreFields.lastUpdateTime
 public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkContext> implements
         Demarshallable, WriteMarshallable {
 
-    private static final Logger LOG = LoggerFactory.getLogger(MapReplicationHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MapReplicationHandler.class);
     private final ThreadLocal<VanillaReplicatedEntry> vre = withInitial(VanillaReplicatedEntry::new);
     private Replication replication;
     private long timestamp;
@@ -115,6 +115,8 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
     @Override
     public void onInitialize(@NotNull WireOut outWire) {
 
+        LOGGER.info("onInitialise of MapReplicationHandler");
+
         if (isClosed())
             return;
 
@@ -124,6 +126,8 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
 
         replication = asset.acquireView(Replication.class, RequestContext.requestContext(asset
                 .fullName()).keyType(keyType).valueType(valueType));
+
+        LOGGER.info("Got a replication object: {}", replication);
 
         // reflect back the map replication handler
         final long lastUpdateTime = replication.lastModificationTime

@@ -152,6 +152,7 @@ public class Replication3WayTest extends ThreadMonitoringTest {
 
     @Before
     public void beforeTest() throws IOException {
+        Jvm.resetExceptionHandlers();
         before();
         name = testName.getMethodName();
 
