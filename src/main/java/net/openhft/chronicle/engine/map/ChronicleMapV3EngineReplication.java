@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
@@ -78,8 +79,11 @@ public final class ChronicleMapV3EngineReplication implements EngineReplication 
 
         @Override
         public boolean hasNext() {
-            LOGGER.info("hasNext()!");
-            return modificationIterator.hasNext();
+            final boolean moreToProcess = modificationIterator.hasNext();
+            if (moreToProcess) {
+                LOGGER.info("hasNext()!");
+            }
+            return moreToProcess;
         }
 
         @Override
@@ -103,10 +107,11 @@ public final class ChronicleMapV3EngineReplication implements EngineReplication 
                                          final long bootstrapTime, final byte remoteIdentifier) {
             final Bytes<ByteBuffer> payload = Bytes.elasticByteBuffer();
             final Bytes<ByteBuffer> destination = Bytes.elasticByteBuffer();
-            chronicleMap.writeExternalEntry(replicableEntry, payload, destination, chronicleId);
-
-            return new VanillaReplicatedEntry(payload.bytesStore(), destination.bytesStore(),
-                    replicableEntry.originTimestamp(), replicableEntry.originIdentifier(), false, bootstrapTime, remoteIdentifier);
+            chronicleMap.writeExternalEntry(replicableEntry, null, destination, chronicleId);
+            final boolean isDeletedNotYetSupported = false;
+            return new MapV3ReplicationEntry(payload, destination,
+                    replicableEntry.originTimestamp(), replicableEntry.originIdentifier(),
+                    isDeletedNotYetSupported, bootstrapTime, remoteIdentifier);
         }
 
         @Override
@@ -117,6 +122,66 @@ public final class ChronicleMapV3EngineReplication implements EngineReplication 
         @Override
         public void setModificationNotifier(@NotNull final ModificationNotifier modificationNotifier) {
             modificationIterator.setModificationNotifier(modificationNotifier::onChange);
+        }
+    }
+
+    private static final class MapV3ReplicationEntry implements ReplicationEntry {
+        private final Bytes<ByteBuffer> key;
+        private final Bytes<ByteBuffer> value;
+        private final long originTimestamp;
+        private final byte originIdentifier;
+        private final boolean isDeleted;
+        private final long bootstrapTime;
+        private final byte remoteIdentifier;
+
+        public MapV3ReplicationEntry(final Bytes<ByteBuffer> key, final Bytes<ByteBuffer> value,
+                                     final long originTimestamp, final byte originIdentifier,
+                                     final boolean isDeleted, final long bootstrapTime,
+                                     final byte remoteIdentifier) {
+            this.key = key;
+            this.value = value;
+            this.originTimestamp = originTimestamp;
+            this.originIdentifier = originIdentifier;
+            this.isDeleted = isDeleted;
+            this.bootstrapTime = bootstrapTime;
+            this.remoteIdentifier = remoteIdentifier;
+        }
+
+        @Nullable
+        @Override
+        public BytesStore key() {
+            return key;
+        }
+
+        @Nullable
+        @Override
+        public BytesStore value() {
+            return value;
+        }
+
+        @Override
+        public long timestamp() {
+            return originTimestamp;
+        }
+
+        @Override
+        public byte identifier() {
+            return originIdentifier;
+        }
+
+        @Override
+        public byte remoteIdentifier() {
+            return remoteIdentifier;
+        }
+
+        @Override
+        public boolean isDeleted() {
+            return isDeleted;
+        }
+
+        @Override
+        public long bootStrapTimeStamp() {
+            return bootstrapTime;
         }
     }
 }

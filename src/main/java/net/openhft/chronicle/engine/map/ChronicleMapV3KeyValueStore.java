@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.engine.api.EngineReplication;
@@ -224,7 +225,8 @@ public final class ChronicleMapV3KeyValueStore<K, V> implements KeyValueStore<K,
     @Override
     public void accept(final EngineReplication.ReplicationEntry replicationEntry) {
         LOGGER.info("replicationEntry: {}", replicationEntry);
-        throw new UnsupportedOperationException();
+        final BytesStore actualReplicatedEntry = replicationEntry.value();
+        delegate.readExternalEntry(actualReplicatedEntry.bytesForRead(), replicationEntry.identifier());
     }
 
     @Override
