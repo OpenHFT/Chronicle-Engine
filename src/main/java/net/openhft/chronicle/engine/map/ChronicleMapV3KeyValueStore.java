@@ -259,13 +259,9 @@ public final class ChronicleMapV3KeyValueStore<K, V> implements KeyValueStore<K,
         final boolean hasValueChanged = hasValueChanged(value, previous);
 
         if (insert) {
-            LOGGER.info("Inserted event {} -> {}", key, value);
-            LOGGER.warn("stack", new RuntimeException());
             subscriptions.notifyEvent(InsertedEvent.of(asset.name(), key, value, false));
         } else if(hasValueChanged) {
             // TODO mark.price equality check by map implementation?
-            LOGGER.info("Updated event {} -> {}", key, value);
-            LOGGER.warn("stack", new RuntimeException());
             subscriptions.notifyEvent(UpdatedEvent.of(asset.name(), key, previous,
                     value, false, true));
         }
