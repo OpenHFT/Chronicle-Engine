@@ -102,113 +102,131 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
         typeToString = asset.root().findView(TypeToString.class);
 
-        eventLoop.addHandler(() -> {
+        eventLoop.addHandler(() -> handleAction(tailer, hasMovedToStart));
+    }
 
-            // the first time this is run, we move to the start of the current cycle
-            if (!hasMovedToStart.get()) {
-                @NotNull final RollingChronicleQueue chronicleQueue = (RollingChronicleQueue) this.chronicleQueue;
-                final int cycle = chronicleQueue.cycle();
-                long startOfCurrentCycle = chronicleQueue.rollCycle().toIndex(cycle, 0);
-                final boolean success = tailer.moveToIndex(startOfCurrentCycle);
-                hasMovedToStart.set(success);
-                if (!success)
-                    return false;
+    private static boolean eventNamesMatch(final CharSequence serialisedEventName,
+                                           final CharSequence queryEventName) {
+        if (serialisedEventName.length() != queryEventName.length()) {
+            return false;
+        }
+
+        for (int i = 0; i < serialisedEventName.length(); i++) {
+            if (serialisedEventName.charAt(i) != queryEventName.charAt(i)) {
+                return false;
             }
+        }
+
+        return true;
+    }
+
+    private boolean handleAction(ExcerptTailer tailer, AtomicBoolean hasMovedToStart) throws InvalidEventHandlerException {
+        // the first time this is run, we move to the start of the current cycle
+        if (!hasMovedToStart.get()) {
+            @NotNull final RollingChronicleQueue chronicleQueue = (RollingChronicleQueue) this.chronicleQueue;
+            final int cycle = chronicleQueue.cycle();
+            long startOfCurrentCycle = chronicleQueue.rollCycle().toIndex(cycle, 0);
+            final boolean success = tailer.moveToIndex(startOfCurrentCycle);
+            hasMovedToStart.set(success);
+            if (!success)
+                return false;
+        }
 
 
-            long currentSecond = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+        long currentSecond = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
 
-            if (currentSecond >= lastSecond + 10) {
-                lastSecond = currentSecond;
-                LOG.info("messages read per second=" + messagesReadPerSecond / 10);
-                messagesReadPerSecond = 0;
-            }
+        if (currentSecond >= lastSecond + 10) {
+            lastSecond = currentSecond;
+            LOG.info("messages read per second=" + messagesReadPerSecond / 10);
+            messagesReadPerSecond = 0;
+        }
 
-            if (isClosed.get())
-                throw new InvalidEventHandlerException();
+        if (isClosed.get())
+            throw new InvalidEventHandlerException();
 
-            try (DocumentContext dc = tailer.readingDocument()) {
+        try (DocumentContext dc = tailer.readingDocument()) {
 
-                if (!dc.isPresent())
-                    return false;
+            if (!dc.isPresent())
+                return false;
 
-                long start = dc.wire().bytes().readPosition();
+            long start = dc.wire().bytes().readPosition();
 
-                try {
-                    for (; ; ) {
-                        dc.wire().consumePadding();
+            try {
+                for (; ; ) {
+                    dc.wire().consumePadding();
 
-                        if (dc.wire().bytes().readRemaining() == 0)
-                            return true;
+                    if (dc.wire().bytes().readRemaining() == 0)
+                        return true;
 
-                        final StringBuilder sb = acquireStringBuilder();
-                        @NotNull final ValueIn read = dc.wire().read(sb);
+                    final StringBuilder sb = acquireStringBuilder();
+                    @NotNull ValueIn read = dc.wire().read(sb);
 
-                        if ("history".contentEquals(sb)) {
-                            read.marshallable(MessageHistory.get());
-                            return true;
-                        }
-
-                        if (sb.length() == 0)
-                            continue;
-                        Class<? extends Marshallable> type = typeToString.toType(sb);
-                        if (type == null)
-                            continue;
-                        @NotNull final V v = (V) VanillaObjectCacheFactory.INSTANCE.get()
-                                .apply(type);
-                        long readPosition = dc.wire().bytes().readPosition();
-                        try {
-                            read.marshallable(v);
-                        } catch (Exception e) {
-
-                            @NotNull final String msg = dc.wire().bytes().toHexString(readPosition, dc.wire()
-                                    .bytes()
-                                    .readLimit() - readPosition);
-
-                            LOG.error("Error passing " + v.getClass().getSimpleName() + " bytes:\n"
-                                    + msg, e);
-                            return false;
-                        }
-
-                        Object k;
-                        if (v instanceof KeyedMarshallable) {
-                            final Bytes bytes = Wires.acquireBytes();
-                            ((KeyedMarshallable) v).writeKey(bytes);
-
-                            k = bytesToKey.get(bytes);
-                            if (k == null) {
-                                BytesStore copy = bytes.copy();
-                                bytesToKey.put(copy.bytesForRead(), copy);
-                                k = copy;
-                            }
-                        } else
-                            continue;
-
-                        messagesReadPerSecond++;
-
-                        @NotNull final String eventName = sb.toString();
-                        synchronized (lastIndexLock) {
-                            multiMap.computeIfAbsent(eventName, e -> new ConcurrentHashMap<>())
-                                    .compute(k, (k1, vOld) -> {
-                                        if (vOld == null)
-                                            return new IndexedValue<>(deepCopy(v), dc.index());
-                                        else {
-                                            copyTo(v, vOld.v());
-                                            vOld.index(dc.index());
-                                            return vOld;
-                                        }
-                                    });
-                            lastIndexRead = dc.index();
-                        }
+                    // skip the history if the message has one.
+                    if ("history".contentEquals(sb)) {
+                        read.marshallable(MessageHistory.get());
+                        sb.setLength(0);
+                        read = dc.wire().read(sb);
                     }
 
-                } catch (RuntimeException e) {
-                    Jvm.warn().on(getClass(), fromSizePrefixedBlobs(dc.wire().bytes(), start - 4), e);
-                }
-            }
+                    if (sb.length() == 0)
+                        continue;
+                    Class<? extends Marshallable> type = typeToString.toType(sb);
+                    if (type == null)
+                        continue;
+                    @NotNull final V v = (V) VanillaObjectCacheFactory.INSTANCE.get()
+                            .apply(type);
+                    long readPosition = dc.wire().bytes().readPosition();
+                    try {
+                        read.marshallable(v);
+                    } catch (Exception e) {
 
-            return true;
-        });
+                        @NotNull final String msg = dc.wire().bytes().toHexString(readPosition, dc.wire()
+                                .bytes()
+                                .readLimit() - readPosition);
+
+                        LOG.error("Error passing " + v.getClass().getSimpleName() + " bytes:\n"
+                                + msg, e);
+                        return false;
+                    }
+
+                    Object k;
+                    if (v instanceof KeyedMarshallable) {
+                        final Bytes bytes = Wires.acquireBytes();
+                        ((KeyedMarshallable) v).writeKey(bytes);
+
+                        k = bytesToKey.get(bytes);
+                        if (k == null) {
+                            BytesStore copy = bytes.copy();
+                            bytesToKey.put(copy.bytesForRead(), copy);
+                            k = copy;
+                        }
+                    } else
+                        continue;
+
+                    messagesReadPerSecond++;
+
+                    @NotNull final String eventName = sb.toString();
+                    synchronized (lastIndexLock) {
+                        multiMap.computeIfAbsent(eventName, e -> new ConcurrentHashMap<>())
+                                .compute(k, (k1, vOld) -> {
+                                    if (vOld == null)
+                                        return new IndexedValue<>(deepCopy(v), dc.index());
+                                    else {
+                                        copyTo(v, vOld.v());
+                                        vOld.index(dc.index());
+                                        return vOld;
+                                    }
+                                });
+                        lastIndexRead = dc.index();
+                    }
+                }
+
+            } catch (RuntimeException e) {
+                Jvm.warn().on(getClass(), fromSizePrefixedBlobs(dc.wire().bytes(), start - 4), e);
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -278,35 +296,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
         registerSubscriber(sub, vanillaIndexQuery, tailer, fromIndex);
         throw new InvalidEventHandlerException();
     }
-
-    /**
-     * used to return the index that will make up this snapshot and to act as a fromIndex predicate
-     */
-    private static class CheckPointPredicate implements Predicate<IndexedValue>, LongSupplier {
-        private long fromIndex;
-        private long indexGreaterThanFromIndex = -1;
-
-        private CheckPointPredicate(long fromIndex) {
-            this.fromIndex = fromIndex;
-        }
-
-        /**
-         * @return the indexGreaterThanFromIndex index that will make up this snapshot
-         */
-        @Override
-        public long getAsLong() {
-            return indexGreaterThanFromIndex;
-        }
-
-        @Override
-        public boolean test(IndexedValue i) {
-            boolean success = i.index() < fromIndex;
-            if (!success)
-                indexGreaterThanFromIndex = Math.max(indexGreaterThanFromIndex, i.index());
-            return success;
-        }
-    }
-
 
     private void registerSubscriber(@NotNull ConsumingSubscriber<IndexedValue<V>> sub,
                                     @NotNull IndexQuery<V> vanillaIndexQuery,
@@ -446,18 +435,31 @@ public class VanillaIndexQueueView<V extends Marshallable>
         chronicleQueue.close();
     }
 
-    private static boolean eventNamesMatch(final CharSequence serialisedEventName,
-                                           final CharSequence queryEventName) {
-        if (serialisedEventName.length() != queryEventName.length()) {
-            return false;
+    /**
+     * used to return the index that will make up this snapshot and to act as a fromIndex predicate
+     */
+    private static class CheckPointPredicate implements Predicate<IndexedValue>, LongSupplier {
+        private long fromIndex;
+        private long indexGreaterThanFromIndex = -1;
+
+        private CheckPointPredicate(long fromIndex) {
+            this.fromIndex = fromIndex;
         }
 
-        for (int i = 0; i < serialisedEventName.length(); i++) {
-            if (serialisedEventName.charAt(i) != queryEventName.charAt(i)) {
-                return false;
-            }
+        /**
+         * @return the indexGreaterThanFromIndex index that will make up this snapshot
+         */
+        @Override
+        public long getAsLong() {
+            return indexGreaterThanFromIndex;
         }
 
-        return true;
+        @Override
+        public boolean test(IndexedValue i) {
+            boolean success = i.index() < fromIndex;
+            if (!success)
+                indexGreaterThanFromIndex = Math.max(indexGreaterThanFromIndex, i.index());
+            return success;
+        }
     }
 }
