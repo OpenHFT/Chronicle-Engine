@@ -27,11 +27,25 @@ import net.openhft.chronicle.engine.api.column.ColumnView;
 import net.openhft.chronicle.engine.api.column.VaadinChart;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
-import net.openhft.chronicle.engine.api.pubsub.*;
+import net.openhft.chronicle.engine.api.pubsub.Publisher;
+import net.openhft.chronicle.engine.api.pubsub.Reference;
+import net.openhft.chronicle.engine.api.pubsub.Replication;
+import net.openhft.chronicle.engine.api.pubsub.SubscriptionCollection;
+import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import net.openhft.chronicle.engine.api.session.Heartbeat;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
-import net.openhft.chronicle.engine.cfg.*;
+import net.openhft.chronicle.engine.cfg.ChronicleMapCfg;
+import net.openhft.chronicle.engine.cfg.ClustersCfg;
+import net.openhft.chronicle.engine.cfg.EngineCfg;
+import net.openhft.chronicle.engine.cfg.EngineClusterContext;
+import net.openhft.chronicle.engine.cfg.FilePerKeyMapCfg;
+import net.openhft.chronicle.engine.cfg.InMemoryMapCfg;
+import net.openhft.chronicle.engine.cfg.JmxCfg;
+import net.openhft.chronicle.engine.cfg.MonitorCfg;
+import net.openhft.chronicle.engine.cfg.QueueCfg;
+import net.openhft.chronicle.engine.cfg.ServerCfg;
+import net.openhft.chronicle.engine.cfg.VanillaWireOutPublisherFactory;
 import net.openhft.chronicle.engine.fs.ChronicleMapGroupFS;
 import net.openhft.chronicle.engine.fs.EngineConnectionManager;
 import net.openhft.chronicle.engine.map.AuthenticatedKeyValueStore;
@@ -145,6 +159,10 @@ public class RequestContext implements Cloneable {
             bootstrap = null;
     private double averageKeySize;
     private double averageValueSize;
+
+    private Object constantSizeKeyExample;
+    private Object constantSizeValueExample;
+
     private long entries;
     private Boolean recurse;
     private boolean sealed = false;
@@ -413,6 +431,26 @@ public class RequestContext implements Cloneable {
 
     public String name() {
         return name;
+    }
+
+    public Object getConstantSizeKeyExample() {
+        return constantSizeKeyExample;
+    }
+
+    public RequestContext constantSizeKeyExample(Object keyExample) {
+        checkSealed();
+        this.constantSizeKeyExample = keyExample;
+        return this;
+    }
+
+    public Object getConstantSizeValueExample() {
+        return constantSizeValueExample;
+    }
+
+    public RequestContext constantSizeValueExample(Object keyExample) {
+        checkSealed();
+        this.constantSizeValueExample = keyExample;
+        return this;
     }
 
     public double getAverageValueSize() {

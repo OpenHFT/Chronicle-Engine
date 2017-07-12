@@ -280,10 +280,20 @@ public final class ChronicleMapV3KeyValueStore<K, V> implements KeyValueStore<K,
         final ChronicleMapBuilder<K, V> builder =
                 ChronicleMap.of((Class<K>) requestContext.keyType(), (Class<V>) requestContext.valueType()).
                         entries(requestContext.getEntries()).
-                        averageValueSize(requestContext.getAverageValueSize()).
-                        averageKeySize(requestContext.getAverageKeySize()).
                         putReturnsNull(requestContext.putReturnsNull() != null ? requestContext.putReturnsNull() : false).
                         replication(replicaId);
+
+        if (requestContext.getConstantSizeKeyExample() != null) {
+            builder.constantKeySizeBySample((K) requestContext.getConstantSizeKeyExample());
+        } else {
+            builder.averageKeySize(requestContext.getAverageKeySize());
+        }
+
+        if (requestContext.getConstantSizeValueExample() != null) {
+            builder.constantValueSizeBySample((V) requestContext.getConstantSizeValueExample());
+        } else {
+            builder.averageValueSize(requestContext.getAverageValueSize());
+        }
 
         final ChronicleMap<K, V> map = builder.create();
         return (ReplicatedChronicleMap<K, V, ?>) map;

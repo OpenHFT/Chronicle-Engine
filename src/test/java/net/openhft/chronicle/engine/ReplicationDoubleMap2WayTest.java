@@ -35,6 +35,7 @@ import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
+import net.openhft.chronicle.queue.impl.single.StoreComponentReferenceHandler;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
@@ -63,14 +64,17 @@ public class ReplicationDoubleMap2WayTest {
     private static AssetTree tree1;
     private static AssetTree tree2;
     private static Map<ExceptionKey, Integer> exceptions;
+    private static ThreadDump threadDump;
     @NotNull
     @Rule
     public TestName testName = new TestName();
     public String name;
-    private ThreadDump threadDump;
 
     @BeforeClass
     public static void before() throws IOException {
+        threadDump = new ThreadDump();
+        threadDump.ignore(StoreComponentReferenceHandler.THREAD_NAME);
+        threadDump.ignore("tree-1/closer");
         exceptions = Jvm.recordExceptions();
         YamlLogging.setAll(false);
 
@@ -111,7 +115,7 @@ public class ReplicationDoubleMap2WayTest {
         }
 
         // TODO TCPRegistery.assertAllServersStopped();
-
+        threadDump.assertNoNewThreads();
     }
 
     @NotNull
@@ -129,7 +133,8 @@ public class ReplicationDoubleMap2WayTest {
                 ChronicleMapV3EngineReplication::new);
         tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
                 new ChronicleMapV3KeyValueStore(context.wireType(writeType).
-                        cluster(clusterTwo).entries(1000).averageKeySize(128).averageValueSize(256),
+                        cluster(clusterTwo).entries(1000).constantSizeKeyExample(Double.valueOf(17.7)).
+                        constantSizeValueExample(Double.MAX_VALUE),
                         asset, hostId));
 
 
@@ -152,17 +157,6 @@ public class ReplicationDoubleMap2WayTest {
         Files.deleteIfExists(Paths.get(OS.TARGET, name.toString()));
     }
 
-    @Before
-    public void threadDump() {
-        threadDump = new ThreadDump();
-    }
-
-    @After
-    public void checkThreadDump() {
-        threadDump.assertNoNewThreads();
-    }
-
-//    @Ignore
     @Test
     public void testBootstrap() throws InterruptedException {
 
