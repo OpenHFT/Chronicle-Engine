@@ -20,6 +20,7 @@ import java.util.function.Consumer;
 public final class ChronicleMapV3EngineReplication implements EngineReplication {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChronicleMapV3EngineReplication.class);
     private final HostIdentifier hostIdentifier;
+    private final long[] lastModificationTimeByRemoteIdentifier = new long[255];
     private ReplicatedChronicleMap<?, ?, ?> chronicleMap;
 
     public ChronicleMapV3EngineReplication(final RequestContext requestContext, @NotNull final Asset asset) {
@@ -52,12 +53,13 @@ public final class ChronicleMapV3EngineReplication implements EngineReplication 
     public long lastModificationTime(final byte remoteIdentifier) {
         LOGGER.info("No lastModificationTime for you");
 
-        return 0;
+        return lastModificationTimeByRemoteIdentifier[remoteIdentifier];
     }
 
     @Override
     public void setLastModificationTime(final byte identifier, final long timestamp) {
         LOGGER.info("setLastModificationTime {}, {}", identifier, timestamp);
+        lastModificationTimeByRemoteIdentifier[identifier] = timestamp;
     }
 
     <K, V> void setChronicleMap(final ReplicatedChronicleMap<K, V, ?> chronicleMap) {
