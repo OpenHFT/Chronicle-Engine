@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
@@ -9,10 +10,18 @@ import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.fs.Clusters;
+import net.openhft.chronicle.engine.fs.EngineCluster;
+import net.openhft.chronicle.engine.fs.EngineHostDetails;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
+import net.openhft.chronicle.map.Replica;
 import net.openhft.chronicle.map.ReplicatedChronicleMap;
+import net.openhft.chronicle.network.api.session.SessionDetails;
+import net.openhft.chronicle.network.api.session.SessionProvider;
+import net.openhft.chronicle.network.cluster.ConnectionManager;
+import net.openhft.chronicle.network.connection.WireOutPublisher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +30,9 @@ public final class ChronicleMapV3KeyValueStore<K, V> implements KeyValueStore<K,
     @NotNull
     private final Asset asset;
     private final KVSSubscription<K, V> subscriptions;
+    private final EventLoop eventLoop;
+    private final SessionProvider sessionProvider;
+    private final SessionDetails replicationSessionDetails;
     private EngineReplication engineReplicator;
 
     public ChronicleMapV3KeyValueStore(final RequestContext requestContext,
@@ -29,7 +41,7 @@ public final class ChronicleMapV3KeyValueStore<K, V> implements KeyValueStore<K,
         if (replicaId > 127) {
             throw new IllegalArgumentException();
         }
-        delegate = createReplicatedMap(requestContext, (byte) replicaId);
+
         //noinspection unchecked
         subscriptions = asset.acquireView(ObjectSubscription.class, requestContext);
         subscriptions.setKvStore(this);
@@ -47,6 +59,79 @@ public final class ChronicleMapV3KeyValueStore<K, V> implements KeyValueStore<K,
         } catch (AssetNotFoundException anfe) {
 //            if (LOG.isDebugEnabled())
 //                Jvm.debug().on(getClass(), "replication not enabled ", anfe);
+        }
+
+
+        eventLoop = asset.findOrCreateView(EventLoop.class);
+        assert eventLoop != null;
+        sessionProvider = asset.findView(SessionProvider.class);
+        eventLoop.start();
+
+        replicationSessionDetails = asset.root().findView(SessionDetails.class);
+
+
+        @Nullable Clusters clusters = asset.findView(Clusters.class);
+
+        if (clusters == null) {
+            Jvm.warn().on(getClass(), "no clusters found.");
+//            return;
+        }
+
+        final EngineCluster engineCluster = clusters.get(requestContext.cluster());
+
+        if (engineCluster == null) {
+            Jvm.warn().on(getClass(), "no cluster found, name=" + requestContext.cluster());
+//            return;
+        }
+
+        byte localIdentifier = hostIdentifier.hostId();
+        delegate = createReplicatedMap(requestContext, localIdentifier);
+
+//        if (LOG.isDebugEnabled())
+//            Jvm.debug().on(getClass(), "hostDetails : localIdentifier=" + localIdentifier + ",cluster=" + engineCluster.hostDetails());
+
+        for (@NotNull EngineHostDetails hostDetails : engineCluster.hostDetails()) {
+            try {
+                // its the identifier with the larger values that will establish the connection
+                byte remoteIdentifier = (byte) hostDetails.hostId();
+
+                if (remoteIdentifier == localIdentifier)
+                    continue;
+
+
+                ConnectionManager connectionManager = engineCluster.findConnectionManager(remoteIdentifier);
+                if (connectionManager == null) {
+                    Jvm.warn().on(getClass(), "connectionManager==null for remoteIdentifier=" + remoteIdentifier);
+                    engineCluster.findConnectionManager(remoteIdentifier);
+                    continue;
+                }
+
+                connectionManager.addListener((nc, isConnected) -> {
+
+                    if (!isConnected)
+                        return;
+
+                    if (nc.isAcceptor())
+                        return;
+
+                    @NotNull final String csp = requestContext.fullName();
+
+                    final long lastUpdateTime = ((Replica) delegate).remoteNodeCouldBootstrapFrom(remoteIdentifier);
+
+                    WireOutPublisher publisher = nc.wireOutPublisher();
+
+                    // TODO mark.price
+                    System.out.printf(Thread.currentThread().getName() + "|++!! new network context: %s%n",
+                            nc);
+
+                    // TODO mark.price
+//                    publisher.publish(newMapReplicationHandler(lastUpdateTime, keyType, valueType, csp, nc.newCid()));
+                });
+
+
+            } catch (Exception e) {
+                Jvm.warn().on(getClass(), "hostDetails=" + hostDetails, e);
+            }
         }
 
 
