@@ -28,6 +28,8 @@ import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.fs.ChronicleMapGroupFS;
 import net.openhft.chronicle.engine.fs.FilePerKeyGroupFS;
+import net.openhft.chronicle.engine.map.ChronicleMapV3EngineReplication;
+import net.openhft.chronicle.engine.map.ChronicleMapV3KeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
@@ -123,11 +125,13 @@ public class ReplicationDoubleMap2WayTest {
                 KeyValueStore.class);
 
         // TODO mark.price
-//        tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",
-//                CMap2EngineReplicator::new);
-//        tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
-//                new ChronicleMapKeyValueStore(context.wireType(writeType).cluster(clusterTwo),
-//                        asset));
+        tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",
+                ChronicleMapV3EngineReplication::new);
+        tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
+                new ChronicleMapV3KeyValueStore(context.wireType(writeType).
+                        cluster(clusterTwo).entries(1000).averageKeySize(128).averageValueSize(256),
+                        asset, hostId));
+
 
         //  VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
 
@@ -158,7 +162,7 @@ public class ReplicationDoubleMap2WayTest {
         threadDump.assertNoNewThreads();
     }
 
-    @Ignore
+//    @Ignore
     @Test
     public void testBootstrap() throws InterruptedException {
 

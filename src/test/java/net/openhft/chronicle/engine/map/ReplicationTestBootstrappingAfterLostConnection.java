@@ -121,11 +121,12 @@ public class ReplicationTestBootstrappingAfterLostConnection {
 
         // TODO mark.price
 
-//        tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",
-//                CMap2EngineReplicator::new);
-//        tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
-//                new ChronicleMapKeyValueStore(context.wireType(writeType).cluster(clusterName),
-//                        asset));
+        tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",
+                ChronicleMapV3EngineReplication::new);
+        tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
+                new ChronicleMapV3KeyValueStore(context.wireType(writeType).
+                        cluster(clusterName).entries(1000).averageKeySize(128).averageValueSize(256),
+                        asset, hostId));
 
         //  VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
 
@@ -141,7 +142,7 @@ public class ReplicationTestBootstrappingAfterLostConnection {
     }
 
     @BeforeClass
-    public void threadDump() {
+    public static void threadDump() {
         threadDump = new ThreadDump();
     }
 

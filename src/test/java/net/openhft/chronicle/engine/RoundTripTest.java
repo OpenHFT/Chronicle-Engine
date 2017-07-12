@@ -28,6 +28,8 @@ import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.fs.*;
+import net.openhft.chronicle.engine.map.ChronicleMapV3EngineReplication;
+import net.openhft.chronicle.engine.map.ChronicleMapV3KeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
@@ -93,6 +95,13 @@ public class RoundTripTest {
                 KeyValueStore.class);
 
         // TODO mark.price replace with v3 map
+        tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",
+                ChronicleMapV3EngineReplication::new);
+        tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
+                new ChronicleMapV3KeyValueStore(context.wireType(writeType).
+                        cluster("test").entries(1000).averageKeySize(128).averageValueSize(256),
+                        asset, hostId));
+
 
 //        tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",
 //                CMap2EngineReplicator::new);
@@ -151,7 +160,7 @@ public class RoundTripTest {
     }
 
     @Test
-    @Ignore("Long running")
+//    @Ignore("Long running")
     public void test() throws IOException, InterruptedException {
         System.out.println("Using cluster " + CLUSTER + " basePath: " + basePath);
         YamlLogging.setAll(false);
