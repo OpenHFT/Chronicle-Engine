@@ -17,7 +17,6 @@
 
 package net.openhft.chronicle.engine;
 
-import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.engine.api.management.mbean.ChronicleConfig;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -69,10 +68,8 @@ public class SimpleEngineMain {
             assetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
                     VanillaMapView::new, KeyValueStore.class);
 
-
-            // TODO mark.price use a v3 chronicle map
-            assetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
-                    new ChronicleMapV3KeyValueStore(context, asset, 1));
+            assetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map",
+                    ChronicleMapV3KeyValueStore::new);
         }
 
         serverEndpoint = new ServerEndpoint("*:" + PORT, assetTree);

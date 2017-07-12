@@ -24,7 +24,6 @@ public final class ChronicleMapV3EngineReplication implements EngineReplication 
     private ReplicatedChronicleMap<?, ?, ?> chronicleMap;
 
     public ChronicleMapV3EngineReplication(final RequestContext requestContext, @NotNull final Asset asset) {
-        // TODO mark.price
         hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
 
         assert hostIdentifier != null;

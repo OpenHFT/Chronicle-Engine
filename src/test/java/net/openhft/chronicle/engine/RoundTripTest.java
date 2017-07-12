@@ -27,7 +27,11 @@ import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
-import net.openhft.chronicle.engine.fs.*;
+import net.openhft.chronicle.engine.fs.ChronicleMapGroupFS;
+import net.openhft.chronicle.engine.fs.Clusters;
+import net.openhft.chronicle.engine.fs.EngineCluster;
+import net.openhft.chronicle.engine.fs.EngineHostDetails;
+import net.openhft.chronicle.engine.fs.FilePerKeyGroupFS;
 import net.openhft.chronicle.engine.map.ChronicleMapV3EngineReplication;
 import net.openhft.chronicle.engine.map.ChronicleMapV3KeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
@@ -37,12 +41,20 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.CountDownLatch;
@@ -94,23 +106,12 @@ public class RoundTripTest {
                 VanillaMapView::new,
                 KeyValueStore.class);
 
-        // TODO mark.price replace with v3 map
         tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",
                 ChronicleMapV3EngineReplication::new);
         tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
                 new ChronicleMapV3KeyValueStore(context.wireType(writeType).
                         cluster("test").entries(1000).averageKeySize(128).averageValueSize(256),
-                        asset, hostId));
-
-
-//        tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",
-//                CMap2EngineReplicator::new);
-//        tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
-//                new ChronicleMapKeyValueStore(context.wireType(writeType)
-//                        .cluster("test")
-//                        .entries(ENTRIES)
-//                        .averageValueSize(VALUE_SIZE),
-//                        asset));
+                        asset));
 
         @NotNull Asset asset1 = tree.acquireAsset(SIMPLE_NAME);
         asset1.addView(Clusters.class, testCluster);
@@ -159,7 +160,6 @@ public class RoundTripTest {
         checkForThrowablesInOtherThreads();
     }
 
-    // TODO mark.price make sure this works with v3 map
     @Test
     @Ignore("Long running")
     public void test() throws IOException, InterruptedException {

@@ -131,13 +131,12 @@ public class MaunualReplication2WayTest {
                 VanillaMapView::new,
                 KeyValueStore.class);
 
-        // TODO mark.price
         testBootstrap.root().addLeafRule(EngineReplication.class, "Engine replication holder",
                 ChronicleMapV3EngineReplication::new);
         tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
                 new ChronicleMapV3KeyValueStore(context.wireType(writeType).
                         cluster(clusterNam).entries(1000).averageKeySize(128).averageValueSize(256),
-                        asset, hostId));
+                        asset));
 
 
         tree.withConfig(resourcesDir() + "/2way", OS.TARGET + "/" + hostId);

@@ -17,11 +17,11 @@
 
 package net.openhft.chronicle.engine.cfg;
 
+import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.map.ChronicleMapV3KeyValueStore;
-import net.openhft.chronicle.engine.map.ObjectKeyValueStore;
 import net.openhft.chronicle.engine.tree.VanillaAsset;
 import net.openhft.chronicle.wire.WireIn;
 import org.jetbrains.annotations.NotNull;
@@ -56,9 +56,8 @@ public class ChronicleMapCfg implements Installable {
         if (entries != -1) rc.entries(entries);
         if (averageSize != -1) rc.averageValueSize(averageSize);
 
-        // TODO mark.price use a v3 map
-//        @NotNull ChronicleMapV3KeyValueStore chronicleMapKeyValueStore = new ChronicleMapV3KeyValueStore(rc, asset);
-//        asset.addView(ObjectKeyValueStore.class, chronicleMapKeyValueStore);
+        @NotNull ChronicleMapV3KeyValueStore chronicleMapKeyValueStore = new ChronicleMapV3KeyValueStore(rc, asset);
+        asset.addView(KeyValueStore.class, chronicleMapKeyValueStore);
 
         return null;
     }

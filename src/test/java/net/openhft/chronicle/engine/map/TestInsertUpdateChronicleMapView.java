@@ -85,7 +85,7 @@ public class TestInsertUpdateChronicleMapView extends ThreadMonitoringTest {
 
         serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
                 new ChronicleMapV3KeyValueStore(context.basePath(null).entries(100)
-                        .putReturnsNull(false).averageKeySize(20).averageValueSize(120), asset, 1));
+                        .putReturnsNull(false).averageKeySize(20).averageValueSize(120), asset));
 
         clientAssetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType);
     }

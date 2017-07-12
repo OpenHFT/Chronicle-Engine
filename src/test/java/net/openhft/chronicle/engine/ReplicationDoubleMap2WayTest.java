@@ -128,14 +128,13 @@ public class ReplicationDoubleMap2WayTest {
                 VanillaMapView::new,
                 KeyValueStore.class);
 
-        // TODO mark.price
         tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",
                 ChronicleMapV3EngineReplication::new);
         tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
                 new ChronicleMapV3KeyValueStore(context.wireType(writeType).
                         cluster(clusterTwo).entries(1000).constantSizeKeyExample(Double.valueOf(17.7)).
                         constantSizeValueExample(Double.MAX_VALUE),
-                        asset, hostId));
+                        asset));
 
 
         //  VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);

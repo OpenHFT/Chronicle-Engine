@@ -9,6 +9,8 @@ import net.openhft.chronicle.engine.cfg.EngineCfg;
 import net.openhft.chronicle.engine.fs.Clusters;
 import net.openhft.chronicle.engine.fs.EngineCluster;
 import net.openhft.chronicle.engine.fs.EngineHostDetails;
+import net.openhft.chronicle.engine.map.ChronicleMapV3EngineReplication;
+import net.openhft.chronicle.engine.map.ChronicleMapV3KeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.query.QueueConfig;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
@@ -57,12 +59,13 @@ public class EngineInstance {
             connectivityMap.addWrappingRule(MapView.class, "map directly to KeyValueStore",
                     VanillaMapView::new,
                     KeyValueStore.class);
-            // TODO mark.price replace functionality with v3 chronicle map
-//            connectivityMap.addLeafRule(EngineReplication.class, "Engine replication holder",
-//                    CMap2EngineReplicator::new);
-//            connectivityMap.addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
-//                    new ChronicleMapKeyValueStore(context.cluster(firstClusterName(tree)), asset));
 
+            tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",
+                    ChronicleMapV3EngineReplication::new);
+            tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
+                    new ChronicleMapV3KeyValueStore(context.
+                            cluster(firstClusterName(tree)).entries(1000).averageKeySize(128).averageValueSize(256),
+                            asset));
             try {
                 installable.install("/", tree);
                 LOGGER.info("Engine started");

@@ -43,12 +43,15 @@ public final class ChronicleMapV3KeyValueStore<K, V> implements KeyValueStore<K,
     private final SessionDetails replicationSessionDetails;
     private EngineReplication engineReplicator;
 
-    public ChronicleMapV3KeyValueStore(final RequestContext requestContext,
-                                @NotNull final Asset asset, final int replicaId) {
+    public ChronicleMapV3KeyValueStore(final RequestContext requestContext, @NotNull final Asset asset) {
         this.asset = asset;
-        if (replicaId > 127) {
-            throw new IllegalArgumentException();
+
+        // TODO mark.price
+        if (requestContext.basePath() != null) {
+            // builder should create a file-backed map
         }
+
+        validateMapParameters(requestContext);
 
         //noinspection unchecked
         subscriptions = asset.acquireView(ObjectSubscription.class, requestContext);
@@ -135,7 +138,6 @@ public final class ChronicleMapV3KeyValueStore<K, V> implements KeyValueStore<K,
 
                     LOGGER.info("Map on {} publishing a replication handler to {}",
                             hostId, nc);
-                    // TODO mark.price
                     publisher.publish(MapReplicationHandler.newMapReplicationHandler(lastUpdateTime,
                             delegate.keyClass(), delegate.valueClass(), csp, nc.newCid()));
                 });
@@ -249,6 +251,15 @@ public final class ChronicleMapV3KeyValueStore<K, V> implements KeyValueStore<K,
     public EngineReplication get() {
         LOGGER.info("Returning replication {}", engineReplicator);
         return engineReplicator;
+    }
+
+    private static void validateMapParameters(final RequestContext requestContext) {
+        if (requestContext.getConstantSizeKeyExample() == null && requestContext.getAverageKeySize() == 0) {
+            throw new IllegalArgumentException("RequestContext must have either constantSizeKeyExample or averageKeySize set");
+        }
+        if (requestContext.getConstantSizeValueExample() == null && requestContext.getAverageValueSize() == 0) {
+            throw new IllegalArgumentException("RequestContext must have either constantSizeValueExample or averageValueSize set");
+        }
     }
 
     private void notifyRemove(final K key, final V value) {

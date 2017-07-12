@@ -139,13 +139,12 @@ public class Replication3WayTest extends ThreadMonitoringTest {
                 VanillaMapView::new,
                 KeyValueStore.class);
 
-        // TODO mark.price
         tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",
                 ChronicleMapV3EngineReplication::new);
         tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
                 new ChronicleMapV3KeyValueStore(context.wireType(writeType).
                         cluster(clusterName).entries(1000).averageKeySize(128).averageValueSize(256),
-                        asset, hostId));
+                        asset));
 
         return tree;
     }

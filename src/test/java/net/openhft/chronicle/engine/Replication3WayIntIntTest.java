@@ -156,7 +156,7 @@ public class  Replication3WayIntIntTest extends ThreadMonitoringTest {
                         cluster(clusterTwo).entries(1000).
                         constantSizeKeyExample(1).
                         constantSizeValueExample(1),
-                        asset, hostId));
+                        asset));
 
         return tree;
     }
