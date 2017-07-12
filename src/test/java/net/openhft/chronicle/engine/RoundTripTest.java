@@ -159,8 +159,9 @@ public class RoundTripTest {
         checkForThrowablesInOtherThreads();
     }
 
+    // TODO mark.price make sure this works with v3 map
     @Test
-//    @Ignore("Long running")
+    @Ignore("Long running")
     public void test() throws IOException, InterruptedException {
         System.out.println("Using cluster " + CLUSTER + " basePath: " + basePath);
         YamlLogging.setAll(false);

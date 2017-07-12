@@ -34,7 +34,7 @@ import java.util.function.Supplier;
 public final class ChronicleMapV3KeyValueStore<K, V> implements KeyValueStore<K, V>, Supplier<EngineReplication> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChronicleMapV3KeyValueStore.class);
 
-    private final ReplicatedChronicleMap<K, V, ?> delegate;
+    private final ChronicleMap<K, V> delegate;
     @NotNull
     private final Asset asset;
     private final KVSSubscription<K, V> subscriptions;
@@ -78,25 +78,25 @@ public final class ChronicleMapV3KeyValueStore<K, V> implements KeyValueStore<K,
 
         replicationSessionDetails = asset.root().findView(SessionDetails.class);
 
-
+        Byte localIdentifier = hostIdentifier != null ? hostIdentifier.hostId() : null;
+        delegate = createReplicatedMap(requestContext, localIdentifier);
         @Nullable Clusters clusters = asset.findView(Clusters.class);
 
         if (clusters == null) {
             Jvm.warn().on(getClass(), "no clusters found.");
-//            return;
+            return;
         }
 
         final EngineCluster engineCluster = clusters.get(requestContext.cluster());
 
         if (engineCluster == null) {
             Jvm.warn().on(getClass(), "no cluster found, name=" + requestContext.cluster());
-//            return;
+            return;
         }
 
-        byte localIdentifier = hostIdentifier.hostId();
-        delegate = createReplicatedMap(requestContext, localIdentifier);
 
-        ((ChronicleMapV3EngineReplication) engineReplicator).setChronicleMap(delegate);
+
+        ((ChronicleMapV3EngineReplication) engineReplicator).setChronicleMap((ReplicatedChronicleMap<K, V, ?>) delegate);
 
 
 //        if (LOG.isDebugEnabled())
@@ -226,7 +226,7 @@ public final class ChronicleMapV3KeyValueStore<K, V> implements KeyValueStore<K,
     public void accept(final EngineReplication.ReplicationEntry replicationEntry) {
         LOGGER.info("replicationEntry: {}", replicationEntry);
         final BytesStore actualReplicatedEntry = replicationEntry.value();
-        delegate.readExternalEntry(actualReplicatedEntry.bytesForRead(), replicationEntry.identifier());
+        ((ReplicatedChronicleMap<K, V, ?>) delegate).readExternalEntry(actualReplicatedEntry.bytesForRead(), replicationEntry.identifier());
     }
 
     @Override
@@ -271,13 +271,16 @@ public final class ChronicleMapV3KeyValueStore<K, V> implements KeyValueStore<K,
         return previous == null ? value != null : !previous.equals(value);
     }
 
-    private static <K, V> ReplicatedChronicleMap<K, V, ?> createReplicatedMap(final RequestContext requestContext, final byte replicaId) {
+    private static <K, V> ChronicleMap<K, V> createReplicatedMap(
+            final RequestContext requestContext, final Byte replicaId) {
 
         final ChronicleMapBuilder<K, V> builder =
                 ChronicleMap.of((Class<K>) requestContext.keyType(), (Class<V>) requestContext.valueType()).
                         entries(requestContext.getEntries()).
-                        putReturnsNull(requestContext.putReturnsNull() != null ? requestContext.putReturnsNull() : false).
-                        replication(replicaId);
+                        putReturnsNull(requestContext.putReturnsNull() != null ? requestContext.putReturnsNull() : false);
+        if (replicaId != null) {
+            builder.replication(replicaId);
+        }
 
         if (requestContext.getConstantSizeKeyExample() != null) {
             builder.constantKeySizeBySample((K) requestContext.getConstantSizeKeyExample());
@@ -292,6 +295,6 @@ public final class ChronicleMapV3KeyValueStore<K, V> implements KeyValueStore<K,
         }
 
         final ChronicleMap<K, V> map = builder.create();
-        return (ReplicatedChronicleMap<K, V, ?>) map;
+        return map;
     }
 }
