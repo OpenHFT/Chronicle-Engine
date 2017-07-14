@@ -260,7 +260,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
         long fromIndex = fromIndex0;
 
-        if (fromIndex == endIndex && endIndex!=-1L)
+        if (fromIndex == endIndex && endIndex != -1L)
             fromIndex--;
 
         final boolean success = tailer.index() != fromIndex ? tailer.moveToIndex(fromIndex) : true;
@@ -407,13 +407,13 @@ public class VanillaIndexQueueView<V extends Marshallable>
                 indexedValue.index(index);
                 indexedValue.v(v);
                 indexedValue.timePublished(System.currentTimeMillis());
-                indexedValue.isEndOfSnapshot(indexedValue == lastIndexOfSnapshot);
+                indexedValue.isEndOfSnapshot(index == lastIndexOfSnapshot.getAsLong());
                 indexedValue.maxIndex(Math.max(dc.index(), lastIndexRead));
                 return indexedValue;
 
             } finally {
                 if (dc.isPresent())
-                // required for delta-wire, as it has to consume all the the fields
+                    // required for delta-wire, as it has to consume all the the fields
                     while (dc.wire().hasMore()) {
                         dc.wire().read().skipValue();
                     }
