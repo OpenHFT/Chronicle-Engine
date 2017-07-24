@@ -169,10 +169,10 @@ public class VanillaIndexQueueView<V extends Marshallable>
                     }
 
                     if (sb.length() == 0)
-                        continue;
+                        return true;
                     Class<? extends Marshallable> type = typeToString.toType(sb);
                     if (type == null)
-                        continue;
+                        return true;
                     @NotNull final V v = (V) VanillaObjectCacheFactory.INSTANCE.get()
                             .apply(type);
                     long readPosition = dc.wire().bytes().readPosition();
@@ -201,7 +201,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
                             k = copy;
                         }
                     } else
-                        continue;
+                        return true;
 
                     messagesReadPerSecond++;
 
@@ -263,7 +263,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
         if (fromIndex == endIndex && endIndex != -1L)
             fromIndex--;
 
-        final boolean success = tailer.index() != fromIndex ? tailer.moveToIndex(fromIndex) : true;
+        final boolean success = tailer.index() == fromIndex || tailer.moveToIndex(fromIndex);
 
         assert success : "fromIndex=" + Long.toHexString(fromIndex)
                 + ", start=" + Long.toHexString(start) + ",end=" + Long.toHexString(endIndex);
