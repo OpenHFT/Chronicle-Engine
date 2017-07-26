@@ -89,8 +89,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
     public VanillaIndexQueueView(@NotNull RequestContext context,
                                  @NotNull Asset asset,
                                  @NotNull QueueView<?, V> queueView) {
-
-
         this.asset = asset;
         @NotNull final EventLoop eventLoop = asset.acquireView(EventLoop.class);
         @NotNull final ChronicleQueueView chronicleQueueView = (ChronicleQueueView) queueView;
@@ -131,7 +129,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
             if (!success)
                 return false;
         }
-
 
         long currentSecond = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
 
@@ -242,7 +239,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
         @NotNull final ExcerptTailer tailer = chronicleQueue.createTailer();
         final long start = tailer.toStart().index();
         @NotNull final ExcerptTailer excerptTailer = tailer.toEnd();
-        final long endIndex = excerptTailer.index();
+        long endIndex = excerptTailer.index();
 
         long fromIndex0 = vanillaIndexQuery.fromIndex();
         if (fromIndex0 == FROM_START) {
@@ -252,7 +249,11 @@ public class VanillaIndexQueueView<V extends Marshallable>
             final int cycle = rollCycle.toCycle(currentIndex);
             fromIndex0 = rollCycle.toIndex(cycle, 0);
         } else if (fromIndex0 == 0) {
-            fromIndex0 = endIndex;
+            long lastIndexRead = this.lastIndexRead;
+            // if data is streaming in constantly, then the lastIndexRead may not be a the last message in the queue, but in the case
+            // we can use this lastIndexRead as the fromIndex0  as the indexes are almost the same.
+            // In other-words its not worth blocking till the lastIndexRead == endIndex
+            fromIndex0 = (endIndex > lastIndexRead && endIndex - lastIndexRead < 1024) ? lastIndexRead : endIndex;
         }
 
         fromIndex0 = Math.min(fromIndex0, endIndex);
@@ -275,10 +276,10 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
         // the method below ensures that all the data is loaded up-to the the current tail, as
         // the user has asked for an index that we have not yet loaded
-        ensureAllDataIsLoadedBeforeRegistingSubsribe(sub, vanillaIndexQuery, tailer, endIndex, fromIndex);
+        ensureAllDataIsLoadedBeforeRegisteringSubscribe(sub, vanillaIndexQuery, tailer, endIndex, fromIndex);
     }
 
-    private void ensureAllDataIsLoadedBeforeRegistingSubsribe(@NotNull ConsumingSubscriber<IndexedValue<V>> sub, @NotNull IndexQuery<V> vanillaIndexQuery, @NotNull ExcerptTailer tailer, long endIndex, long fromIndex) {
+    private void ensureAllDataIsLoadedBeforeRegisteringSubscribe(@NotNull ConsumingSubscriber<IndexedValue<V>> sub, @NotNull IndexQuery<V> vanillaIndexQuery, @NotNull ExcerptTailer tailer, long endIndex, long fromIndex) {
         @Nullable final EventLoop eventLoop = asset.root().getView(EventLoop.class);
         eventLoop.addHandler(() -> endOfTailCheckedRegisterSubscriber(sub, vanillaIndexQuery, tailer, fromIndex));
     }
