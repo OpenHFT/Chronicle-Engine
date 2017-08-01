@@ -38,7 +38,7 @@ public class EngineInstance {
 
     static {
         try {
-            net.openhft.chronicle.core.Jvm.setExceptionsHandlers(WARN, WARN, null);
+            net.openhft.chronicle.core.Jvm.setExceptionHandlers(WARN, WARN, null);
             loadDefaultAliases();
         } catch (Exception e) {
             e.printStackTrace();
