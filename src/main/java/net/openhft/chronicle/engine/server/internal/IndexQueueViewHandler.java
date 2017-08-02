@@ -45,7 +45,7 @@ import static net.openhft.chronicle.engine.server.internal.IndexQueueViewHandler
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
 import static net.openhft.chronicle.network.connection.CoreFields.tid;
 
-/**
+/*
  * Created by Rob Austin
  */
 public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandler {

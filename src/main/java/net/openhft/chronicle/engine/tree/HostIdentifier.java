@@ -21,7 +21,7 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
+/*
  * Created by peter.lawrey on 15/06/2015.
  */
 public class HostIdentifier {

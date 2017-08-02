@@ -39,7 +39,7 @@ import java.util.function.Consumer;
 import static net.openhft.chronicle.engine.redis.RedisEmulator.*;
 import static org.junit.Assert.assertEquals;
 
-/**
+/*
  * Created by daniel on 31/07/2015.
  */
 public class RedisEmulatorTest {

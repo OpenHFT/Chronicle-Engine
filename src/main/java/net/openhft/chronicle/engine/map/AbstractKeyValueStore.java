@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Iterator;
 import java.util.Map;
 
-/**
+/*
  * Created by peter on 22/05/15.
  */
 public class AbstractKeyValueStore<K, V> implements KeyValueStore<K, V> {

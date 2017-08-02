@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.time.LocalTime;
 
-/**
+/*
  * Created by daniel on 07/09/2015.
  */
 public class UserStat implements Marshallable {

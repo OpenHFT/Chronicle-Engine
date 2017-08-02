@@ -22,7 +22,7 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
+/*
  * Created by peter on 17/09/15.
  */
 public class VanillaSubAssetFactory implements SubAssetFactory {
@@ -31,6 +31,6 @@ public class VanillaSubAssetFactory implements SubAssetFactory {
     public <E> Asset createSubAsset(@NotNull VanillaAsset asset, String name, Class<E> valueType) {
         @Nullable @SuppressWarnings("unchecked")
         ValueReader<Object, E> vr = asset.getView(ValueReader.class);
-        return new VanillaSubAsset<E>(asset, name, valueType, vr);
+        return new VanillaSubAsset<>(asset, name, valueType, vr);
     }
 }

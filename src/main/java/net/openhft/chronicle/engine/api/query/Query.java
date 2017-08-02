@@ -25,7 +25,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 
-/**
+/*
  * Created by peter.lawrey on 11/07/2015.
  */
 public interface Query<T> {

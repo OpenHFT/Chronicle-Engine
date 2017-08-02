@@ -160,9 +160,7 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
                 chronicleMap = builder.createPersistedTo(new File(pathname));
 
             } catch (IOException e) {
-                @NotNull IORuntimeException iore = new IORuntimeException("Could not access " + pathname);
-                iore.initCause(e);
-                throw iore;
+                throw new IORuntimeException("Could not access " + pathname, e);
             }
         }
 

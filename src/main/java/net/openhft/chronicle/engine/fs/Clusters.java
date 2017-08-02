@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentSkipListMap;
 
-/**
+/*
  * Created by peter.lawrey on 17/06/2015.
  */
 public class Clusters extends AbstractMarshallable implements Marshallable, Closeable {

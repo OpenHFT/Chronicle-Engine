@@ -17,7 +17,7 @@
 
 package net.openhft.chronicle.engine.collection;
 
-/**
+/*
  * Created by Rob Austin
  */
 

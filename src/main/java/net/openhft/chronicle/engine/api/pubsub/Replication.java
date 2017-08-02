@@ -22,7 +22,7 @@ import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
+/*
  * Created by Rob Austin
  */
 public interface Replication {

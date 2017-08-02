@@ -51,7 +51,7 @@ import static net.openhft.chronicle.engine.Utils.methodName;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-/**
+/*
  * Created by daniel on 13/07/2015.
  */
 @RunWith(value = Parameterized.class)

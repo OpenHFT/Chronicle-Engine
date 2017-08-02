@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 
-/**
+/*
  * Created by peter on 07/07/15.
  */
 public class KeyFunctionPair implements Marshallable {

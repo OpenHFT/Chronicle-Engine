@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-/**
+/*
  * Created by rob on 27/04/2016.
  */
 public class IndexedValue<V extends Marshallable> implements Demarshallable, Marshallable {

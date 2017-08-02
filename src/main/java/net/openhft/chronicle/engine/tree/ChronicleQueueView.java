@@ -245,7 +245,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
             if (mapView0 != null)
                 return mapView0;
 
-            this.mapView = new QueueViewAsMapView<T, M>(this, context, asset);
+            this.mapView = new QueueViewAsMapView<>(this, context, asset);
             return this.mapView;
         }
 

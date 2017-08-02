@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
 
-/**
+/*
  * Created by peter on 12/06/15.
  */
 @Deprecated

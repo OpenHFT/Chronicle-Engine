@@ -43,7 +43,7 @@ import java.util.function.Consumer;
 
 import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
 
-/**
+/*
  * Created by peter on 22/05/15.
  */
 public class VanillaAssetTree implements AssetTree {

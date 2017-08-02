@@ -24,7 +24,7 @@ import net.openhft.chronicle.engine.tree.TopologySubscription;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import org.jetbrains.annotations.NotNull;
 
-/**
+/*
  * Created by rob austin on 28/06/2015.
  */
 public class RemoteTopologySubscription extends AbstractRemoteSubscription<TopologicalEvent> implements TopologySubscription {

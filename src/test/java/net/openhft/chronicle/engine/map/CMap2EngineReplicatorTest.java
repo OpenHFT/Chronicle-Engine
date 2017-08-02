@@ -41,7 +41,7 @@ import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static net.openhft.chronicle.bytes.NativeBytesStore.wrap;
 import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplication.builder;
 
-/**
+/*
  * Created by Rob Austin
  */
 

@@ -40,8 +40,7 @@ public class RemoteEntrySetView<K, MV, V> extends VanillaEntrySetView<K, MV, V> 
     @Override
     @NotNull
     public Query<Map.Entry<K, V>> query() {
-        return new RemoteQuery<>((subscriber, filter, contextOperations) -> {
-            mapView.registerSubscriber((Subscriber) subscriber, (Filter) filter, contextOperations);
-        });
+        return new RemoteQuery<>((subscriber, filter, contextOperations) ->
+                mapView.registerSubscriber((Subscriber) subscriber, (Filter) filter, contextOperations));
     }
 }

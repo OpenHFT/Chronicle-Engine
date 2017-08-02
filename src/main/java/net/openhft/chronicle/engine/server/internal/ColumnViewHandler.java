@@ -37,9 +37,9 @@ class ColumnViewHandler extends AbstractHandler {
     @Nullable
     private WireIn inWire = null;
     @Nullable
-    private Map<String, Object> oldRow = new HashMap<String, Object>();
+    private Map<String, Object> oldRow = new HashMap<>();
     @NotNull
-    private Map<String, Object> newRow = new HashMap<String, Object>();
+    private Map<String, Object> newRow = new HashMap<>();
 
     private long tid;
     @NotNull

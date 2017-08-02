@@ -17,7 +17,7 @@
 
 package net.openhft.chronicle.engine.api.management.mbean;
 
-/**
+/*
  * Created by pct25 on 6/16/2015.
  */
 public interface AssetTreeJMXMBean {

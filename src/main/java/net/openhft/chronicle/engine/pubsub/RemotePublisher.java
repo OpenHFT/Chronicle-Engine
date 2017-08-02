@@ -50,7 +50,7 @@ import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.Even
 import static net.openhft.chronicle.engine.server.internal.TopicPublisherHandler.EventId.onEndOfSubscription;
 import static net.openhft.chronicle.engine.server.internal.TopicPublisherHandler.EventId.publish;
 
-/**
+/*
  * Created by Rob Austin
  */
 public class RemotePublisher<T, M> extends AbstractStatelessClient<EventId> implements

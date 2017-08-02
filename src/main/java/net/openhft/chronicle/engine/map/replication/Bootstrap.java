@@ -23,7 +23,7 @@ import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
-/**
+/*
  * Created by Rob Austin
  */
 public class Bootstrap extends AbstractMarshallable implements Marshallable {

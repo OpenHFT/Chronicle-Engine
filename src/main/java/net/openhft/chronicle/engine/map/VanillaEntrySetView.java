@@ -32,7 +32,7 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
 
-/**
+/*
  * Created by peter on 22/05/15.
  */
 public class VanillaEntrySetView<K, MV, V> extends AbstractCollection<Entry<K, V>> implements EntrySetView<K, MV, V> {

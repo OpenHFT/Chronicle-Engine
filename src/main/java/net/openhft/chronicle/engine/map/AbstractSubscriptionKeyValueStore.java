@@ -22,7 +22,7 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import org.jetbrains.annotations.NotNull;
 
-/**
+/*
  * Created by daniel on 08/06/15.
  */
 public class AbstractSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValueStore<K, V>

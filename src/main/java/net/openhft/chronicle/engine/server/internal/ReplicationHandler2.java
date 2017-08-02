@@ -40,7 +40,7 @@ import java.util.function.BiConsumer;
 
 import static net.openhft.chronicle.engine.server.internal.ReplicationHandler2.EventId.*;
 
-/**
+/*
  * Created by Rob Austin
  */
 public class ReplicationHandler2<E> extends AbstractHandler {

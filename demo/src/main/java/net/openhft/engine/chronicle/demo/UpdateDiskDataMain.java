@@ -6,7 +6,7 @@ import net.openhft.chronicle.wire.WireType;
 
 import java.util.Map;
 
-/**
+/*
  * Created by daniel on 02/09/2015.
  * A very simple program to demonstrate how to change value.
  */

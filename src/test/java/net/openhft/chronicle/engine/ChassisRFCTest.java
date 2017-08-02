@@ -33,7 +33,7 @@ import java.util.Map;
 import static net.openhft.chronicle.engine.Chassis.*;
 import static org.junit.Assert.assertEquals;
 
-/**
+/*
  * Created by peter on 22/05/15.
  */
 public class ChassisRFCTest {

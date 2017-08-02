@@ -51,7 +51,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-/**
+/*
  * Created by peter.lawrey on 16/06/2015.
  */
 public enum ManagementTools {
@@ -127,7 +127,7 @@ public enum ManagementTools {
         String treeName = assetTree.toString();
         try {
             Set<ObjectName> objNames = mbs.queryNames(new ObjectName("*:type=" + treeName + ",*"), null);
-            objNames.forEach((atName) -> ManagementTools.unregisterTreeWithMBean(atName));
+            objNames.forEach(ManagementTools::unregisterTreeWithMBean);
         } catch (MalformedObjectNameException e) {
             Jvm.warn().on(ManagementTools.class, "Error while disable management", e);
         }

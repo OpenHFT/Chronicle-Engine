@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static net.openhft.chronicle.bytes.NativeBytes.nativeBytes;
 import static org.junit.Assert.assertTrue;
 
-/**
+/*
  * Created by pct25 on 6/18/2015.
  */
 @Ignore("Long running test")

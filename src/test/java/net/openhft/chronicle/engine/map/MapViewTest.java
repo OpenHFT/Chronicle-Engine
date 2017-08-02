@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-/**
+/*
  * Created by peter.lawrey on 11/06/2015.
  */
 public class MapViewTest {

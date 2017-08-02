@@ -40,7 +40,7 @@ import static net.openhft.chronicle.engine.server.internal.SubscriptionHandler.S
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
 import static net.openhft.chronicle.network.connection.WireOutPublisher.newThrottledWireOutPublisher;
 
-/**
+/*
  * Created by rob on 28/06/2015.
  */
 public class SubscriptionHandler<T extends SubscriptionCollection> extends AbstractHandler {

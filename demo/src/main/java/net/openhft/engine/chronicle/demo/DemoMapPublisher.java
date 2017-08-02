@@ -6,7 +6,7 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.WireType;
 
-/**
+/*
  * Created by daniel on 25/09/2015.
  */
 public class DemoMapPublisher {

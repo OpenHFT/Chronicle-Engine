@@ -93,8 +93,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         this.asset = asset;
         assert type == String.class;
 
-        String first = basePath;
-        @NotNull String dirName = first == null ? name : first + "/" + name;
+        @NotNull String dirName = basePath == null ? name : basePath + "/" + name;
         this.dirPath = Paths.get(dirName);
 
         try {
@@ -214,7 +213,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         @Nullable BytesStore existingValue = getFileContents(path, null);
         writeToFile(path, value);
         if (fr != null) fr.valid = false;
-        return existingValue == null ? null : existingValue;
+        return existingValue;
     }
 
     // TODO mark return value as reserved.
@@ -486,7 +485,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
                         } else {
                             subscriptions.notifyEvent(UpdatedEvent.of(asset.fullName(), p.toFile
                                     ().getName(), prevContents, mapVal, false, prevContents ==
-                                    null ? true : !prevContents.equals(mapVal)));
+                                    null || !prevContents.equals(mapVal)));
                         }
                     } finally {
                         if (prevContents != null)

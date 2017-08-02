@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-/**
+/*
  * Created by peter on 22/05/15.
  */
 public class VanillaKeyValueStore<K, V> implements AuthenticatedKeyValueStore<K, V> {

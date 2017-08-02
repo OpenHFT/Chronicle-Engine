@@ -260,9 +260,7 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
 
     @Override
     public boolean canDeleteRows() {
-        if (requestContext.toUri().startsWith("/proc"))
-            return false;
-        return true;
+        return !requestContext.toUri().startsWith("/proc");
     }
 
 

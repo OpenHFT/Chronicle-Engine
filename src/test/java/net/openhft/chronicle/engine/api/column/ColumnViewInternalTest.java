@@ -10,7 +10,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.function.Predicate;
 
-/**
+/*
  * Created by rob on 19/12/2016.
  */
 public class ColumnViewInternalTest {

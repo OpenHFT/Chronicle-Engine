@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-/**
+/*
  * Created by daniel on 16/07/2015. Tests the combination of Reference and Chronicle
  */
 public class ReferenceChronicleTest {

@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
-/**
+/*
  * Created by Rob Austin
  */
 public class VanillaReplication implements Replication {

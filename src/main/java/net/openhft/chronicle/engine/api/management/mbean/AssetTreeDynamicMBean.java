@@ -17,7 +17,7 @@
 
 package net.openhft.chronicle.engine.api.management.mbean;
 
-/**
+/*
  * Created by pct25 on 6/24/2015.
  */
 
@@ -110,10 +110,7 @@ public class AssetTreeDynamicMBean implements DynamicMBean {
     @Nullable
     public synchronized MBeanInfo getMBeanInfo() {
         @NotNull SortedSet names = new TreeSet();
-        for (@NotNull Iterator localIterator1 = this.properties.keySet().iterator(); localIterator1.hasNext(); ) {
-            Object name = localIterator1.next();
-            names.add(name);
-        }
+        names.addAll(this.properties.keySet());
 
         @NotNull MBeanAttributeInfo[] attrs = new MBeanAttributeInfo[names.size()];
         @NotNull Iterator it = names.iterator();

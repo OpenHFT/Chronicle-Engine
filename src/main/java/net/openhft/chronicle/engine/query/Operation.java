@@ -79,8 +79,8 @@ public class Operation implements Marshallable {
 
         @org.jetbrains.annotations.NotNull Operation operation = (Operation) o;
 
-        if (type != operation.type) return false;
-        return !(wrapped != null ? !wrapped.equals(operation.wrapped) : operation.wrapped != null);
+        return type == operation.type
+                && !(wrapped != null ? !wrapped.equals(operation.wrapped) : operation.wrapped != null);
 
     }
 

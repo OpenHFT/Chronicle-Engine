@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BooleanSupplier;
 
-/**
+/*
  * Created by Rob Austin
  */
 public class Utils {

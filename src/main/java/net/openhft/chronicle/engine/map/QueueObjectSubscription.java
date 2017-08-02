@@ -50,7 +50,7 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
+/*
  * Created by peter on 22/05/15.
  */
 // todo review thread safety
@@ -217,7 +217,7 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
         else if (topicType == String.class)
             return (T) eventName.toString();
         else if (topicType == WireKey.class)
-            return (T) (WireKey) (() -> eventName.toString());
+            return (T) (WireKey) (eventName::toString);
         else
             throw new UnsupportedOperationException("unable to convert " + eventName + " to type " + topicType);
     }

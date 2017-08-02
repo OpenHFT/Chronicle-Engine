@@ -27,7 +27,7 @@ import org.junit.Test;
 import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
 import static org.junit.Assert.assertEquals;
 
-/**
+/*
  * Created by daniel on 29/05/15.
  */
 public class RequestContextTest {

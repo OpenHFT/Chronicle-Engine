@@ -34,7 +34,7 @@ import static net.openhft.chronicle.engine.server.internal.PublisherHandler.Para
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
 import static net.openhft.chronicle.network.connection.CoreFields.tid;
 
-/**
+/*
  * Created by rob on 27/06/2015.
  */
 public class TopologyHandler<E> extends AbstractHandler {
@@ -55,19 +55,12 @@ public class TopologyHandler<E> extends AbstractHandler {
                 assert startEnforceInValueReadCheck(inWire);
                 if (registerSubscriber.contentEquals(eventName)) {
 
-                    @NotNull final Subscriber listener = new Subscriber() {
-
-                        @Override
-                        public void onMessage(final Object message) {
-                            publisher.add(publish -> {
-                                publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
-                                        (inputTid));
-                                publish.writeNotCompleteDocument(false, wire -> wire.writeEventName(reply)
-                                        .marshallable(m -> m.write(Params.message).object(message)));
-                            });
-                        }
-
-                    };
+                    @NotNull final Subscriber listener = message -> publisher.add(publish -> {
+                        publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
+                                (inputTid));
+                        publish.writeNotCompleteDocument(false, wire -> wire.writeEventName(reply)
+                                .marshallable(m -> m.write(Params.message).object(message)));
+                    });
 
                     // TODO CE-101
                     boolean bootstrap = true;

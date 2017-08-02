@@ -46,7 +46,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
 import static net.openhft.chronicle.engine.server.internal.SubscriptionHandler.SubscriptionEventID.*;
 
-/**
+/*
  * Created by rob on 27/06/2015.
  */
 abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient implements SubscriptionCollection<E> {

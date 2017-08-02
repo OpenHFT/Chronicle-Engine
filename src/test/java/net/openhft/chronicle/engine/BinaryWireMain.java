@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-/**
+/*
  * Created by andre on 01/05/2015.
  */
 public class BinaryWireMain {

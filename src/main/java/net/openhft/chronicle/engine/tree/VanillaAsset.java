@@ -68,7 +68,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 
-/**
+/*
  * Created by peter on 22/05/15.
  */
 public class VanillaAsset implements Asset, Closeable {

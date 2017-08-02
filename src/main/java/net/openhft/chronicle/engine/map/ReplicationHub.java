@@ -43,7 +43,7 @@ import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.server.internal.ReplicationHandler2.EventId.*;
 
-/**
+/*
  * Created by Rob Austin
  */
 class ReplicationHub extends AbstractStatelessClient {

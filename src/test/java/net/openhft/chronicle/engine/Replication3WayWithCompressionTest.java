@@ -47,7 +47,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import static org.junit.Assert.assertNotNull;
 
-/**
+/*
  * Created by Rob Austin
  */
 @Ignore

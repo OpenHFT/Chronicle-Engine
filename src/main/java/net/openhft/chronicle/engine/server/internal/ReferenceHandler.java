@@ -38,7 +38,7 @@ import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.Para
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
 import static net.openhft.chronicle.network.connection.CoreFields.tid;
 
-/**
+/*
  * Created by Rob Austin
  */
 public class ReferenceHandler<E, T> extends AbstractHandler {

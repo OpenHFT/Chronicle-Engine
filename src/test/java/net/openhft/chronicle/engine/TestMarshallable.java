@@ -22,7 +22,7 @@ import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
-/**
+/*
  * Created by daniel on 08/04/15.
  */
 public class TestMarshallable implements Marshallable {

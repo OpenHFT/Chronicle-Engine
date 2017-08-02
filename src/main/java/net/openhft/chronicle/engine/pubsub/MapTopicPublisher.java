@@ -28,9 +28,8 @@ import net.openhft.chronicle.engine.api.tree.Assetted;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.map.KVSSubscription;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-/**
+/*
  * Created by peter on 23/05/15.
  */
 public class MapTopicPublisher<T, M> implements TopicPublisher<T, M>, Assetted<MapView<T, M>> {

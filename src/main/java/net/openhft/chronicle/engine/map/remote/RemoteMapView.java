@@ -40,7 +40,7 @@ import java.util.function.Function;
 
 import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
 
-/**
+/*
  * Created by peter on 22/05/15.
  */
 public class RemoteMapView<K, MV, V> extends VanillaMapView<K, V> {

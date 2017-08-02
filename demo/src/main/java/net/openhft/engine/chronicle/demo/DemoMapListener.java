@@ -12,7 +12,7 @@ import net.openhft.chronicle.wire.WireType;
 
 import java.util.Scanner;
 
-/**
+/*
  * Created by daniel on 02/09/2015.
  * This demo program created a listener to the /data/map.
  */

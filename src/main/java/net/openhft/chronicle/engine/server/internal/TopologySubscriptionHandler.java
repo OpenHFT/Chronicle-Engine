@@ -31,7 +31,7 @@ import java.util.function.BiConsumer;
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
 import static net.openhft.chronicle.network.connection.CoreFields.tid;
 
-/**
+/*
  * Created by Rob Austin
  */
 public class TopologySubscriptionHandler extends SubscriptionHandler<TopologySubscription> {

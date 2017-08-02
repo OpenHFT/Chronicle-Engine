@@ -34,7 +34,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-/**
+/*
  * Created by peter.lawrey on 16/06/2015.
  */
 public class VanillaAssetTreeEgMain {

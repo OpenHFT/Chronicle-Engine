@@ -21,7 +21,7 @@ import net.openhft.chronicle.network.api.session.SessionDetails;
 import net.openhft.chronicle.network.api.session.SessionProvider;
 import org.jetbrains.annotations.NotNull;
 
-/**
+/*
  * Created by peter on 01/06/15.
  */
 public class VanillaSessionProvider implements SessionProvider {

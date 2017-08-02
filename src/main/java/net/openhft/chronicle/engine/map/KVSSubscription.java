@@ -27,7 +27,7 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.query.Filter;
 import org.jetbrains.annotations.NotNull;
 
-/**
+/*
  * Created by peter on 29/05/15.
  */
 public interface KVSSubscription<K, V> extends SubscriptionCollection<MapEvent<K, V>>, ISubscriber, EventConsumer<K, V> {

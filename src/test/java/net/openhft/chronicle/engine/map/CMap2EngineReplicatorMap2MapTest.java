@@ -32,7 +32,7 @@ import java.util.Map;
 
 import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplication.builder;
 
-/**
+/*
  * Created by Rob Austin
  */
 

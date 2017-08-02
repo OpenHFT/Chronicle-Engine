@@ -52,7 +52,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertNotNull;
 
-/**
+/*
  * Created by Rob Austin
  */
 

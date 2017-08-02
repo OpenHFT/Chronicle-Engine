@@ -24,7 +24,7 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.query.Filter;
 import org.jetbrains.annotations.NotNull;
 
-/**
+/*
  * Created by peter on 29/05/15.
  */
 public class RemoteSimpleSubscription<E> implements SimpleSubscription<E> {

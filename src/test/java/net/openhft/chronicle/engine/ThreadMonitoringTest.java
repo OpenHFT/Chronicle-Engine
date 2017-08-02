@@ -29,7 +29,7 @@ import org.junit.Before;
 import java.util.Map;
 import java.util.Properties;
 
-/**
+/*
  * Created by Rob Austin
  */
 public class ThreadMonitoringTest {

@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-/**
+/*
  * Created by peter on 11/06/15.
  */
 public class VanillaTopologySubscription implements TopologySubscription {

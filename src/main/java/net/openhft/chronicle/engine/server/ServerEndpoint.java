@@ -38,7 +38,7 @@ import java.util.function.Function;
 
 import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
 
-/**
+/*
  * Created by Rob Austin
  */
 public class ServerEndpoint implements Closeable {

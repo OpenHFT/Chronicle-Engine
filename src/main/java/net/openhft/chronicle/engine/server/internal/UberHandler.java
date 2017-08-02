@@ -42,7 +42,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.network.HeaderTcpHandler.HANDLER;
 import static net.openhft.chronicle.network.cluster.TerminatorHandler.terminationHandler;
 
-/**
+/*
  * Created by Rob Austin
  */
 public class UberHandler extends CspTcpHander<EngineWireNetworkContext>

@@ -36,7 +36,7 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
-/**
+/*
  * Created by peter on 12/06/15.
  */
 public class ConfigurationFSTest {

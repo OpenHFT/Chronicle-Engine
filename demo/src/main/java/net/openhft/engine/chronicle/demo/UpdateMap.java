@@ -7,7 +7,7 @@ import net.openhft.chronicle.wire.WireType;
 
 import java.util.Scanner;
 
-/**
+/*
  * Created by daniel on 02/09/2015.
  * This demo program allows the user to interactively
  * change values in the /data/map.

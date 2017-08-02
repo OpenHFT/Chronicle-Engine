@@ -31,7 +31,7 @@ import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
-/**
+/*
  * Created by peter on 12/06/15.
  */
 @Deprecated

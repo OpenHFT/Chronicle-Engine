@@ -61,7 +61,7 @@ import static net.openhft.chronicle.core.Jvm.rethrow;
 import static net.openhft.chronicle.network.connection.CoreFields.csp;
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
 
-/**
+/*
  * Created by Rob Austin
  */
 public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> implements
@@ -667,7 +667,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
     public long createProxy(String type, long token) {
 
         createProxy0(type, cspBuff);
-        cspBuff.append("&token=" + token);
+        cspBuff.append("&token=").append(token);
 
         final long cid = acquireCid(cspBuff);
         outWire.writeEventName(reply).typePrefix("set-proxy")

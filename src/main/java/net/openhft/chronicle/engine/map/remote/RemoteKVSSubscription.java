@@ -143,9 +143,8 @@ public class RemoteKVSSubscription<K, V> extends AbstractRemoteSubscription<MapE
 
         hub.lock(() -> {
             writeMetaDataForKnownTID(tid);
-            hub.outWire().writeDocument(false, wireOut -> {
-                wireOut.writeEventName(unregisterTopicSubscriber).text("");
-            });
+            hub.outWire().writeDocument(false, wireOut ->
+                    wireOut.writeEventName(unregisterTopicSubscriber).text(""));
         });
 
     }

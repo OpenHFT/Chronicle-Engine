@@ -43,7 +43,7 @@ import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContex
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
 
-/**
+/*
  * Created by peter on 22/05/15.
  */
 public class ChassisTest {

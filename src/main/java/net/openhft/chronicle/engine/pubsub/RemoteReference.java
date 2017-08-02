@@ -47,7 +47,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.EventId.*;
 
-/**
+/*
  * Created by Rob Austin
  */
 public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler.EventId> implements Reference<E> {

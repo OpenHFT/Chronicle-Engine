@@ -30,7 +30,7 @@ import java.util.Iterator;
 import java.util.Objects;
 import java.util.Set;
 
-/**
+/*
  * Created by peter.lawrey on 11/06/2015.
  */
 public class VanillaKeySetView<K, V> extends AbstractCollection<K> implements KeySetView<K> {

@@ -29,7 +29,7 @@ import org.junit.After;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
+/*
  * Created by peter on 17/08/15.
  */
 

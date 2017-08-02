@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.stream.Stream;
 
-/**
+/*
  * Created by peter.lawrey on 11/07/2015.
  */
 public interface Queryable<E> {

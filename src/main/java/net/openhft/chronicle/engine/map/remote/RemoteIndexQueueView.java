@@ -99,7 +99,7 @@ public class RemoteIndexQueueView<K extends Marshallable, V extends Marshallable
                         .typedMarshallable(q);
             }
 
-            private final IndexedValue<V> instance = new IndexedValue<V>();
+            private final IndexedValue<V> instance = new IndexedValue<>();
             private final Function<Class, ReadMarshallable> reuseFunction = c -> instance;
 
             @Override
@@ -152,9 +152,8 @@ public class RemoteIndexQueueView<K extends Marshallable, V extends Marshallable
 
         hub.lock(() -> {
             writeMetaDataForKnownTID(tid);
-            hub.outWire().writeDocument(false, wireOut -> {
-                wireOut.writeEventName(unregisterSubscriber).text("");
-            });
+            hub.outWire().writeDocument(false, wireOut ->
+                    wireOut.writeEventName(unregisterSubscriber).text(""));
         });
 
     }

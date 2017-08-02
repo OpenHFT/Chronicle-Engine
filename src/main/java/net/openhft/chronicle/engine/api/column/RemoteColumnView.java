@@ -67,8 +67,7 @@ public class RemoteColumnView extends AbstractStatelessClient implements ColumnV
 
     @Override
     public int rowCount(@NotNull SortedFilter sortedFilter) {
-        int count = proxyReturnInt(rowCount, sortedFilter);
-        return count;
+        return proxyReturnInt(rowCount, sortedFilter);
     }
 
     @Override
@@ -113,7 +112,7 @@ public class RemoteColumnView extends AbstractStatelessClient implements ColumnV
         sortedFilter,
         row,
         oldRow,
-        keys;
+        keys
     }
 
     public enum EventId implements ParameterizeWireKey {

@@ -36,7 +36,7 @@ import static net.openhft.chronicle.engine.server.internal.ObjectKVSubscriptionH
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
 import static net.openhft.chronicle.network.connection.CoreFields.tid;
 
-/**
+/*
  * Created by Rob Austin
  */
 public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<SubscriptionCollection> {

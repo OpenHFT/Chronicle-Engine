@@ -315,8 +315,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
         final ConcurrentMap<Object, IndexedValue<V>> map = multiMap.computeIfAbsent(eventName, k -> new ConcurrentHashMap<>());
 
-        final long fromIndex0 = fromIndex;
-        CheckPointPredicate checkPointPredicate = new CheckPointPredicate(fromIndex0);
+        CheckPointPredicate checkPointPredicate = new CheckPointPredicate(fromIndex);
         iterator = (vanillaIndexQuery.bootstrap())
                 ? map.values().stream().filter(
                 i -> filter.test(i.v()) && checkPointPredicate.test(i)).iterator()

@@ -24,7 +24,7 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 
-/**
+/*
  * Created by daniel on 01/09/2015.
  */
 public class ChronicleConfig implements ChronicleConfigMBean {

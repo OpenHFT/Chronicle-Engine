@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-/**
+/*
  * Created by peter on 26/08/15.
  */
 public class MonitorCfg extends AbstractMarshallable implements Installable {

@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-/**
+/*
  * Created by peter on 26/08/15.
  */
 public class ServerCfg implements Installable, Marshallable {
