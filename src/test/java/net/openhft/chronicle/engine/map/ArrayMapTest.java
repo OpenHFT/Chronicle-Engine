@@ -109,6 +109,7 @@ public class ArrayMapTest extends ThreadMonitoringTest {
         map = assetTree.acquireMap(NAME, String.class, byte[].class);
     }
 
+    @Override
     @After
     public void preAfter() {
 

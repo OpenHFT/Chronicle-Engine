@@ -73,6 +73,7 @@ public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subsc
                         }
                     }
 
+                    @Override
                     public void onEndOfSubscription() {
                         subscriptionEnded = true;
                         synchronized (publisher) {
@@ -188,6 +189,7 @@ public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subsc
             this.params = params;
         }
 
+        @Override
         @NotNull
         public <P extends WireKey> P[] params() {
             return (P[]) this.params;

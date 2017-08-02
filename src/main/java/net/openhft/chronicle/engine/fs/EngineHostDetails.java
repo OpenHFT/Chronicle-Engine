@@ -18,19 +18,12 @@
 package net.openhft.chronicle.engine.fs;
 
 import net.openhft.chronicle.core.io.Closeable;
-import net.openhft.chronicle.core.threads.EventLoop;
-import net.openhft.chronicle.core.threads.HandlerPriority;
-import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.api.session.SessionDetails;
 import net.openhft.chronicle.network.api.session.SessionProvider;
 import net.openhft.chronicle.network.cluster.HostDetails;
-import net.openhft.chronicle.network.connection.ClientConnectionMonitor;
-import net.openhft.chronicle.network.connection.FatalFailureConnectionStrategy;
-import net.openhft.chronicle.network.connection.SocketAddressSupplier;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.Marshallable;
-import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,6 +100,7 @@ public class EngineHostDetails extends HostDetails implements Marshallable, Clos
         /**
          * @return the current session details
          */
+        @Override
         @Nullable
         public SessionDetails get() {
             return sessionDetails;
@@ -117,6 +111,7 @@ public class EngineHostDetails extends HostDetails implements Marshallable, Clos
          *
          * @param sessionDetails to set to
          */
+        @Override
         public void set(@NotNull SessionDetails sessionDetails) {
             throw new UnsupportedOperationException();
         }
@@ -124,6 +119,7 @@ public class EngineHostDetails extends HostDetails implements Marshallable, Clos
         /**
          * There is no longer any valid session details and get() will return null.
          */
+        @Override
         public void remove() {
             throw new UnsupportedOperationException();
         }

@@ -391,10 +391,12 @@ public class CMap2EngineReplicator implements EngineReplication,
             this.remoteIdentifier = remoteIdentifier;
         }
 
+        @Override
         public boolean hasNext() {
             return instance.hasNext();
         }
 
+        @Override
         public boolean nextEntry(@NotNull Consumer<ReplicationEntry> consumer) {
             //noinspection AssertWithSideEffects
             assert consumerAccessIsSingleThreaded();

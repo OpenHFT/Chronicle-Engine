@@ -24,6 +24,7 @@ public class CloseKey extends AbstractMarshallable implements KeyedMarshallable 
         return instrument;
     }
 
+    @Override
     public void writeKey(@NotNull Bytes bytes) {
         WIRE_MARSHALLER_CL.get(CloseKey.class).writeKey(this, bytes);
     }

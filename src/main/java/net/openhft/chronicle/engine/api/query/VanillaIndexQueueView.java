@@ -233,6 +233,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
      *                          predicate defined by {@code vanillaIndexQuery}
      * @param vanillaIndexQuery the predicate of the subscription
      */
+    @Override
     public void registerSubscriber(@NotNull ConsumingSubscriber<IndexedValue<V>> sub,
                                    @NotNull IndexQuery<V> vanillaIndexQuery) {
 
@@ -424,6 +425,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
     }
 
+    @Override
     public void unregisterSubscriber(@NotNull ConsumingSubscriber<IndexedValue<V>> listener) {
         final AtomicBoolean isClosed = activeSubscriptions.remove(listener);
         if (isClosed != null) isClosed.set(true);

@@ -62,6 +62,7 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
         clientTree = new VanillaAssetTree().forRemoteAccess(CONNECTION, WIRE_TYPE);
     }
 
+    @Override
     public void preAfter() {
 
         clientTree.close();

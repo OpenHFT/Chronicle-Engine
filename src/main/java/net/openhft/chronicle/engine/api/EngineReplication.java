@@ -61,6 +61,7 @@ public interface EngineReplication extends Replication {
      * identifier
      * @see #identifier()
      */
+    @Override
     @Nullable
     ModificationIterator acquireModificationIterator(byte remoteIdentifier);
 
@@ -74,8 +75,10 @@ public interface EngineReplication extends Replication {
      * @return a timestamp of the last modification to an entry, or 0 if there are no entries.
      * @see #identifier()
      */
+    @Override
     long lastModificationTime(byte remoteIdentifier);
 
+    @Override
     void setLastModificationTime(byte identifier, long timestamp);
 
     /**

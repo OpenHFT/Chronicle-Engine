@@ -52,6 +52,7 @@ public class RemovedAssetEvent extends AbstractMarshallable implements Topologic
         return assetName;
     }
 
+    @Override
     public String name() {
         return name;
     }

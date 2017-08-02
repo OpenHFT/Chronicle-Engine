@@ -99,6 +99,7 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
         map = clientAssetTree.acquireMap(NAME, String.class, String.class);
     }
 
+    @Override
     @After
     public void preAfter() {
         clientAssetTree.close();

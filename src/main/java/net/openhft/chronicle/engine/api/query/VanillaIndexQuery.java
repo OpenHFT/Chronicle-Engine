@@ -75,6 +75,7 @@ public class VanillaIndexQuery<V> extends AbstractMarshallable implements Demars
         return select == null ? "" : select;
     }
 
+    @Override
     public String eventName() {
         return eventName;
     }
@@ -108,6 +109,7 @@ public class VanillaIndexQuery<V> extends AbstractMarshallable implements Demars
         return bootstrap;
     }
 
+    @Override
     public long fromIndex() {
         return from;
     }
@@ -123,6 +125,7 @@ public class VanillaIndexQuery<V> extends AbstractMarshallable implements Demars
         return this;
     }
 
+    @Override
     public Predicate<V> filter() {
         return ClassCache.newInstance(valueClass, select);
     }

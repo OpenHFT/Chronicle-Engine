@@ -85,6 +85,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     }
 
 
+    @Override
     public void preAfter() {
         TCPRegistry.reset();
         Closeable.closeQuietly(assetTree);
@@ -710,6 +711,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
             this.value = value;
         }
 
+        @Override
         public int compareTo(@NotNull BI other) {
             return Integer.compare(value, other.value);
         }
@@ -742,6 +744,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
             this.value = value;
         }
 
+        @Override
         public int compareTo(@NotNull BS other) {
             return value.compareTo(other.value);
         }
@@ -769,6 +772,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
             super(Collections.singleton(e));
         }
 
+        @Override
         public int compareTo(@NotNull LexicographicList<E> other) {
             long start = System.currentTimeMillis();
             int common = Math.min(size(), other.size());

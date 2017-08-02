@@ -49,6 +49,7 @@ public class ConfigurationFS implements MountPoint {
         this.baseDir = baseDir;
     }
 
+    @Override
     public void install(String baseDir, @NotNull AssetTree assetTree) {
         @NotNull Asset asset = assetTree.acquireAsset(assetName);
 

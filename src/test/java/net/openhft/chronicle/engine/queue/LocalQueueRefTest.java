@@ -63,6 +63,7 @@ public class LocalQueueRefTest extends ThreadMonitoringTest {
         YamlLogging.setAll(false);
     }
 
+    @Override
     public void preAfter() {
         methodName = "";
     }

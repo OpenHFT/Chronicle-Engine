@@ -402,6 +402,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
             this.params = params;
         }
 
+        @Override
         @NotNull
         public <P extends WireKey> P[] params() {
             return (P[]) this.params;

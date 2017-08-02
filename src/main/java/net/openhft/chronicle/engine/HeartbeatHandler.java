@@ -159,6 +159,7 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
         Closeable.closeQuietly(closable());
     }
 
+    @Override
     public void onMessageReceived() {
         lastTimeMessageReceived = System.currentTimeMillis();
     }

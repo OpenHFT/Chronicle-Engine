@@ -20,6 +20,7 @@ public class VanillaVaadinChart extends AbstractMarshallable implements VaadinCh
 
     }
 
+    @Override
     public String columnNameField() {
         return columnNameField;
     }
@@ -47,6 +48,7 @@ public class VanillaVaadinChart extends AbstractMarshallable implements VaadinCh
         return this;
     }
 
+    @Override
     public VaadinChartSeries[] series() {
         return series;
     }
@@ -57,6 +59,7 @@ public class VanillaVaadinChart extends AbstractMarshallable implements VaadinCh
         return this;
     }
 
+    @Override
     public ChartProperties chartProperties() {
         return chartProperties;
     }

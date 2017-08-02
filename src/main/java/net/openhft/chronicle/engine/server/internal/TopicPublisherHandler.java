@@ -77,6 +77,7 @@ public class TopicPublisherHandler<T, M> extends AbstractHandler {
                             }
                         }
 
+                        @Override
                         public void onEndOfSubscription() {
                             synchronized (publisher) {
                                 publisher.put(null, publish -> {
@@ -183,6 +184,7 @@ public class TopicPublisherHandler<T, M> extends AbstractHandler {
             this.params = params;
         }
 
+        @Override
         @NotNull
         public <P extends WireKey> P[] params() {
             return (P[]) this.params;

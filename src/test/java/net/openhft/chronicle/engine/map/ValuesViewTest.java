@@ -94,6 +94,7 @@ public class ValuesViewTest extends ThreadMonitoringTest {
         map = assetTree.acquireMap(NAME, String.class, String.class);
     }
 
+    @Override
     @After
     public void preAfter() {
         assetTree.close();

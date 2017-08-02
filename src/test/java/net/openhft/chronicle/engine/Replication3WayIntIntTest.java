@@ -126,6 +126,7 @@ public class  Replication3WayIntIntTest extends ThreadMonitoringTest {
         Files.deleteIfExists(Paths.get(OS.TARGET, name));
     }
 
+    @Override
     public void preAfter() {
         Closeable.closeQuietly(serverEndpoint1);
         Closeable.closeQuietly(serverEndpoint2);

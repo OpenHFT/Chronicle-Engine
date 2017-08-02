@@ -86,31 +86,37 @@ class GenericWireAdapter<K, V> implements WireAdapter<K, V> {
         });
     }
 
+    @Override
     @NotNull
     public BiConsumer<ValueOut, K> keyToWire() {
         return keyToWire;
     }
 
+    @Override
     @NotNull
     public Function<ValueIn, K> wireToKey() {
         return wireToKey;
     }
 
+    @Override
     @NotNull
     public BiConsumer<ValueOut, V> valueToWire() {
         return valueToWire;
     }
 
+    @Override
     @NotNull
     public Function<ValueIn, V> wireToValue() {
         return wireToValue;
     }
 
+    @Override
     @NotNull
     public BiConsumer<ValueOut, Entry<K, V>> entryToWire() {
         return entryToWire;
     }
 
+    @Override
     @NotNull
     public Function<ValueIn, Entry<K, V>> wireToEntry() {
         return wireToEntry;

@@ -78,6 +78,7 @@ public class QueueHandler<T, M> extends TopicPublisherHandler<T, M> {
                             }
                         }
 
+                        @Override
                         public void onEndOfSubscription() {
                             synchronized (publisher) {
                                 publisher.put(null, publish -> {
@@ -115,6 +116,7 @@ public class QueueHandler<T, M> extends TopicPublisherHandler<T, M> {
         }
     };
 
+    @Override
     @SuppressWarnings("unchecked")
     void process(@NotNull final WireIn inWire,
                  final WireOutPublisher publisher,
@@ -149,6 +151,7 @@ public class QueueHandler<T, M> extends TopicPublisherHandler<T, M> {
             this.params = params;
         }
 
+        @Override
         @NotNull
         public <P extends WireKey> P[] params() {
             return (P[]) this.params;

@@ -30,6 +30,7 @@ import java.util.stream.Stream;
  */
 public interface KeySetView<K> extends Set<K>, Assetted<MapView<K, ?>>,
         Queryable<K>, KeyedView {
+    @Override
     default Stream<K> stream() {
         return Set.super.stream();
     }

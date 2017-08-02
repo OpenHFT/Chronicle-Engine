@@ -97,6 +97,7 @@ public class ReferenceHandler<E, T> extends AbstractHandler {
                             }
                         }
 
+                        @Override
                         public void onEndOfSubscription() {
                             synchronized (publisher) {
                                 if (!publisher.isClosed()) {
@@ -243,6 +244,7 @@ public class ReferenceHandler<E, T> extends AbstractHandler {
             this.params = params;
         }
 
+        @Override
         @NotNull
         public <P extends WireKey> P[] params() {
             return (P[]) this.params;

@@ -114,6 +114,7 @@ public class ColumnViewIteratorHandler extends AbstractHandler {
             this.params = params;
         }
 
+        @Override
         @NotNull
         public <P extends WireKey> P[] params() {
             return (P[]) this.params;

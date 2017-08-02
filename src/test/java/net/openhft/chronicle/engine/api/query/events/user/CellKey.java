@@ -19,6 +19,7 @@ public class CellKey extends AbstractMarshallable implements KeyedMarshallable {
         this.cellId = cellId;
     }
 
+    @Override
     public void writeKey(@NotNull Bytes bytes) {
         WIRE_MARSHALLER_CL.get(CellKey.class).writeKey(this, bytes);
     }

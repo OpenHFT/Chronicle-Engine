@@ -68,6 +68,7 @@ public class RemovedEvent<K, V> extends AbstractMarshallable implements MapEvent
         return new RemovedEvent<>(assetName, keyFunction.apply(key, null), valueFunction.apply(oldValue, null), isReplicationEvent);
     }
 
+    @Override
     @Nullable
     public K getKey() {
         return key;
@@ -79,6 +80,7 @@ public class RemovedEvent<K, V> extends AbstractMarshallable implements MapEvent
         return oldValue;
     }
 
+    @Override
     @Nullable
     public V getValue() {
         return null;

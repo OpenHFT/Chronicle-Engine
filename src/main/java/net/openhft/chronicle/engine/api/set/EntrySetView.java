@@ -31,6 +31,7 @@ import java.util.stream.Stream;
  */
 public interface EntrySetView<K, MV, V> extends Set<Entry<K, V>>, Assetted<MapView<K, V>>,
         Queryable<Entry<K, V>>, KeyedView {
+    @Override
     default Stream<Entry<K, V>> stream() {
         return Set.super.stream();
     }

@@ -93,6 +93,7 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
         }
     }
 
+    @Override
     @After
     public void preAfter() {
         clientAssetTree.close();

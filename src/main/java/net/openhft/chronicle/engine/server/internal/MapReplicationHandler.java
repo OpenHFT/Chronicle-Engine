@@ -174,6 +174,7 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
             this.params = params;
         }
 
+        @Override
         @NotNull
         public <P extends WireKey> P[] params() {
             //noinspection unchecked

@@ -119,6 +119,7 @@ public class RemoteRpc extends JSR166TestCase {
         }
     }
 
+    @Override
     @After
     public void preAfter() {
         assetTree.close();

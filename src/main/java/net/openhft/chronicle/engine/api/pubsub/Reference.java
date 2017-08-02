@@ -29,6 +29,7 @@ public interface Reference<E> extends Publisher<E>, Supplier<E>, Visitable<E> {
     /**
      * @return the current value.
      */
+    @Override
     @Nullable
     E get();
 
@@ -50,6 +51,7 @@ public interface Reference<E> extends Publisher<E>, Supplier<E>, Visitable<E> {
      *
      * @param e replace value
      */
+    @Override
     long set(E e);
 
     /**
@@ -74,6 +76,7 @@ public interface Reference<E> extends Publisher<E>, Supplier<E>, Visitable<E> {
      *
      * @param e value to publish/set
      */
+    @Override
     default void publish(E e) {
         set(e);
     }

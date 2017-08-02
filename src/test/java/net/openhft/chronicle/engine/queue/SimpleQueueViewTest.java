@@ -128,6 +128,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         }
     }
 
+    @Override
     @After
     public void preAfter() {
 

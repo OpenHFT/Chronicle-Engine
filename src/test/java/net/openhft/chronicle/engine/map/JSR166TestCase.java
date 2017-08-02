@@ -192,10 +192,12 @@ public class JSR166TestCase extends ThreadMonitoringTest {
         return new TrackedRunnable() {
             private volatile boolean done = false;
 
+            @Override
             public boolean isDone() {
                 return done;
             }
 
+            @Override
             public void run() {
                 try {
                     delay(timeoutMillis);
@@ -649,6 +651,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     @NotNull
     public Callable<String> latchAwaitingStringTask(@NotNull final CountDownLatch latch) {
         return new CheckedCallable<String>() {
+            @Override
             @NotNull
             protected String realCall() {
                 try {
@@ -664,6 +667,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     @NotNull
     public Runnable awaiter(@NotNull final CountDownLatch latch) {
         return new CheckedRunnable() {
+            @Override
             public void realRun() {
                 await(latch);
             }
@@ -689,6 +693,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     @NotNull
     public Runnable possiblyInterruptedRunnable(final long timeoutMillis) {
         return new CheckedRunnable() {
+            @Override
             protected void realRun() {
                 try {
                     delay(timeoutMillis);
@@ -783,20 +788,24 @@ public class JSR166TestCase extends ThreadMonitoringTest {
             perms = new Permissions();
         }
 
+        @Override
         @NotNull
         public PermissionCollection getPermissions(CodeSource cs) {
             return perms;
         }
 
+        @Override
         @NotNull
         public PermissionCollection getPermissions(ProtectionDomain pd) {
             return perms;
         }
 
+        @Override
         public boolean implies(ProtectionDomain pd, Permission p) {
             return perms.implies(p);
         }
 
+        @Override
         public void refresh() {
         }
 
@@ -829,17 +838,20 @@ public class JSR166TestCase extends ThreadMonitoringTest {
 //     }
 
     private static class NoOpRunnable implements Runnable {
+        @Override
         public void run() {
         }
     }
 
     private static class NoOpCallable implements Callable {
+        @Override
         public Object call() {
             return Boolean.TRUE;
         }
     }
 
     private static class StringTask implements Callable<String> {
+        @Override
         @NotNull
         public String call() {
             return TEST_STRING;
@@ -847,6 +859,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     }
 
     private static class NPETask implements Callable<String> {
+        @Override
         @NotNull
         public String call() {
             throw new NullPointerException();
@@ -854,6 +867,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     }
 
     private static class CallableOne implements Callable<Integer> {
+        @Override
         @NotNull
         public Integer call() {
             return one;
@@ -864,6 +878,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
      * For use as ThreadFactory in constructors
      */
     private static class SimpleThreadFactory implements ThreadFactory {
+        @Override
         @NotNull
         public Thread newThread(Runnable r) {
             return new Thread(r);
@@ -873,6 +888,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     public static class TrackedShortRunnable implements Runnable {
         public volatile boolean done = false;
 
+        @Override
         public void run() {
             try {
                 delay(SHORT_DELAY_MS);
@@ -885,6 +901,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     public static class TrackedSmallRunnable implements Runnable {
         public volatile boolean done = false;
 
+        @Override
         public void run() {
             try {
                 delay(SMALL_DELAY_MS);
@@ -897,6 +914,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     public static class TrackedMediumRunnable implements Runnable {
         public volatile boolean done = false;
 
+        @Override
         public void run() {
             try {
                 delay(MEDIUM_DELAY_MS);
@@ -909,6 +927,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     public static class TrackedLongRunnable implements Runnable {
         public volatile boolean done = false;
 
+        @Override
         public void run() {
             try {
                 delay(LONG_DELAY_MS);
@@ -921,6 +940,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     public static class TrackedNoOpRunnable implements Runnable {
         public volatile boolean done = false;
 
+        @Override
         public void run() {
             done = true;
         }
@@ -929,6 +949,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     public static class TrackedCallable implements Callable {
         public volatile boolean done = false;
 
+        @Override
         public Object call() {
             try {
                 delay(SMALL_DELAY_MS);
@@ -943,6 +964,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
      * For use as RejectedExecutionHandler in constructors
      */
     private static class NoOpREHandler implements RejectedExecutionHandler {
+        @Override
         public void rejectedExecution(Runnable r,
                                       ThreadPoolExecutor executor) {
         }
@@ -951,6 +973,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     public abstract class CheckedRunnable implements Runnable {
         protected abstract void realRun() throws Throwable;
 
+        @Override
         public final void run() {
             try {
                 realRun();
@@ -969,6 +992,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
 
         protected abstract void realRun() throws Throwable;
 
+        @Override
         public final void run() {
             try {
                 realRun();
@@ -989,6 +1013,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
 
         protected abstract void realRun() throws Throwable;
 
+        @Override
         public final void run() {
             try {
                 realRun();
@@ -1003,6 +1028,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     public abstract class CheckedInterruptedRunnable implements Runnable {
         protected abstract void realRun() throws Throwable;
 
+        @Override
         public final void run() {
             try {
                 realRun();
@@ -1018,6 +1044,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     public abstract class CheckedCallable<T> implements Callable<T> {
         protected abstract T realCall() throws Throwable;
 
+        @Override
         public final T call() {
             try {
                 return realCall();
@@ -1033,6 +1060,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
         @NotNull
         protected abstract T realCall() throws Throwable;
 
+        @Override
         public final T call() {
             try {
                 @NotNull T result = realCall();
@@ -1048,24 +1076,28 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     }
 
     protected class ShortRunnable extends CheckedRunnable {
+        @Override
         protected void realRun() throws Throwable {
             delay(SHORT_DELAY_MS);
         }
     }
 
     protected class ShortInterruptedRunnable extends CheckedInterruptedRunnable {
+        @Override
         protected void realRun() throws InterruptedException {
             delay(SHORT_DELAY_MS);
         }
     }
 
     protected class SmallRunnable extends CheckedRunnable {
+        @Override
         protected void realRun() throws Throwable {
             delay(SMALL_DELAY_MS);
         }
     }
 
     protected class SmallPossiblyInterruptedRunnable extends CheckedRunnable {
+        @Override
         protected void realRun() {
             try {
                 delay(SMALL_DELAY_MS);
@@ -1076,6 +1108,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     }
 
     protected class SmallCallable extends CheckedCallable {
+        @Override
         protected Object realCall() throws InterruptedException {
             delay(SMALL_DELAY_MS);
             return Boolean.TRUE;
@@ -1083,18 +1116,21 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     }
 
     protected class MediumRunnable extends CheckedRunnable {
+        @Override
         protected void realRun() throws Throwable {
             delay(MEDIUM_DELAY_MS);
         }
     }
 
     protected class MediumInterruptedRunnable extends CheckedInterruptedRunnable {
+        @Override
         protected void realRun() throws InterruptedException {
             delay(MEDIUM_DELAY_MS);
         }
     }
 
     protected class MediumPossiblyInterruptedRunnable extends CheckedRunnable {
+        @Override
         protected void realRun() {
             try {
                 delay(MEDIUM_DELAY_MS);
@@ -1105,6 +1141,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     }
 
     protected class LongPossiblyInterruptedRunnable extends CheckedRunnable {
+        @Override
         protected void realRun() {
             try {
                 delay(LONG_DELAY_MS);
@@ -1157,6 +1194,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
             super(parties);
         }
 
+        @Override
         public int await() {
             try {
                 return super.await(2 * LONG_DELAY_MS, MILLISECONDS);

@@ -17,6 +17,7 @@ public class TradeKey extends AbstractMarshallable implements KeyedMarshallable 
         this.tradeId = tradeId;
     }
 
+    @Override
     public void writeKey(@NotNull Bytes bytes) {
         WireMarshaller.WIRE_MARSHALLER_CL.get(TradeKey.class).writeKey(this, bytes);
     }

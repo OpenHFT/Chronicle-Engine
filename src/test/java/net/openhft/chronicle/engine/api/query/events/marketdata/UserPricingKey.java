@@ -22,6 +22,7 @@ class UserPricingKey extends AbstractMarshallable implements KeyedMarshallable {
         return uiid;
     }
 
+    @Override
     public void writeKey(@NotNull Bytes bytes) {
         WIRE_MARSHALLER_CL.get(UserPricingKey.class).writeKey(this, bytes);
     }

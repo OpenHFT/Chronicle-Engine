@@ -92,6 +92,7 @@ public class TestInsertUpdateChronicleMapViewOnServer extends ThreadMonitoringTe
 
     }
 
+    @Override
     public void preAfter() {
         clientAssetTree.close();
         Jvm.pause(100);

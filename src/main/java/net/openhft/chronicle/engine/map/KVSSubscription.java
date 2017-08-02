@@ -63,6 +63,7 @@ public interface KVSSubscription<K, V> extends SubscriptionCollection<MapEvent<K
 
     void setKvStore(KeyValueStore<K, V> store);
 
+    @Override
     void notifyEvent(MapEvent<K, V> changeEvent);
 
     boolean hasSubscribers();

@@ -95,6 +95,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
         return remoteIdentifier;
     }
 
+    @Override
     public boolean isClosed() {
         return isClosing.get();
     }

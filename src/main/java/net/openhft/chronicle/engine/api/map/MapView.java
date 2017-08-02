@@ -127,6 +127,7 @@ public interface MapView<K, V> extends ConcurrentMap<K, V>,
         return get(k);
     }
 
+    @Override
     default int size() {
         return (int) Math.min(Integer.MAX_VALUE, longSize());
     }

@@ -386,6 +386,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         Files.deleteIfExists(path);
     }
 
+    @Override
     public void close() {
         closed = true;
         fileFpmWatcher.interrupt();

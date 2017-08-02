@@ -39,6 +39,7 @@ public class AssetTreeDynamicMBean implements DynamicMBean {
         load();
     }
 
+    @Override
     public synchronized String getAttribute(@NotNull String name) throws AttributeNotFoundException {
         String value = this.properties.getProperty(name);
         if (value != null) {
@@ -47,6 +48,7 @@ public class AssetTreeDynamicMBean implements DynamicMBean {
         throw new AttributeNotFoundException("No such property: " + name);
     }
 
+    @Override
     public synchronized void setAttribute(@NotNull Attribute attribute) throws InvalidAttributeValueException, MBeanException, AttributeNotFoundException {
         String name = attribute.getName();
         if (this.properties.getProperty(name) == null)
@@ -66,6 +68,7 @@ public class AssetTreeDynamicMBean implements DynamicMBean {
         setAttributes(list);
     }
 
+    @Override
     @NotNull
     public synchronized AttributeList getAttributes(@NotNull String[] names) {
         @NotNull AttributeList list = new AttributeList();
@@ -77,6 +80,7 @@ public class AssetTreeDynamicMBean implements DynamicMBean {
         return list;
     }
 
+    @Override
     @NotNull
     public synchronized AttributeList setAttributes(@NotNull AttributeList list) {
         @NotNull Attribute[] attrs = list.toArray(new Attribute[0]);
@@ -92,6 +96,7 @@ public class AssetTreeDynamicMBean implements DynamicMBean {
         return retlist;
     }
 
+    @Override
     @Nullable
     public Object invoke(@NotNull String name, @Nullable Object[] args, @Nullable String[] sig) throws MBeanException, ReflectionException {
         if ((name.equals("reload")) && ((args == null) || (args.length == 0)) && ((sig == null) || (sig.length == 0))) {
@@ -101,6 +106,7 @@ public class AssetTreeDynamicMBean implements DynamicMBean {
         throw new ReflectionException(new NoSuchMethodException(name));
     }
 
+    @Override
     @Nullable
     public synchronized MBeanInfo getMBeanInfo() {
         @NotNull SortedSet names = new TreeSet();

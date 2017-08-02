@@ -20,6 +20,7 @@ public class SpreadChangeUserEvent extends CellKey implements UserEvent {
         return value;
     }
 
+    @Override
     @NotNull
     public String userName() {
         return userName;

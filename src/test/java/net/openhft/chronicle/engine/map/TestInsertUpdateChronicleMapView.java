@@ -90,6 +90,7 @@ public class TestInsertUpdateChronicleMapView extends ThreadMonitoringTest {
         clientAssetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType);
     }
 
+    @Override
     public void preAfter() {
         clientAssetTree.close();
         Jvm.pause(100);

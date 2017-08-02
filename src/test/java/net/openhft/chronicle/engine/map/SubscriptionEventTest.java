@@ -112,6 +112,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
         map = assetTree.acquireMap(NAME, String.class, String.class);
     }
 
+    @Override
     public void preAfter() {
         Closeable.closeQuietly(assetTree);
         Closeable.closeQuietly(serverEndpoint);

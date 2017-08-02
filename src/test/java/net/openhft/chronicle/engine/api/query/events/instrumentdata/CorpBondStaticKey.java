@@ -19,6 +19,7 @@ public class CorpBondStaticKey extends AbstractMarshallable implements KeyedMars
         return uiid;
     }
 
+    @Override
     public void writeKey(@NotNull Bytes bytes) {
         WIRE_MARSHALLER_CL.get(CorpBondStaticKey.class).writeKey(this, bytes);
     }

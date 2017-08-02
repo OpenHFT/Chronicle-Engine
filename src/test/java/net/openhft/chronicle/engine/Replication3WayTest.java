@@ -104,14 +104,16 @@ public class Replication3WayTest extends ThreadMonitoringTest {
         serverEndpoint3 = new ServerEndpoint("host.port3", tree3);
     }
 
+    @Override
     @Before
     public void threadDump() {
         threadDump = new ThreadDump();
     }
 
+    @Override
     @After
     public void preAfter() {
-  
+
         Closeable.closeQuietly(tree1);
         Closeable.closeQuietly(tree2);
         Closeable.closeQuietly(tree3);

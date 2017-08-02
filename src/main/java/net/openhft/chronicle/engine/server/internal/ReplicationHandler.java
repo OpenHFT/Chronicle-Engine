@@ -170,6 +170,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
             this.params = params;
         }
 
+        @Override
         @NotNull
         public <P extends WireKey> P[] params() {
             //noinspection unchecked

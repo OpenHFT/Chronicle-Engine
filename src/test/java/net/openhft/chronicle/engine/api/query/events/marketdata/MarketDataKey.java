@@ -30,6 +30,7 @@ class MarketDataKey extends AbstractMarshallable implements KeyedMarshallable {
         return source;
     }
 
+    @Override
     public void writeKey(@NotNull Bytes bytes) {
         WIRE_MARSHALLER_CL.get(MarketDataKey.class).writeKey(this, bytes);
     }

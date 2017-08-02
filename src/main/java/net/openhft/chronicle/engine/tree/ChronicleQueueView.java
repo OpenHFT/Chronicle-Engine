@@ -48,7 +48,6 @@ import net.openhft.chronicle.queue.ExcerptTailer;
 import net.openhft.chronicle.queue.impl.RollingChronicleQueue;
 import net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder;
 import net.openhft.chronicle.wire.*;
-import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -594,6 +593,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         });
     }
 
+    @Override
     public long publishAndIndex(@NotNull T topic, @NotNull M message) {
 
         if (isReplicating && !isSource)
@@ -652,6 +652,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         mapView().putAll(m);
     }
 
+    @Override
     public void clear() {
         chronicleQueue.clear();
         mapView().clear();
@@ -667,6 +668,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         throw new UnsupportedOperationException("todo");
     }
 
+    @Override
     public void close() {
 
         @NotNull File file = chronicleQueue.file();
@@ -811,6 +813,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
             index(wireIn.read(() -> "index").int64());
         }
 
+        @Override
         public void clear() {
             message = null;
             topic = null;

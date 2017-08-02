@@ -93,6 +93,7 @@ public class ServerOverloadTest extends ThreadMonitoringTest {
         }
     }
 
+    @Override
     @After
     public void preAfter() {
         closeQuietly(map);

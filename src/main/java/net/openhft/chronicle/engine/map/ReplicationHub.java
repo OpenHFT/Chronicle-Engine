@@ -331,6 +331,7 @@ class ReplicationHub extends AbstractStatelessClient {
                     wireOut.writeEventName(replicationEvent).typedMarshallable(e));
         }
 
+        @Override
         @NotNull
         public HandlerPriority priority() {
             return HandlerPriority.REPLICATION;

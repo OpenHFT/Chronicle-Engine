@@ -101,6 +101,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
         throw new UnsupportedOperationException();
     }
 
+    @Override
     @Nullable
     @SuppressWarnings("NullableProblems")
     public V putIfAbsent(K key, V value) {
@@ -136,6 +137,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
         return proxyReturnBooleanWithArgs(replaceForOld, key, oldValue, newValue);
     }
 
+    @Override
     @Nullable
     @SuppressWarnings("NullableProblems")
     public V replace(K key, V value) {
@@ -230,27 +232,32 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
         return longSize() == 0;
     }
 
+    @Override
     public boolean containsKey(Object key) {
         checkKey(key);
         return proxyReturnBoolean(containsKey, out -> out.object(key));
     }
 
+    @Override
     @Nullable
     public V get(Object key) {
         checkKey(key);
         return this.proxyReturnTypedObject(get, null, vClass, key);
     }
 
+    @Override
     @Nullable
     public V getUsing(K key, Object usingValue) {
         checkKey(key);
         return this.proxyReturnTypedObject(get, (V) usingValue, vClass, key);
     }
 
+    @Override
     public long longSize() {
         return proxyReturnLong(size);
     }
 
+    @Override
     public boolean remove(Object key) {
         checkKey(key);
         sendEventAsync(remove, toParameters(remove, key), true);
@@ -269,6 +276,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
             throw new NullPointerException("key can not be null");
     }
 
+    @Override
     public boolean put(K key, V value) {
         checkKey(key);
         checkValue(value);
@@ -284,6 +292,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
         return proxyReturnTypedObject(getAndPut, null, vClass, key, value);
     }
 
+    @Override
     public void clear() {
         proxyReturnVoid(clear);
     }
@@ -438,14 +447,17 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
             key = k1;
         }
 
+        @Override
         public final K getKey() {
             return key;
         }
 
+        @Override
         public final V getValue() {
             return value;
         }
 
+        @Override
         public final V setValue(V newValue) {
             V oldValue = value;
             RemoteKeyValueStore.this.put(getKey(), newValue);

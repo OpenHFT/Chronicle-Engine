@@ -78,6 +78,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
         );
     }
 
+    @Override
     public void preAfter() {
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();

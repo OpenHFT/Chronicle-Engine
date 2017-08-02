@@ -78,6 +78,7 @@ public class UpdatedEvent<K, V> extends AbstractMarshallable implements MapEvent
         return new UpdatedEvent<>(assetName, keyFunction.apply(key, null), valueFunction.apply(oldValue, null), valueFunction.apply(value, null), isReplicationEvent, hasValueChanged);
     }
 
+    @Override
     @Nullable
     public K getKey() {
         return key;
@@ -89,6 +90,7 @@ public class UpdatedEvent<K, V> extends AbstractMarshallable implements MapEvent
         return oldValue;
     }
 
+    @Override
     @Nullable
     public V getValue() {
         return value;

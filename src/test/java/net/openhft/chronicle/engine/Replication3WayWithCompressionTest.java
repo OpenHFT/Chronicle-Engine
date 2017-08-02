@@ -105,6 +105,7 @@ public class Replication3WayWithCompressionTest extends ThreadMonitoringTest {
         serverEndpoint3 = new ServerEndpoint("host.port3", tree3);
     }
 
+    @Override
     public void preAfter() {
         if (serverEndpoint1 != null)
             serverEndpoint1.close();

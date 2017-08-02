@@ -63,12 +63,14 @@ abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient imp
         super(hub, cid, csp);
     }
 
+    @Override
     public void registerSubscriber(@NotNull RequestContext rc,
                                    @NotNull Subscriber<E> subscriber,
                                    @NotNull Filter<E> filter) {
         registerSubscriber0(rc, subscriber, filter);
     }
 
+    @Override
     public void unregisterSubscriber(@NotNull Subscriber subscriber) {
         unregisterSubscriber0(subscriber);
     }

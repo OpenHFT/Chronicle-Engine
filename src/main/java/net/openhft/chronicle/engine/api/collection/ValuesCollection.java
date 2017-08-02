@@ -29,6 +29,7 @@ import java.util.stream.Stream;
  */
 public interface ValuesCollection<V> extends Collection<V>, Assetted<MapView<?, V>>,
         Queryable<V> {
+    @Override
     default Stream<V> stream() {
         return Collection.super.stream();
     }

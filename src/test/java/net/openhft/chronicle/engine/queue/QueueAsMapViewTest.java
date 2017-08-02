@@ -106,6 +106,7 @@ public class QueueAsMapViewTest extends ThreadMonitoringTest {
 
     }
 
+    @Override
     @After
     public void preAfter() {
 

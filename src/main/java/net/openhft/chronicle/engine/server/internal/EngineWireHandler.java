@@ -605,6 +605,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
         return systemHandler.hasClientClosed();
     }
 
+    @Override
     public void close() {
         onEndOfConnection(false);
         publisher().close();

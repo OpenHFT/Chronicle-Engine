@@ -94,6 +94,7 @@ public class QueryableKeySetTest extends ThreadMonitoringTest {
         }
     }
 
+    @Override
     @After
     public void preAfter() {
         assetTree.close();

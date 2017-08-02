@@ -72,6 +72,7 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
         }
     }
 
+    @Override
     public void preAfter() {
         shutdownTrees();
         serverAssetTree.close();

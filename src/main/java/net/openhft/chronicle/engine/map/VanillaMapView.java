@@ -92,38 +92,46 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
     public Collection<V> values() {
         if (values == null) {
             values = new AbstractCollection<V>() {
+                @Override
                 @NotNull
                 public Iterator<V> iterator() {
                     return new Iterator<V>() {
                         @NotNull
                         private final Iterator<Entry<K, V>> i = entrySet().iterator();
 
+                        @Override
                         public boolean hasNext() {
                             return i.hasNext();
                         }
 
+                        @Override
                         public V next() {
                             return i.next().getValue();
                         }
 
+                        @Override
                         public void remove() {
                             i.remove();
                         }
                     };
                 }
 
+                @Override
                 public int size() {
                     return VanillaMapView.this.size();
                 }
 
+                @Override
                 public boolean isEmpty() {
                     return VanillaMapView.this.isEmpty();
                 }
 
+                @Override
                 public void clear() {
                     VanillaMapView.this.clear();
                 }
 
+                @Override
                 public boolean contains(Object v) {
                     return VanillaMapView.this.containsValue(v);
                 }

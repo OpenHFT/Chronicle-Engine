@@ -68,6 +68,7 @@ public class MapBootstrapTest extends ThreadMonitoringTest {
                 (CONNECTION_1, WIRE_TYPE);
     }
 
+    @Override
     @After
     public void preAfter() {
 

@@ -89,6 +89,7 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
                         });
                     }
 
+                    @Override
                     public void onEndOfSubscription() {
                         subscriptionEnded = true;
                         if (publisher.isClosed())
@@ -108,6 +109,7 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
                      *                 publishes writes the data
                      *                 directly to the socket
                      */
+                    @Override
                     public void addSupplier(@NotNull Supplier<Marshallable> supplier) {
                         publisher.addWireConsumer(wireOut -> {
 
@@ -210,6 +212,7 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
             this.params = params;
         }
 
+        @Override
         @NotNull
         public <P extends WireKey> P[] params() {
             return (P[]) this.params;

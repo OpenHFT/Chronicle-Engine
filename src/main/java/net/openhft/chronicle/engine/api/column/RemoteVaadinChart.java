@@ -63,6 +63,7 @@ public class RemoteVaadinChart extends AbstractStatelessClient implements Vaadin
     /**
      * @return the column view used to build the chart
      */
+    @Override
     @NotNull
     public ColumnView columnView() {
         @Nullable String url = (String) proxyReturnTypedObject(columnView, null, String.class);
@@ -81,6 +82,7 @@ public class RemoteVaadinChart extends AbstractStatelessClient implements Vaadin
             this.params = params;
         }
 
+        @Override
         @NotNull
         public <P extends WireKey> P[] params() {
             return (P[]) this.params;
