@@ -21,8 +21,8 @@
     </properties>
     <parent>
         <groupId>net.openhft</groupId>
-        <artifactId>chronicle-enterprise-root-pom</artifactId>
-        <version>1.0.3</version>
+        <artifactId>chronicle-nexus-root-pom</artifactId>
+        <version>1.0.8-SNAPSHOT</version>
         <relativePath />
     </parent>
 
