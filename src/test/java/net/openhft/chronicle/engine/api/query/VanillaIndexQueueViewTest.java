@@ -1,7 +1,7 @@
 package net.openhft.chronicle.engine.api.query;
 
 import net.openhft.chronicle.core.io.IOTools;
-import net.openhft.chronicle.core.pool.ClassLookup;
+import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.EngineInstance;
 import net.openhft.chronicle.engine.api.query.events.EventProcessor;
 import net.openhft.chronicle.engine.api.query.events.WriterGateway;
@@ -38,10 +38,10 @@ public class VanillaIndexQueueViewTest {
 
 
     static {
-        ClassLookup.create().addAlias(MarketDataEvent.class);
+        ClassAliasPool.CLASS_ALIASES.addAlias(MarketDataEvent.class);
     }
 
-    @Test
+    @Test(timeout = 10000)
     public void shouldFilterEventsUsingEventName() throws Exception {
         TCPRegistry.reset();
         TCPRegistry.createServerSocketChannelFor("host.port1", "host.port2");
@@ -80,7 +80,7 @@ public class VanillaIndexQueueViewTest {
         }
     }
 
-    @Test
+    @Test(timeout = 10000)
     public void testIsEndOfSnapshot() throws InterruptedException, IOException {
         TCPRegistry.reset();
         TCPRegistry.createServerSocketChannelFor("host.port1", "host.port2");
@@ -130,7 +130,7 @@ public class VanillaIndexQueueViewTest {
     }
 
 
-    @Test
+    @Test(timeout = 10000)
     public void shouldReceiveEventViaSubscription() throws InterruptedException, IOException {
         TCPRegistry.reset();
         TCPRegistry.createServerSocketChannelFor("host.port1", "host.port2");
