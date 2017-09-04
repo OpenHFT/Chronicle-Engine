@@ -51,8 +51,10 @@ public class ConfigurationFSTest {
 
     @After
     public void checkThreadDump() {
-        threadDump.ignore("all-trees-watcher");
-        threadDump.assertNoNewThreads();
+        if (threadDump != null) {
+            threadDump.ignore("all-trees-watcher");
+            threadDump.assertNoNewThreads();
+        }
     }
 
     @Before

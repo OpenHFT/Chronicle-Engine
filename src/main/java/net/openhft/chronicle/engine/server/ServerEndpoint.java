@@ -19,14 +19,12 @@ package net.openhft.chronicle.engine.server;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
-import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
 import net.openhft.chronicle.engine.server.internal.EngineWireNetworkContext;
-import net.openhft.chronicle.network.*;
-import net.openhft.chronicle.network.api.TcpHandler;
-import net.openhft.chronicle.network.api.session.SessionDetailsProvider;
-import net.openhft.chronicle.network.connection.VanillaWireOutPublisher;
+import net.openhft.chronicle.network.AcceptorEventHandler;
+import net.openhft.chronicle.network.NetworkContext;
+import net.openhft.chronicle.network.NetworkStatsListener;
+import net.openhft.chronicle.network.TcpEventHandler;
 import net.openhft.chronicle.threads.Threads;
-import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -76,7 +74,7 @@ public class ServerEndpoint implements Closeable {
 
             @Override
             public void close() {
-                LOG.info(" host=" + host + ", port=" + port + ", isConnected=false");
+                LOG.info(" close() host=" + host + ", port=" + port + ", isConnected=false");
             }
 
             @Override
@@ -119,36 +117,8 @@ public class ServerEndpoint implements Closeable {
         @Nullable final EventLoop eventLoop = assetTree.root().findOrCreateView(EventLoop.class);
         assert eventLoop != null;
 
-        @NotNull Function<NetworkContext, TcpEventHandler> networkContextTcpEventHandlerFunction = (networkContext) -> {
-            @NotNull final EngineWireNetworkContext nc = (EngineWireNetworkContext) networkContext;
-            if (nc.isAcceptor())
-                nc.wireOutPublisher(new VanillaWireOutPublisher(WireType.TEXT));
-            @NotNull final TcpEventHandler handler = new TcpEventHandler(networkContext);
-
-            @NotNull final Function<Object, TcpHandler> consumer = o -> {
-                if (o instanceof SessionDetailsProvider) {
-                    @NotNull final SessionDetailsProvider sessionDetails = (SessionDetailsProvider) o;
-                    nc.sessionDetails(sessionDetails);
-                    nc.wireType(sessionDetails.wireType());
-                    @Nullable final WireType wireType = nc.sessionDetails().wireType();
-                    if (wireType != null)
-                        nc.wireOutPublisher().wireType(wireType);
-                    return new EngineWireHandler();
-                } else if (o instanceof TcpHandler)
-                    return (TcpHandler) o;
-
-                throw new UnsupportedOperationException("not supported class=" + o.getClass());
-            };
-
-            @Nullable final Function<EngineWireNetworkContext, TcpHandler> f
-                    = x -> new HeaderTcpHandler<>(handler, consumer, x);
-
-            @NotNull final WireTypeSniffingTcpHandler sniffer = new
-                    WireTypeSniffingTcpHandler<>(handler, f);
-
-            handler.tcpHandler(sniffer);
-            return handler;
-        };
+        @NotNull Function<NetworkContext, TcpEventHandler> networkContextTcpEventHandlerFunction =
+                    BootstrapHandlerFactory.forServerEndpoint()::bootstrapHandlerFactory;
         @NotNull final AcceptorEventHandler eah = new AcceptorEventHandler(
                 hostPortDescription,
                 networkContextTcpEventHandlerFunction,
