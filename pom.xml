@@ -20,12 +20,13 @@
         <additionalparam>-Xdoclint:none</additionalparam>
     </properties>
     <parent>
-        <groupId>net.openhft</groupId>
+        <groupId>software.chronicle</groupId>
         <artifactId>chronicle-enterprise-root-pom</artifactId>
         <version>1.0.6</version>
         <relativePath />
     </parent>
-
+    
+    <groupId>net.openhft</groupId>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>chronicle-engine</artifactId>
     <version>1.14.8-SNAPSHOT</version>
