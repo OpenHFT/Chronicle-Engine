@@ -23,7 +23,7 @@ import net.openhft.chronicle.bytes.BytesUtil;
 import java.nio.ByteBuffer;
 
 /*
- * Created by peter on 25/05/15.
+ * Created by Peter Lawrey on 25/05/15.
  */
 public class Buffers {
     static final ThreadLocal<Buffers> BUFFERS = ThreadLocal.withInitial(Buffers::new);

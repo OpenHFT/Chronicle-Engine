@@ -25,7 +25,7 @@ import net.openhft.chronicle.engine.query.Filter;
 import org.jetbrains.annotations.NotNull;
 
 /*
- * Created by peter on 29/05/15.
+ * Created by Peter Lawrey on 29/05/15.
  */
 public class RemoteSimpleSubscription<E> implements SimpleSubscription<E> {
     // TODO CE-101 pass to the server

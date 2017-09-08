@@ -30,7 +30,7 @@ import net.openhft.chronicle.engine.map.KVSSubscription;
 import org.jetbrains.annotations.NotNull;
 
 /*
- * Created by peter on 23/05/15.
+ * Created by Peter Lawrey on 23/05/15.
  */
 public class MapTopicPublisher<T, M> implements TopicPublisher<T, M>, Assetted<MapView<T, M>> {
     private final Class<T> tClass;

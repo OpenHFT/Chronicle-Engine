@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /*
- * Created by peter on 17/09/15.
+ * Created by Peter Lawrey on 17/09/15.
  */
 public class VanillaSubAssetFactory implements SubAssetFactory {
     @NotNull

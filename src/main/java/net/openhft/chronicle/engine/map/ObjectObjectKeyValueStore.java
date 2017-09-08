@@ -37,7 +37,7 @@ import java.util.function.BiFunction;
 import static net.openhft.chronicle.engine.map.Buffers.BUFFERS;
 
 /*
- * Created by peter on 25/05/15.
+ * Created by Peter Lawrey on 25/05/15.
  */
 public class ObjectObjectKeyValueStore<K, V> implements KeyValueStore<K, V> {
     @NotNull

@@ -21,7 +21,7 @@ import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.engine.map.AuthenticatedKeyValueStore;
 
 /*
- * Created by peter on 25/05/15.
+ * Created by Peter Lawrey on 25/05/15.
  */
 public interface StringBytesStoreKeyValueStore extends AuthenticatedKeyValueStore<String, BytesStore> {
 }

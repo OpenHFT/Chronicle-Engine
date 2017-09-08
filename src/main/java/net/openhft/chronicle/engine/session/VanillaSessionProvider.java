@@ -22,7 +22,7 @@ import net.openhft.chronicle.network.api.session.SessionProvider;
 import org.jetbrains.annotations.NotNull;
 
 /*
- * Created by peter on 01/06/15.
+ * Created by Peter Lawrey on 01/06/15.
  */
 public class VanillaSessionProvider implements SessionProvider {
     @NotNull

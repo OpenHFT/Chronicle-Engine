@@ -29,7 +29,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /*
- * Created by peter on 22/05/15.
+ * Created by Peter Lawrey on 22/05/15.
  */
 public class RemovedEvent<K, V> extends AbstractMarshallable implements MapEvent<K, V> {
     private String assetName;

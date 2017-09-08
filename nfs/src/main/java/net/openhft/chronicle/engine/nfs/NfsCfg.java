@@ -34,7 +34,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /*
- * Created by peter on 26/08/15.
+ * Created by Peter Lawrey on 26/08/15.
  */
 public class NfsCfg implements Installable, Marshallable {
     private static final Logger LOGGER = LoggerFactory.getLogger(NfsCfg.class);

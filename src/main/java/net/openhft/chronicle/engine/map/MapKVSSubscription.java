@@ -46,7 +46,7 @@ import static java.lang.Boolean.TRUE;
 import static net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer.notifyEachSubscriber;
 
 /*
- * Created by peter on 22/05/15.
+ * Created by Peter Lawrey on 22/05/15.
  */
 public class MapKVSSubscription<K, V> implements ObjectSubscription<K, V>,
         RawKVSSubscription<K, V> {

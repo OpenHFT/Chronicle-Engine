@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 /*
- * Created by peter on 26/08/15.
+ * Created by Peter Lawrey on 26/08/15.
  */
 public class InMemoryMapCfg implements Installable {
     private static final Logger LOGGER = LoggerFactory.getLogger(InMemoryMapCfg.class);

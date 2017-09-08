@@ -69,7 +69,7 @@ import java.util.function.BiPredicate;
 import java.util.function.Function;
 
 /*
- * Created by peter on 22/05/15.
+ * Created by Peter Lawrey on 22/05/15.
  */
 public class VanillaAsset implements Asset, Closeable {
 

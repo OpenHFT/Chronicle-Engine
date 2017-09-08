@@ -28,7 +28,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 
 /*
- * Created by peter on 26/08/15.
+ * Created by Peter Lawrey on 26/08/15.
  */
 public class MonitorCfg extends AbstractMarshallable implements Installable {
     private static final Logger LOGGER = LoggerFactory.getLogger(MonitorCfg.class);

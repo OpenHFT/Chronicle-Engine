@@ -25,7 +25,7 @@ import java.util.Collections;
 import java.util.Set;
 
 /*
- * Created by peter on 11/06/15.
+ * Created by Peter Lawrey on 11/06/15.
  */
 public interface TopologicalEvent extends ChangeEvent {
     String name();

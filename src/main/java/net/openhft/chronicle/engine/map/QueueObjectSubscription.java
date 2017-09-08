@@ -51,7 +51,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /*
- * Created by peter on 22/05/15.
+ * Created by Peter Lawrey on 22/05/15.
  */
 // todo review thread safety
 public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {

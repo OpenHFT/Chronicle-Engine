@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 /*
- * Created by peter on 08/05/16.
+ * Created by Peter Lawrey on 08/05/16.
  */
 public enum VanillaObjectCacheFactory implements ObjectCacheFactory {
     INSTANCE;
