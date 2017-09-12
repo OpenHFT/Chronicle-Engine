@@ -147,15 +147,16 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
                                               @NotNull Class topicType,
                                               @NotNull Class elementType,
                                               boolean acknowledgement,
-                                              @Nullable MessageAdaptor messageAdaptor) {
+                                              @Nullable MessageAdaptor syncMessageAdaptor,
+                                              @Nullable MessageAdaptor sourceMessageAdaptor) {
         Objects.requireNonNull(topicType);
         Objects.requireNonNull(elementType);
         try {
             Class<?> aClass = Class.forName("software.chronicle.enterprise.queue.QueueSourceReplicationHandler");
             Constructor<?> declaredConstructor = aClass.getDeclaredConstructor(long.class, Class.class,
-                    Class.class, boolean.class, MessageAdaptor.class);
+                    Class.class, boolean.class, MessageAdaptor.class, MessageAdaptor.class);
             return (WriteMarshallable) declaredConstructor.newInstance(nextIndexRequired,
-                    topicType, elementType, acknowledgement, messageAdaptor);
+                    topicType, elementType, acknowledgement, syncMessageAdaptor, sourceMessageAdaptor);
 
         } catch (Exception e) {
             @NotNull IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
@@ -167,11 +168,11 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
     }
 
     /**
-     * @param topicType       the type of the topic
-     * @param elementType     the type of the element
-     * @param acknowledgement {@code true} if message acknowledgement to the source is required
-     * @param messageAdaptor  used to apply processing in the bytes before they are written to the
-     *                        queue
+     * @param topicType          the type of the topic
+     * @param elementType        the type of the element
+     * @param acknowledgement    {@code true} if message acknowledgement to the source is required
+     * @param syncMessageAdaptor used to apply processing in the bytes before they are written to the
+     *                           queue
      * @return and instance of QueueSyncReplicationHandler
      */
     @NotNull
@@ -180,15 +181,16 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
             @NotNull Class topicType,
             @NotNull Class elementType,
             boolean acknowledgement,
-            @Nullable MessageAdaptor messageAdaptor,
-            @NotNull WireType wireType) {
+            @Nullable MessageAdaptor syncMessageAdaptor,
+            @NotNull WireType wireType,
+            @Nullable MessageAdaptor sourceMessageAdaptor) {
         try {
 
             Class<?> aClass = Class.forName("software.chronicle.enterprise.queue.QueueSyncReplicationHandler");
             Constructor<?> declaredConstructor = aClass.getConstructor(Class.class, Class.class,
-                    boolean.class, MessageAdaptor.class, WireType.class);
+                    boolean.class, MessageAdaptor.class, WireType.class, MessageAdaptor.class);
             return (WriteMarshallable) declaredConstructor.newInstance(topicType, elementType,
-                    acknowledgement, messageAdaptor, wireType);
+                    acknowledgement, syncMessageAdaptor, wireType, sourceMessageAdaptor);
 
         } catch (Exception e) {
             @NotNull IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
@@ -296,7 +298,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
 
         // if true - each replication event sends back an enableAcknowledgment
         final boolean acknowledgement = queueConfig.acknowledgment();
-        final MessageAdaptor messageAdaptor = queueConfig.bytesFunction();
+        final MessageAdaptor messageAdaptor = queueConfig.syncMessageAdaptor();
+        final MessageAdaptor sourceMessageAdaptor = queueConfig.sourceMessageAdaptor();
 
         for (@NotNull EngineHostDetails hostDetails : engineCluster.hostDetails()) {
 
@@ -329,13 +332,13 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
                         newSource(chronicleQueue.createTailer().toEnd().index(), context.topicType(),
                                 context.elementType(),
                                 acknowledgement,
-                                messageAdaptor) :
+                                messageAdaptor, sourceMessageAdaptor) :
 
                         newSync(context.topicType(),
                                 context.elementType(),
                                 acknowledgement,
                                 messageAdaptor,
-                                chronicleQueue.wireType());
+                                chronicleQueue.wireType(), sourceMessageAdaptor);
 
                 long cid = nc.newCid();
                 nc.wireOutPublisher().publish(w -> w.writeDocument(true, d ->

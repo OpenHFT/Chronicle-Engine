@@ -69,7 +69,8 @@ public class ServerEndpoint implements Closeable {
     }
 
     public ServerEndpoint(@NotNull String hostPortDescription,
-                          @NotNull AssetTree assetTree, String clusterName) throws IOException {
+                          @NotNull AssetTree assetTree,
+                          String clusterName) throws IOException {
 
         this(hostPortDescription, assetTree, new NetworkStatsListener() {
 

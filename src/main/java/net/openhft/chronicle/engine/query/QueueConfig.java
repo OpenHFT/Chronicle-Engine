@@ -33,7 +33,8 @@ public class QueueConfig {
     Function<String, Integer> source;
     boolean acknowledgment;
     @Nullable
-    MessageAdaptor messageAdaptor;
+    MessageAdaptor syncMessageAdaptor;
+    MessageAdaptor sourceMessageAdaptor;
     @NotNull
     WireType wireType;
 
@@ -47,7 +48,7 @@ public class QueueConfig {
                        @Nullable MessageAdaptor messageAdaptor,
                        @NotNull WireType wireType) {
         this.source = masterIDFunction;
-        this.messageAdaptor = messageAdaptor;
+        this.syncMessageAdaptor = messageAdaptor;
         this.acknowledgment = acknowledgment;
         this.wireType = wireType;
     }
@@ -61,8 +62,13 @@ public class QueueConfig {
     }
 
     @Nullable
-    public MessageAdaptor bytesFunction() {
-        return messageAdaptor;
+    public MessageAdaptor syncMessageAdaptor() {
+        return syncMessageAdaptor;
+    }
+
+    @Nullable
+    public MessageAdaptor sourceMessageAdaptor() {
+        return sourceMessageAdaptor;
     }
 
     @NotNull
