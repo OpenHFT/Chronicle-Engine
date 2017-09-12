@@ -65,7 +65,7 @@ public class TypographyTest {
 
             @NotNull String hostPortDescription = "SimpleQueueViewTest-methodName" + methodName;
             TCPRegistry.createServerSocketChannelFor(hostPortDescription);
-            serverEndpoint = new ServerEndpoint(hostPortDescription, assetTree0);
+            serverEndpoint = new ServerEndpoint(hostPortDescription, assetTree0, "cluster");
 
             @NotNull final VanillaAssetTree client = new VanillaAssetTree();
             assetTree = client.forRemoteAccess(hostPortDescription, WireType.BINARY);

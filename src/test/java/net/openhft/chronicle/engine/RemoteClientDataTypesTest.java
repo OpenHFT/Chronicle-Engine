@@ -105,7 +105,7 @@ public class RemoteClientDataTypesTest {
         _serverAssetTree = new VanillaAssetTree().forServer();
 
         TCPRegistry.createServerSocketChannelFor(_serverAddress);
-        _serverEndpoint = new ServerEndpoint(_serverAddress, _serverAssetTree);
+        _serverEndpoint = new ServerEndpoint(_serverAddress, _serverAssetTree, "cluster");
         _clientAssetTree = new VanillaAssetTree().forRemoteAccess(_serverAddress, _wireType);
     }
 

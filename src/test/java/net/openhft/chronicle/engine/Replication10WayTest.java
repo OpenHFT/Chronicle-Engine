@@ -84,7 +84,7 @@ public class Replication10WayTest {
         @NotNull WireType writeType = WireType.TEXT;
         for (int i = 0; i < NUMBER_OF_SIMULATED_SERVERS; i++) {
             tree[i] = create(i + 1, writeType, "clusterTen");
-            serverEndpoint[i] = new ServerEndpoint("host.port" + (i + 1), tree[i]);
+            serverEndpoint[i] = new ServerEndpoint("host.port" + (i + 1), tree[i], "cluster");
         }
     }
 

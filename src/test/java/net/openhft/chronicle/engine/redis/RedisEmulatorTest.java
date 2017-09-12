@@ -66,7 +66,7 @@ public class RedisEmulatorTest {
         TCPRegistry.createServerSocketChannelFor("RemoteSubscriptionModelPerformanceTest.port");
 
         @NotNull ServerEndpoint serverEndpoint = new ServerEndpoint("RemoteSubscriptionModelPerformanceTest.port",
-                serverAssetTree);
+                serverAssetTree, "cluster");
         clientAssetTree = new VanillaAssetTree()
                 .forRemoteAccess("RemoteSubscriptionModelPerformanceTest.port", WireType.TEXT);
 

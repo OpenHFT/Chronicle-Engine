@@ -91,7 +91,7 @@ public class BootStrapTest {
 
         TCPRegistry.createServerSocketChannelFor(CONNECTION_1);
 
-        serverEndpoint1 = new ServerEndpoint(CONNECTION_1, serverAssetTree1);
+        serverEndpoint1 = new ServerEndpoint(CONNECTION_1, serverAssetTree1, "cluster");
 
         client1 = new VanillaAssetTree("client1").forRemoteAccess
                 (CONNECTION_1, WIRE_TYPE);

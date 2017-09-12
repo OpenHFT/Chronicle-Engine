@@ -98,7 +98,7 @@ public class ReferenceChronicleTest {
         serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
                 new ChronicleMapKeyValueStore(context.basePath(OS.TARGET).entries(50).averageValueSize(2_000_000), asset));
 
-        @NotNull ServerEndpoint serverEndpoint = new ServerEndpoint(hostPortToken, serverAssetTree);
+        @NotNull ServerEndpoint serverEndpoint = new ServerEndpoint(hostPortToken, serverAssetTree, "cluster");
         @NotNull AssetTree clientAssetTree = new VanillaAssetTree().forRemoteAccess(hostPortToken, WireType.BINARY);
 
         //noinspection TryFinallyCanBeTryWithResources

@@ -361,7 +361,7 @@ public class MapClientTest extends ThreadMonitoringTest {
             this.clientAssetTree = clientAssetTree;
             this.serverAssetTree = new VanillaAssetTree().forTesting(false);
             TCPRegistry.createServerSocketChannelFor(hostPortDescription);
-            serverEndpoint = new ServerEndpoint(hostPortDescription, serverAssetTree);
+            serverEndpoint = new ServerEndpoint(hostPortDescription, serverAssetTree, "cluster");
             ((VanillaAssetTree) clientAssetTree).forRemoteAccess(hostPortDescription, wireType);
 
             map = clientAssetTree.acquireMap(name, kClass, vClass);

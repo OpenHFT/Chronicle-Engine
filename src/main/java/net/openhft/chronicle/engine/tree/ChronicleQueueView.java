@@ -41,6 +41,7 @@ import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.pubsub.QueueTopicPublisher;
 import net.openhft.chronicle.engine.query.Filter;
 import net.openhft.chronicle.engine.query.QueueConfig;
+import net.openhft.chronicle.network.cluster.ConnectionManager;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ExcerptAppender;
@@ -305,7 +306,15 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
             if (remoteIdentifier == localIdentifier)
                 continue;
 
-            engineCluster.findConnectionManager(remoteIdentifier).addListener((nc, isConnected) -> {
+
+            ConnectionManager connectionManager = engineCluster.findConnectionManager(remoteIdentifier);
+            if (connectionManager == null) {
+                engineCluster.findConnectionManager(remoteIdentifier);
+                Jvm.warn().on(getClass(), "NOT FOUND -> remoteIdentifier=" + remoteIdentifier);
+                return;
+            }
+
+            connectionManager.addListener((nc, isConnected) -> {
 
                 if (!isConnected)
                     return;
@@ -336,6 +345,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
 
             });
         }
+
     }
 
     @NotNull

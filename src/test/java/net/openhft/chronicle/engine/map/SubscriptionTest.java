@@ -118,7 +118,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
         VanillaAssetTree assetTree;
         if (isRemote) {
             TCPRegistry.createServerSocketChannelFor("testSubscriptionTest.host.port");
-            serverEndpoint = new ServerEndpoint("testSubscriptionTest.host.port", serverAssetTree);
+            serverEndpoint = new ServerEndpoint("testSubscriptionTest.host.port", serverAssetTree, "cluster");
 
             assetTree = new VanillaAssetTree().forRemoteAccess("testSubscriptionTest.host.port", wireType);
         } else {

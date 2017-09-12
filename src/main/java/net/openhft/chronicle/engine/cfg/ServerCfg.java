@@ -36,13 +36,14 @@ public class ServerCfg implements Installable, Marshallable {
     private YamlLogging.YamlLoggingLevel logTCPMessages;
     private ServerEndpoint serverEndpoint;
     private int heartbeatIntervalTicks, heartbeatIntervalTimeout;
+    private String clusterName = "cluster";
 
     @NotNull
     @Override
     public ServerCfg install(@NotNull String path, @NotNull AssetTree assetTree) throws IOException {
         LOGGER.info(path + ": Starting listener on port " + port);
-        serverEndpoint = new ServerEndpoint("*:" + port, assetTree);
-       // YamlLogging.setAll(false);
+        serverEndpoint = new ServerEndpoint("*:" + port, assetTree, this.clusterName);
+        // YamlLogging.setAll(false);
         return this;
     }
 
@@ -53,6 +54,7 @@ public class ServerCfg implements Installable, Marshallable {
         wire.read(() -> "logTCPMessages").asEnum(YamlLogging.YamlLoggingLevel.class, this, (o, b) -> o.logTCPMessages = b);
         wire.read(() -> "heartbeatIntervalTicks").int32(this, (o, i) -> o.heartbeatIntervalTicks = i);
         wire.read(() -> "heartbeatIntervalTimeout").int32(this, (o, i) -> o.heartbeatIntervalTimeout = i);
+        wire.read(() -> "clusterName").text(this, (o, i) -> o.clusterName = i);
     }
 
     @Override
@@ -62,6 +64,7 @@ public class ServerCfg implements Installable, Marshallable {
         wire.write(() -> "logTCPMessages").asEnum(logTCPMessages);
         wire.write(() -> "heartbeatIntervalTicks").int32(heartbeatIntervalTicks);
         wire.write(() -> "heartbeatIntervalTimeout").int32(heartbeatIntervalTimeout);
+        wire.write(() -> "clusterName").text(clusterName);
     }
 
     @NotNull
@@ -74,6 +77,7 @@ public class ServerCfg implements Installable, Marshallable {
                 ", serverEndpoint=" + serverEndpoint +
                 ", heartbeatIntervalTicks=" + heartbeatIntervalTicks +
                 ", heartbeatIntervalTimeout=" + heartbeatIntervalTimeout +
+                ", clusterName=" + clusterName +
                 '}';
     }
 }

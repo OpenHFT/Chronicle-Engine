@@ -34,7 +34,7 @@ import java.util.Map;
  */
 public class EngineCfg implements Installable {
     static final Logger LOGGER = LoggerFactory.getLogger(EngineCfg.class);
-    final Map<String, Installable> installableMap = new LinkedHashMap<>();
+    public final Map<String, Installable> installableMap = new LinkedHashMap<>();
 
     @Nullable
     @Override

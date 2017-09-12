@@ -79,7 +79,7 @@ public class TestInsertUpdateChronicleMapViewOnServer extends ThreadMonitoringTe
 
         connection = "TestInsertUpdateChronicleMapView.host.port";
         TCPRegistry.createServerSocketChannelFor(connection);
-        serverEndpoint = new ServerEndpoint(connection, serverAssetTree);
+        serverEndpoint = new ServerEndpoint(connection, serverAssetTree, "cluster");
 
         serverAssetTree.root().addWrappingRule(MapView.class, "map directly to " + "KeyValueStore",
                 VanillaMapView::new, KeyValueStore.class);

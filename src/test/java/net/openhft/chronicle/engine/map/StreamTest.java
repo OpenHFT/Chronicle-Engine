@@ -86,7 +86,7 @@ public class StreamTest extends ThreadMonitoringTest {
             methodName(name.getMethodName());
             connection = "StreamTest." + name.getMethodName() + ".host.port";
             TCPRegistry.createServerSocketChannelFor(connection);
-            serverEndpoint = new ServerEndpoint(connection, serverAssetTree);
+            serverEndpoint = new ServerEndpoint(connection, serverAssetTree, "cluster");
             assetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType);
         } else {
             assetTree = serverAssetTree;

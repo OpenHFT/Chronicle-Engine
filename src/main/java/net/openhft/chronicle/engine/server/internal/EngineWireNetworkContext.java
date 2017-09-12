@@ -17,7 +17,6 @@
 
 package net.openhft.chronicle.engine.server.internal;
 
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.annotation.UsedViaReflection;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -41,7 +40,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
-import java.util.function.Supplier;
 
 import static net.openhft.chronicle.engine.server.internal.EngineWireNetworkContext.ConnectionStatus.CONNECTED;
 import static net.openhft.chronicle.engine.server.internal.EngineWireNetworkContext.ConnectionStatus.DISCONNECTED;
@@ -66,7 +64,7 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
         return handler;
     }
 
-    public EngineWireNetworkContext(@NotNull Asset asset) {
+    public EngineWireNetworkContext(@NotNull Asset asset, String clusterName) {
         this.rootAsset = asset.root();
         // TODO make configurable
         serverThreadingStrategy(ServerThreadingStrategy.CONCURRENT);
@@ -75,12 +73,12 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
         hostByConnectionStatus = rootAsset.root().acquireMap(
                 CONNECTIVITY_URI,
                 ConnectionDetails.class,
-                ConnectionEvent.class);
+                ConnectionEvent.class, clusterName);
 
         connectivityHosts = rootAsset.root().acquireMap(
                 CONNECTIVITY_HOSTS_URI,
                 String.class,
-                ConnectionStatus.class);
+                ConnectionStatus.class, clusterName);
     }
 
     @NotNull
@@ -238,7 +236,7 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
         @NotNull
         @Override
         public NetworkContext apply(@NotNull ClusterContext context) {
-            return new EngineWireNetworkContext<>(((EngineClusterContext) context).assetRoot());
+            return new EngineWireNetworkContext<>(((EngineClusterContext) context).assetRoot(), context.clusterName());
         }
     }
 }

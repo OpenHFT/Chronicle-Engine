@@ -106,7 +106,7 @@ public class ReferenceTest {
 
             methodName(name.getMethodName());
             TCPRegistry.createServerSocketChannelFor(hostPortToken);
-            serverEndpoint = new ServerEndpoint(hostPortToken, serverAssetTree);
+            serverEndpoint = new ServerEndpoint(hostPortToken, serverAssetTree, "cluster");
 
             assetTree = new VanillaAssetTree()
                     .forRemoteAccess(hostPortToken, wireType);

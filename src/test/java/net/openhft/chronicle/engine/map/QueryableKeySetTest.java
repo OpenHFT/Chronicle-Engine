@@ -87,7 +87,7 @@ public class QueryableKeySetTest extends ThreadMonitoringTest {
             methodName(name.getMethodName());
             connection = "QueryableKeySetTest.host.port";
             TCPRegistry.createServerSocketChannelFor(connection);
-            serverEndpoint = new ServerEndpoint(connection, serverAssetTree);
+            serverEndpoint = new ServerEndpoint(connection, serverAssetTree, "cluster");
             assetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType);
         } else {
             assetTree = serverAssetTree;

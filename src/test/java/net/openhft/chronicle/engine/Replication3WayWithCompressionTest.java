@@ -100,9 +100,9 @@ public class Replication3WayWithCompressionTest extends ThreadMonitoringTest {
         tree2 = create(2, writeType, "clusterThree");
         tree3 = create(3, writeType, "clusterThree");
 
-        serverEndpoint1 = new ServerEndpoint("host.port1", tree1);
-        serverEndpoint2 = new ServerEndpoint("host.port2", tree2);
-        serverEndpoint3 = new ServerEndpoint("host.port3", tree3);
+        serverEndpoint1 = new ServerEndpoint("host.port1", tree1, "cluster");
+        serverEndpoint2 = new ServerEndpoint("host.port2", tree2, "cluster");
+        serverEndpoint3 = new ServerEndpoint("host.port3", tree3, "cluster");
     }
 
     @Override

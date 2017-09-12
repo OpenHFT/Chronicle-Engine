@@ -418,14 +418,14 @@ public interface Asset extends Closeable {
 
 
     @NotNull
-    default <K, V> MapView<K, V> acquireMap(@NotNull String uri, Class<K> kClass, Class<V> vClass) throws AssetNotFoundException {
+    default <K, V> MapView<K, V> acquireMap(@NotNull String uri, Class<K> kClass, Class<V> vClass, String cluster) throws AssetNotFoundException {
         @NotNull final RequestContext requestContext = requestContext(uri);
 
         if (requestContext.bootstrap() != null)
             throw new UnsupportedOperationException("Its not possible to set the bootstrap when " +
                     "acquiring a map");
 
-        return acquireView(requestContext.view("map").type(kClass).type2(vClass));
+        return acquireView(requestContext.view("map").type(kClass).type2(vClass).cluster(cluster));
     }
 
 }

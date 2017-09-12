@@ -25,13 +25,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 /*
  * Created by peter.lawrey on 17/06/2015.
  */
 public class Clusters extends AbstractMarshallable implements Marshallable, Closeable {
-    private final Map<String, EngineCluster> clusterMap = new ConcurrentSkipListMap<>();
+    public final Map<String, EngineCluster> clusterMap = new ConcurrentSkipListMap<>();
 
     public Clusters() {
 
@@ -73,6 +74,10 @@ public class Clusters extends AbstractMarshallable implements Marshallable, Clos
 
     public EngineCluster get(String cluster) {
         return clusterMap.get(cluster);
+    }
+
+    public Set<Entry<String, EngineCluster>> clusters() {
+        return clusterMap.entrySet();
     }
 
     public EngineCluster firstCluster() {

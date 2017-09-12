@@ -48,13 +48,15 @@ public class ServerEndpoint implements Closeable {
 
     @NotNull
     private final AtomicBoolean isClosed = new AtomicBoolean();
+    private final String clusterName;
 
     @Nullable
     private AcceptorEventHandler eah;
 
     public ServerEndpoint(@NotNull String hostPortDescription,
                           @NotNull AssetTree assetTree,
-                          @NotNull NetworkStatsListener networkStatsListener) throws IOException {
+                          @NotNull NetworkStatsListener networkStatsListener,
+                          @NotNull  String clusterName) throws IOException {
 
         eg = assetTree.root().acquireView(EventLoop.class);
         Threads.<Void, IOException>withThreadGroup(assetTree.root().getView(ThreadGroup.class), () -> {
@@ -63,10 +65,12 @@ public class ServerEndpoint implements Closeable {
         });
 
         assetTree.root().addView(ServerEndpoint.class, this);
+        this.clusterName = clusterName;
     }
 
     public ServerEndpoint(@NotNull String hostPortDescription,
-                          @NotNull AssetTree assetTree) throws IOException {
+                          @NotNull AssetTree assetTree, String clusterName) throws IOException {
+
         this(hostPortDescription, assetTree, new NetworkStatsListener() {
 
             private String host;
@@ -99,11 +103,12 @@ public class ServerEndpoint implements Closeable {
             public void onRoundTripLatency(long nanosecondLatency) {
 
             }
-        });
+        }, clusterName);
+
     }
 
 
-    @Nullable
+    @NotNull
     private AcceptorEventHandler start(@NotNull String hostPortDescription,
                                        @NotNull final AssetTree assetTree,
                                        @NotNull NetworkStatsListener networkStatsListener)
@@ -118,7 +123,7 @@ public class ServerEndpoint implements Closeable {
         assert eventLoop != null;
 
         @NotNull Function<NetworkContext, TcpEventHandler> networkContextTcpEventHandlerFunction =
-                    BootstrapHandlerFactory.forServerEndpoint()::bootstrapHandlerFactory;
+                BootstrapHandlerFactory.forServerEndpoint()::bootstrapHandlerFactory;
         @NotNull final AcceptorEventHandler eah = new AcceptorEventHandler(
                 hostPortDescription,
                 networkContextTcpEventHandlerFunction,
@@ -132,7 +137,7 @@ public class ServerEndpoint implements Closeable {
     @NotNull
     private EngineWireNetworkContext createNetworkContext(@NotNull AssetTree assetTree,
                                                           @NotNull final NetworkStatsListener networkStatsListener) {
-        @NotNull final EngineWireNetworkContext nc = new EngineWireNetworkContext(assetTree.root());
+        @NotNull final EngineWireNetworkContext nc = new EngineWireNetworkContext(assetTree.root(), clusterName);
         nc.networkStatsListener(networkStatsListener);
         networkStatsListener.networkContext(nc);
         return nc;

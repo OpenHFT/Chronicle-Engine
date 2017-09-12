@@ -62,7 +62,7 @@ public class TcpManyClientConnectionsTest extends ThreadMonitoringTest {
 
         TCPRegistry.createServerSocketChannelFor(CONNECTION);
 
-        serverEndpoint = new ServerEndpoint(CONNECTION, serverAssetTree);
+        serverEndpoint = new ServerEndpoint(CONNECTION, serverAssetTree, "cluster");
 
         for (int i = 0; i < MAX; i++) {
             trees[i] = new VanillaAssetTree().forRemoteAccess(CONNECTION, WIRE_TYPE);

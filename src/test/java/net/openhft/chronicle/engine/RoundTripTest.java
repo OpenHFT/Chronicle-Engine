@@ -168,9 +168,9 @@ public class RoundTripTest {
         @NotNull AssetTree serverAssetTree2 = create(2, WireType.BINARY, hostDetails);
         @NotNull AssetTree serverAssetTree3 = create(3, WireType.BINARY, hostDetails);
 
-        @NotNull ServerEndpoint serverEndpoint1 = new ServerEndpoint(CONNECTION_1, serverAssetTree1);
-        @NotNull ServerEndpoint serverEndpoint2 = new ServerEndpoint(CONNECTION_2, serverAssetTree2);
-        @NotNull ServerEndpoint serverEndpoint3 = new ServerEndpoint(CONNECTION_3, serverAssetTree3);
+        @NotNull ServerEndpoint serverEndpoint1 = new ServerEndpoint(CONNECTION_1, serverAssetTree1, "cluster");
+        @NotNull ServerEndpoint serverEndpoint2 = new ServerEndpoint(CONNECTION_2, serverAssetTree2, "cluster");
+        @NotNull ServerEndpoint serverEndpoint3 = new ServerEndpoint(CONNECTION_3, serverAssetTree3, "cluster");
 
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
         ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);

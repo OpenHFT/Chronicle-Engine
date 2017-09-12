@@ -42,6 +42,6 @@ public class ServerMain {
         YamlLogging.showServerReads(true);
         YamlLogging.showServerWrites(true);
         @NotNull AssetTree serverTree = new VanillaAssetTree().forServer(false);
-        endpoint = new ServerEndpoint("localhost:9090", serverTree);
+        endpoint = new ServerEndpoint("localhost:9090", serverTree, "cluster");
     }
 }

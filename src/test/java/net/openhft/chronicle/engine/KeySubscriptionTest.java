@@ -58,7 +58,7 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
         serverAssetTree = new VanillaAssetTree().forTesting();
 
         TCPRegistry.createServerSocketChannelFor(CONNECTION);
-        serverEndpoint = new ServerEndpoint(CONNECTION, serverAssetTree);
+        serverEndpoint = new ServerEndpoint(CONNECTION, serverAssetTree, "cluster");
         clientTree = new VanillaAssetTree().forRemoteAccess(CONNECTION, WIRE_TYPE);
     }
 

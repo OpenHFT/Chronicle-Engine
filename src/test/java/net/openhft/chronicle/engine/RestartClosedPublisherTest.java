@@ -73,7 +73,7 @@ public class RestartClosedPublisherTest {
         YamlLogging.setAll(false);
         _server = new VanillaAssetTree().forServer();
 
-        _serverEndpoint1 = new ServerEndpoint(CONNECTION_1, _server);
+        _serverEndpoint1 = new ServerEndpoint(CONNECTION_1, _server, "cluster");
 
     }
 

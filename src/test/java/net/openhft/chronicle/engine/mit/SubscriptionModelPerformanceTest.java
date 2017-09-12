@@ -118,7 +118,7 @@ public class SubscriptionModelPerformanceTest {
 
         serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
                 new ChronicleMapKeyValueStore(context.basePath(OS.TARGET).entries(50).averageValueSize(2 << 20), asset));
-        serverEndpoint = new ServerEndpoint(hostPortDescription, serverAssetTree);
+        serverEndpoint = new ServerEndpoint(hostPortDescription, serverAssetTree, "cluster");
         clientAssetTree = new VanillaAssetTree(15).forRemoteAccess(hostPortDescription, wireType);
     }
 

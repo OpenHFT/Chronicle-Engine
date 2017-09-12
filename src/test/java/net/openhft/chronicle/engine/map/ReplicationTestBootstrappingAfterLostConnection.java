@@ -85,10 +85,10 @@ public class ReplicationTestBootstrappingAfterLostConnection {
         @NotNull WireType writeType = WireType.TEXT;
 
         tree1 = create(1, writeType, "clusterTwo");
-        serverEndpoint1 = new ServerEndpoint("host.port1", tree1);
+        serverEndpoint1 = new ServerEndpoint("host.port1", tree1, "cluster");
 
         tree2 = create(2, writeType, "clusterTwo");
-        serverEndpoint2 = new ServerEndpoint("host.port2", tree2);
+        serverEndpoint2 = new ServerEndpoint("host.port2", tree2, "cluster");
     }
 
     @AfterClass
@@ -241,7 +241,7 @@ public class ReplicationTestBootstrappingAfterLostConnection {
         map2.put("hello3", "world3");
 
         tree1 = create(1, WireType.TEXT, "clusterTwo");
-        serverEndpoint1 = new ServerEndpoint("host.port1", tree1);
+        serverEndpoint1 = new ServerEndpoint("host.port1", tree1, "cluster");
 
         map1 = tree1.acquireMap(NAME
                 , String.class, String.class);
@@ -279,7 +279,7 @@ public class ReplicationTestBootstrappingAfterLostConnection {
         map1.put("hello3", "world3");
 
         tree2 = create(2, WireType.TEXT, "clusterTwo");
-        serverEndpoint2 = new ServerEndpoint("host.port2", tree2);
+        serverEndpoint2 = new ServerEndpoint("host.port2", tree2, "cluster");
 
         map2 = tree2.acquireMap(NAME, String.class, String.class);
 
@@ -312,7 +312,7 @@ public class ReplicationTestBootstrappingAfterLostConnection {
 
         //recreate the map and load off the persisted file
         tree1 = create(1, WireType.TEXT, "clusterTwo");
-        serverEndpoint1 = new ServerEndpoint("host.port3", tree1);
+        serverEndpoint1 = new ServerEndpoint("host.port3", tree1, "cluster");
         @NotNull ConcurrentMap<String, String> map1a = tree1.acquireMap(NAME + "unique" + "?basePath=" +
                         basePath
                 , String.class, String.class);
@@ -348,7 +348,7 @@ public class ReplicationTestBootstrappingAfterLostConnection {
         map2.put("hello3", "world3");
 
         tree1 = create(1, WireType.TEXT, "clusterTwo");
-        serverEndpoint1 = new ServerEndpoint("host.port1", tree1);
+        serverEndpoint1 = new ServerEndpoint("host.port1", tree1, "cluster");
 
         map1 = tree1.acquireMap(NAME + "?basePath=" + basePath
                 , String.class, String.class);

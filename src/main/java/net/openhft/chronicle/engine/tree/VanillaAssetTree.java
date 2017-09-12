@@ -66,6 +66,8 @@ public class VanillaAssetTree implements AssetTree {
 
     @NotNull
     final VanillaAsset root;
+    private String region;
+    private String clusterName;
 
     public VanillaAssetTree() {
         this("");
@@ -219,4 +221,23 @@ public class VanillaAssetTree implements AssetTree {
     public VanillaAssetTree forRemoteAccess(String serverAddress, @NotNull WireType wireType, Consumer<Throwable> t) {
         return forRemoteAccess(serverAddress, wireType);
     }
+
+    public VanillaAssetTree region(String region) {
+        this.region = region;
+        return this;
+    }
+
+    public String region() {
+        return region;
+    }
+
+    public String clusterName() {
+        return clusterName;
+    }
+
+    public void clusterName(String clusterName) {
+        this.clusterName = clusterName;
+    }
+
+
 }

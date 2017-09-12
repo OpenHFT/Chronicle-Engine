@@ -46,7 +46,7 @@ public class NetworkStatsReaderTest {
         TCPRegistry.reset();
         @NotNull String hostPortDescription = "NetworkStatsReaderTest-" + name;
         TCPRegistry.createServerSocketChannelFor(hostPortDescription);
-        serverEndpoint = new ServerEndpoint(hostPortDescription, assetTree);
+        serverEndpoint = new ServerEndpoint(hostPortDescription, assetTree, "cluster");
     }
 
     @Test

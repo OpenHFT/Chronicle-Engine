@@ -116,8 +116,8 @@ public class TcpFailoverWithMonitoringTest {
 
         map = failOverClient.acquireMap(NAME, String.class, String.class);
 
-        serverEndpoint1 = new ServerEndpoint(CONNECTION_1, serverAssetTree1);
-        serverEndpoint2 = new ServerEndpoint(CONNECTION_2, serverAssetTree2);
+        serverEndpoint1 = new ServerEndpoint(CONNECTION_1, serverAssetTree1, "cluster");
+        serverEndpoint2 = new ServerEndpoint(CONNECTION_2, serverAssetTree2, "cluster");
     }
 
     @NotNull
