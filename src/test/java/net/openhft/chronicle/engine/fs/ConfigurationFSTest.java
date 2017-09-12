@@ -27,8 +27,13 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -58,6 +63,11 @@ public class ConfigurationFSTest {
     public void recordException() {
         exceptions = Jvm.recordExceptions();
         Jvm.dumpException(exceptions);
+        for (ExceptionKey exceptionKey : exceptions.keySet()) {
+            final StringWriter sw = new StringWriter();
+            exceptionKey.throwable.printStackTrace(new PrintWriter(sw));
+            Assert.fail("Did not expect any exceptions on test start-up:\n" + sw.toString());
+        }
         assertEquals(0, exceptions.size());
     }
 
@@ -70,7 +80,6 @@ public class ConfigurationFSTest {
         }
     }
 
-    @Ignore("todo: fix : ignored for now as failing on teamcity")
     @Test
     public void addMountPoints() {
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
