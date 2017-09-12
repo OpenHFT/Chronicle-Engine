@@ -31,7 +31,7 @@ import java.util.Iterator;
 import java.util.Objects;
 
 /*
- * Created by peter on 11/06/15.
+ * Created by Peter Lawrey on 11/06/15.
  */
 public class VanillaValuesCollection<K, V> extends AbstractCollection<V> implements ValuesCollection<V> {
     private final Asset asset;

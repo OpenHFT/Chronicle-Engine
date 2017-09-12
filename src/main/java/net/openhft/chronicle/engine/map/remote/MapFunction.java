@@ -27,7 +27,7 @@ import java.util.function.Function;
 import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
 
 /*
- * Created by peter on 07/07/15.
+ * Created by Peter Lawrey on 07/07/15.
  */
 public enum MapFunction implements SerializableBiFunction<MapView, Object, Object> {
     CONTAINS_VALUE {

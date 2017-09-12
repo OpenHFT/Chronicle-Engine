@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 
 /*
- * Created by peter on 17/08/15.
+ * Created by Peter Lawrey on 17/08/15.
  */
 /*
 Run ServerMain first

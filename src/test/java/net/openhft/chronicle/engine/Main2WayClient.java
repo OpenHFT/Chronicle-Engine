@@ -23,7 +23,7 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import org.jetbrains.annotations.NotNull;
 
 /*
- * Created by peter on 02/12/15.
+ * Created by Peter Lawrey on 02/12/15.
  */
 public class Main2WayClient {
     public static void main(String[] args) {

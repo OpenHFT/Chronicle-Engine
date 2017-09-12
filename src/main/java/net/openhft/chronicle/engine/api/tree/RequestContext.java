@@ -61,7 +61,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Proxy;
 
 /*
- * Created by peter on 24/05/15.
+ * Created by Peter Lawrey on 24/05/15.
  */
 public class RequestContext implements Cloneable {
     public static final ClassLookup CLASS_ALIASES = ClassLookup.create();

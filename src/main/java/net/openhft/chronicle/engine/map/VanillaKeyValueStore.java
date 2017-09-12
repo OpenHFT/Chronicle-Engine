@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /*
- * Created by peter on 22/05/15.
+ * Created by Peter Lawrey on 22/05/15.
  */
 public class VanillaKeyValueStore<K, V> implements AuthenticatedKeyValueStore<K, V> {
     private final ConcurrentMap<K, V> map = new ConcurrentHashMap<>();

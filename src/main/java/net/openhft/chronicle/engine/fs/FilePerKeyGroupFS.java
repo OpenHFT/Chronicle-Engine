@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
 
 /*
- * Created by peter on 12/06/15.
+ * Created by Peter Lawrey on 12/06/15.
  */
 @Deprecated
 public class FilePerKeyGroupFS implements Marshallable, MountPoint {

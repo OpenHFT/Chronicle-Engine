@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /*
- * Created by peter on 26/08/15.
+ * Created by Peter Lawrey on 26/08/15.
  */
 public interface Installable extends ReadMarshallable {
     @Nullable

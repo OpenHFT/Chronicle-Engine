@@ -20,7 +20,7 @@ package net.openhft.chronicle.engine.api.map;
 import net.openhft.chronicle.engine.map.ObjectKeyValueStore;
 
 /*
- * Created by peter on 25/05/15.
+ * Created by Peter Lawrey on 25/05/15.
  */
 public interface StringStringKeyValueStore extends ObjectKeyValueStore<String, String> {
 }

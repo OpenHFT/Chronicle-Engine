@@ -35,7 +35,7 @@ import java.util.Collections;
 import static org.easymock.EasyMock.*;
 
 /*
- * Created by peter on 11/06/15.
+ * Created by Peter Lawrey on 11/06/15.
  */
 public class AssetSubscriptionsTest {
 

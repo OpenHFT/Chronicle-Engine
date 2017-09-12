@@ -26,7 +26,7 @@ import java.io.IOException;
 
 /**
  * Run EngineMain in test mode so slf4j will be imported.
- * Created by peter on 26/08/15.
+ * Created by Peter Lawrey on 26/08/15.
  */
 public class RunEngineMain {
     public static void main(String[] args) throws IOException {

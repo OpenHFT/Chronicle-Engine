@@ -37,7 +37,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /*
- * Created by peter on 22/05/15.
+ * Created by Peter Lawrey on 22/05/15.
  */
 public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscriber<String, E> {
     @NotNull

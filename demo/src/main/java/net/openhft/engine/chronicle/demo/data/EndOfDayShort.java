@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.Serializable;
 
 /*
- * Created by peter on 27/08/15.
+ * Created by Peter Lawrey on 27/08/15.
  */
 public class EndOfDayShort implements Marshallable, Serializable {
     long daysVolume;

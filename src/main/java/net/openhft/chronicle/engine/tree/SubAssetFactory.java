@@ -21,7 +21,7 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import org.jetbrains.annotations.Nullable;
 
 /*
- * Created by peter on 17/09/15.
+ * Created by Peter Lawrey on 17/09/15.
  */
 public interface SubAssetFactory {
     @Nullable

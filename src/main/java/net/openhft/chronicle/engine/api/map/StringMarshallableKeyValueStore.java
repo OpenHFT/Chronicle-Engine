@@ -21,7 +21,7 @@ import net.openhft.chronicle.engine.map.ObjectKeyValueStore;
 import net.openhft.chronicle.wire.Marshallable;
 
 /*
- * Created by peter on 25/05/15.
+ * Created by Peter Lawrey on 25/05/15.
  */
 public interface StringMarshallableKeyValueStore<V extends Marshallable> extends ObjectKeyValueStore<String, V> {
 }
