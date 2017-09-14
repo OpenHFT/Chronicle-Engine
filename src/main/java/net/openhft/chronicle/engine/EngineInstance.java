@@ -6,7 +6,6 @@ import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.cfg.EngineCfg;
-import net.openhft.chronicle.engine.cfg.Installable;
 import net.openhft.chronicle.engine.fs.Clusters;
 import net.openhft.chronicle.engine.fs.EngineCluster;
 import net.openhft.chronicle.engine.fs.EngineHostDetails;
@@ -29,7 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Collection;
 
 import static net.openhft.chronicle.core.onoes.PrintExceptionHandler.WARN;
 import static net.openhft.chronicle.engine.api.tree.RequestContext.loadDefaultAliases;
@@ -59,7 +57,7 @@ public class EngineInstance {
     public static VanillaAssetTree engineMain(final int hostId, final String yamlConfigFile, String cluster, String region) {
         try {
 
-            @NotNull final VanillaAssetTree tree = createAssetTree(yamlConfigFile, region, hostId,cluster);
+            @NotNull final VanillaAssetTree tree = createAssetTree(yamlConfigFile, region, hostId, cluster);
 
             @Nullable final Clusters clusters = tree.root().getView(Clusters.class);
 
@@ -77,7 +75,7 @@ public class EngineInstance {
     }
 
     @NotNull
-    public static VanillaAssetTree createAssetTree(String yamlConfigFile, String region, int hostId,String clusterName) throws IOException {
+    public static VanillaAssetTree createAssetTree(String yamlConfigFile, String region, int hostId, String clusterName) throws IOException {
         @NotNull TextWire yaml = TextWire.fromFile(yamlConfigFile);
 
         @NotNull EngineCfg installable = (EngineCfg) yaml.readObject();
@@ -106,9 +104,7 @@ public class EngineInstance {
     }
 
 
-
-
-    public static void setUpEndpoint(int hostId, String cluster, VanillaAssetTree tree) throws IOException {
+    public static ServerEndpoint setUpEndpoint(int hostId, String cluster, VanillaAssetTree tree) throws IOException {
 
         tree.root().addView(HostIdentifier.class, new HostIdentifier((byte) hostId));
 
@@ -156,6 +152,9 @@ public class EngineInstance {
                     String.class,
                     NetworkStats.class, engineCluster.clusterName());
         }
+
+        return serverEndpoint;
+
     }
 
     public static VanillaAssetTree engineMain(final int hostId, final String yamlConfigFile) {
