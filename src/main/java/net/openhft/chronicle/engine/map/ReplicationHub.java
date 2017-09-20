@@ -180,12 +180,8 @@ class ReplicationHub extends AbstractStatelessClient {
 
                                       if (LOG.isInfoEnabled()) {
                                           long delay = System.currentTimeMillis() - replicatedEntry.timestamp();
-                                          if (delay > 100) {
+                                          if (delay > 100)
                                               LOG.info("Rcv Clt latency=" + delay + "ms\t");
-                                              if (count++ % 10 == 0) {
-                                                  LOG.info("");
-                                              }
-                                          }
                                       }
 
                                       replication.applyReplication(replicatedEntry);
