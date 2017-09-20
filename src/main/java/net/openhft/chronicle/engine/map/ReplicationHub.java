@@ -47,7 +47,7 @@ import static net.openhft.chronicle.engine.server.internal.ReplicationHandler2.E
  * Created by Rob Austin
  */
 class ReplicationHub extends AbstractStatelessClient {
-    private static final Logger LOG = LoggerFactory.getLogger(ChronicleMapKeyValueStore.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ReplicationHub.class);
     final ThreadLocal<VanillaReplicatedEntry> vre = ThreadLocal.withInitial(VanillaReplicatedEntry::new);
     @NotNull
     private final EventLoop eventLoop;
