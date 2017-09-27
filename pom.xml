@@ -98,8 +98,15 @@
         </dependency>
 
         <dependency>
+            <groupId>software.chronicle</groupId>
+            <artifactId>chronicle-map-enterprise</artifactId>
+            <version>1.0.14-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
             <groupId>net.openhft</groupId>
             <artifactId>chronicle-map</artifactId>
+            <version>3.14.1</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.codehaus.jettison</groupId>
@@ -114,6 +121,15 @@
 
         </dependency>
 
+        <dependency>
+            <groupId>net.openhft</groupId>
+            <artifactId>compiler</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>net.openhft</groupId>
+            <artifactId>lang</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>net.openhft</groupId>

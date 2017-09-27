@@ -88,8 +88,8 @@ public class EngineInstance {
         connectivityMap.addWrappingRule(MapView.class, "map directly to KeyValueStore",
                 VanillaMapView::new,
                 KeyValueStore.class);
-        connectivityMap.addLeafRule(EngineReplication.class, "Engine replication holder",
-                CMap2EngineReplicator::new);
+//        connectivityMap.addLeafRule(EngineReplication.class, "Engine replication holder",
+//                CMap2EngineReplicator::new);
         connectivityMap.addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
                 new ChronicleMapKeyValueStore(context.cluster(clusterName), asset));
 
@@ -170,8 +170,8 @@ public class EngineInstance {
             connectivityMap.addWrappingRule(MapView.class, "map directly to KeyValueStore",
                     VanillaMapView::new,
                     KeyValueStore.class);
-            connectivityMap.addLeafRule(EngineReplication.class, "Engine replication holder",
-                    CMap2EngineReplicator::new);
+//            connectivityMap.addLeafRule(EngineReplication.class, "Engine replication holder",
+//                    CMap2EngineReplicator::new);
             connectivityMap.addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
                     new ChronicleMapKeyValueStore(context.cluster(firstClusterName(tree)), asset));
 

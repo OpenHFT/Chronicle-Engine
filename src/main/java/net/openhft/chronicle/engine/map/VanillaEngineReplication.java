@@ -18,36 +18,54 @@
 
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.bytes.BytesStore;
-import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.engine.api.EngineReplication;
-import net.openhft.chronicle.engine.api.map.KeyValueStore;
-import net.openhft.chronicle.engine.api.map.MapEventListener;
 import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
-import net.openhft.chronicle.wire.Marshallable;
-import net.openhft.chronicle.wire.WireIn;
-import net.openhft.chronicle.wire.WireOut;
-import net.openhft.lang.collection.ATSDirectBitSet;
-import net.openhft.lang.collection.DirectBitSet;
-import net.openhft.lang.io.DirectStore;
-import net.openhft.lang.model.DataValueClasses;
-import net.openhft.lang.model.constraints.MaxSize;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.concurrent.atomic.AtomicReferenceArray;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.IntFunction;
-
-import static net.openhft.chronicle.engine.map.VanillaEngineReplication.ReplicationData.*;
 
 public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyValueStore<K, MV>>
         implements EngineReplication, Closeable {
+    @Override
+    public void close() throws IOException {
+        
+    }
 
+    @Override
+    public byte identifier() {
+        return 0;
+    }
+
+    @Nullable
+    @Override
+    public ModificationIterator acquireModificationIterator(final byte remoteIdentifier) {
+        return null;
+    }
+
+    @Override
+    public long lastModificationTime(final byte remoteIdentifier) {
+        return 0;
+    }
+
+    @Override
+    public void setLastModificationTime(final byte identifier, final long timestamp) {
+
+    }
+
+    @Override
+    public void applyReplication(@NotNull final ReplicationEntry replicatedEntry) {
+
+    }
+
+
+
+
+
+
+
+    /*
     public static final int RESERVED_MOD_ITER = 8;
     public static final int MAX_MODIFICATION_ITERATORS = 127 + RESERVED_MOD_ITER;
     // a long word serve 64 bits
@@ -68,9 +86,9 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
     private final SegmentForKey<Store> segmentForKey;
     private final AtomicReferenceArray<VanillaModificationIterator>
             modificationIterators = new AtomicReferenceArray<>(127 + RESERVED_MOD_ITER);
-    private final DirectBitSet modificationIteratorsRequiringSettingBootstrapTimestamp =
-            createModIterBitSet();
-    private final DirectBitSet modIterSet = createModIterBitSet();
+//    private final DirectBitSet modificationIteratorsRequiringSettingBootstrapTimestamp =
+//            createModIterBitSet();
+//    private final DirectBitSet modIterSet = createModIterBitSet();
     @NotNull
     private final MapEventListener<K, MV> eventListener;
 
@@ -649,15 +667,11 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
             return replicationData.getDeleted();
         }
 
-        /**
-         * @return the timestamp  that the remote client should bootstrap from when there has been a
-         * disconnection, this time maybe later than the message time as event are not send in
-         * chronological order from the bit set.
-         */
         @Override
         public long bootStrapTimeStamp() {
             return bootstrapTimestamp(identifier);
         }
     }
+    */
 }
 

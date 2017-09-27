@@ -48,8 +48,11 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.LockSupport;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 /*
@@ -133,8 +136,8 @@ public class Replication2WayTest extends ThreadMonitoringTest {
         tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
                 VanillaMapView::new,
                 KeyValueStore.class);
-        tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",
-                CMap2EngineReplicator::new);
+//        tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",
+//                CMap2EngineReplicator::new);
         tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
                 new ChronicleMapKeyValueStore(context.wireType(writeType).cluster(clusterTwo),
                         asset));
@@ -199,6 +202,8 @@ public class Replication2WayTest extends ThreadMonitoringTest {
                 break;
             Jvm.pause(300);
         }
+
+        assertEquals(map1.size(), map2.size());
 
         for (@NotNull Map m : new Map[]{map1, map2}) {
             Assert.assertEquals("world1", m.get("hello1"));

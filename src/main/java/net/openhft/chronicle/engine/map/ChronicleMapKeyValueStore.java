@@ -36,19 +36,20 @@ import net.openhft.chronicle.engine.fs.EngineCluster;
 import net.openhft.chronicle.engine.fs.EngineHostDetails;
 import net.openhft.chronicle.engine.server.internal.MapReplicationHandler;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
-import net.openhft.chronicle.hash.replication.EngineReplicationLangBytesConsumer;
-import net.openhft.chronicle.map.*;
+import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.map.ChronicleMapBuilder;
+import net.openhft.chronicle.map.Replica;
 import net.openhft.chronicle.network.api.session.SessionDetails;
 import net.openhft.chronicle.network.api.session.SessionProvider;
 import net.openhft.chronicle.network.cluster.ConnectionManager;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.threads.NamedThreadFactory;
-import net.openhft.lang.io.Bytes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.chronicle.enterprise.map.cluster.BiDirectionalMapReplicationHandler;
 
 import java.io.File;
 import java.io.IOException;
@@ -63,8 +64,6 @@ import java.util.function.Supplier;
 import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
 import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
 import static net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer.notifyEachEvent;
-import static net.openhft.chronicle.engine.server.internal.MapReplicationHandler.newMapReplicationHandler;
-import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplication.builder;
 
 public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V>,
         Closeable, Supplier<EngineReplication> {
@@ -115,18 +114,20 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
         ChronicleMapBuilder<K, V> builder = ChronicleMapBuilder.of(context.keyType(), context.valueType());
         @Nullable HostIdentifier hostIdentifier = null;
         @Nullable EngineReplication engineReplicator1 = null;
-        try {
-            engineReplicator1 = asset.acquireView(EngineReplication.class);
 
-            @Nullable final EngineReplicationLangBytesConsumer langBytesConsumer = asset.findView
-                    (EngineReplicationLangBytesConsumer.class);
+        try {
+//            engineReplicator1 = asset.acquireView(EngineReplication.class);
+
+//            @Nullable final EngineReplicationLangBytesConsumer langBytesConsumer = asset.findView
+//                    (EngineReplicationLangBytesConsumer.class);
 
             hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
             assert hostIdentifier != null;
             builder.putReturnsNull(context.putReturnsNull() != Boolean.FALSE)
                     .removeReturnsNull(context.removeReturnsNull() != Boolean.FALSE);
-            builder.replication(builder().engineReplication(langBytesConsumer)
-                    .createWithId(hostIdentifier.hostId()));
+//            builder.replication(builder().engineReplication(langBytesConsumer)
+            builder.replication(hostIdentifier.hostId());
+//                    .createWithId(hostIdentifier.hostId()));
 
         } catch (AssetNotFoundException anfe) {
             if (LOG.isDebugEnabled())
@@ -135,20 +136,31 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
 
         this.engineReplicator = engineReplicator1;
 
-        @Nullable Boolean nullOldValueOnUpdateEvent = context.nullOldValueOnUpdateEvent();
-        if (nullOldValueOnUpdateEvent != null && nullOldValueOnUpdateEvent) {
-            builder.bytesEventListener(new NullOldValuePublishingOperations());
-        } else {
-            builder.eventListener(new PublishingOperations());
-        }
+//        @Nullable Boolean nullOldValueOnUpdateEvent = context.nullOldValueOnUpdateEvent();
+//        if (nullOldValueOnUpdateEvent != null && nullOldValueOnUpdateEvent) {
+//            builder.bytesEventListener(new NullOldValuePublishingOperations());
+//        } else {
+//            builder.eventListener(new PublishingOperations());
+//        }
 
         if (context.putReturnsNull() != Boolean.FALSE)
             builder.putReturnsNull(true);
         if (context.removeReturnsNull() != Boolean.FALSE)
             builder.removeReturnsNull(true);
-        if (averageValueSize > 0)
+        if (averageValueSize > 0) {
             builder.averageValueSize(averageValueSize);
-        if (maxEntries > 0) builder.entries(maxEntries + 1); // we have to add a head room of 1
+        } else {
+            // TODO completely arbitrary decision, should be enforced on the RequestContext
+            builder.averageValueSize(512);
+        }
+        // TODO completely arbitrary decision, should be enforced on the RequestContext
+        builder.averageKeySize(512);
+        if (maxEntries > 0) {
+            builder.entries(maxEntries + 1); // we have to add a head room of 1
+        } else {
+            // TODO completely arbitrary decision, should be enforced on the RequestContext
+            builder.entries(10_000);
+        }
 
         if (basePath == null) {
             chronicleMap = builder.create();
@@ -212,10 +224,15 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
 
                     @NotNull final String csp = context.fullName();
 
-                    final long lastUpdateTime = ((Replica) chronicleMap).lastModificationTime(remoteIdentifier);
+                    final long lastUpdateTime = ((Replica) chronicleMap).remoteNodeCouldBootstrapFrom(remoteIdentifier);
 
                     WireOutPublisher publisher = nc.wireOutPublisher();
-                    publisher.publish(newMapReplicationHandler(lastUpdateTime, keyType, valueType, csp, nc.newCid()));
+
+                    System.out.printf("Publishing new replication handler [%s]%n",
+                            nc.socketChannel().socket());
+
+                    publisher.publish(net.openhft.chronicle.engine.map.MapReplicationHandler.newReplicationHandler(lastUpdateTime, csp, nc.newCid()));
+//                            newMapReplicationHandler(lastUpdateTime, keyType, valueType, csp, nc.newCid()));
                 });
 
 
@@ -234,7 +251,7 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
     @Override
     public boolean put(K key, V value) {
         try {
-            return chronicleMap.update(key, value) != UpdateResult.INSERT;
+            return chronicleMap.put(key, value) != null;
 
         } catch (RuntimeException e) {
             if (LOG.isDebugEnabled())
@@ -362,118 +379,122 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
         return valueType;
     }
 
-    private class PublishingOperations extends MapEventListener<K, V> {
-        @Override
-        public boolean isActive() {
-            return subscriptions.hasSubscribers();
-        }
-
-        @Override
-        public boolean usesValue() {
-            return subscriptions.hasValueSubscribers();
-        }
-
-        @Override
-        public void onRemove(@NotNull K key, V value, boolean replicationEvent, byte identifier, byte replacedIdentifier, long timestamp, long replacedTimeStamp) {
-            if (replicationEvent &&
-                    replicationSessionDetails != null &&
-                    sessionProvider.get() == null) {
-
-                // todo - this is a bit of a hack, to prevent the AuthenticationKeyValueSubscription
-                // from throwing an exception that there is has no session details from a replication event
-                /// the reason that this was failing, is that client connection "don't and should not hold"
-                // session details of their servers, however in a replication cluster replication events are being authenticated
-                // event thought they originate from a client connect
-                sessionProvider.set(replicationSessionDetails);
-            }
-
-            onRemove0(key, value, replicationEvent);
-        }
-
-        public void onRemove0(@NotNull K key, V value, boolean replicationEven) {
-            subscriptions.notifyEvent(RemovedEvent.of(assetFullName, key, value, replicationEven));
-        }
-
-        private void onPut0(@NotNull K key, V newValue, @Nullable V replacedValue,
-                            boolean replicationEvent, boolean added, boolean hasValueChanged) {
-            if (added) {
-                subscriptions.notifyEvent(InsertedEvent.of(assetFullName, key, newValue, replicationEvent));
-            } else {
-                if (hasValueChanged)
-                    subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, replacedValue,
-                            newValue, replicationEvent, hasValueChanged));
-            }
-        }
-
-        @Override
-        public void onPut(@NotNull K key,
-                          V newValue,
-                          @Nullable V replacedValue,
-                          boolean replicationEvent,
-                          boolean added,
-                          boolean hasValueChanged,
-                          byte identifier,
-                          byte replacedIdentifier, long timestamp, long replacedTimestamp) {
-
-            if (!added && !hasValueChanged && replacedTimestamp == timestamp
-                    && identifier == replacedIdentifier) {
-                Jvm.debug().on(getClass(), "ignore update as nothing has changed");
-                return;
-            }
-
-            if (replicationEvent &&
-                    replicationSessionDetails != null &&
-                    sessionProvider.get() == null) {
-
-                // todo - this is a bit of a hack, to prevent the AuthenticationKeyValueSubscription
-                // from throwing an exception that there is has no session details from a replication event
-                /// the reason that this was failing, is that client connection "don't and should not hold"
-                // session details of their servers, however in a replication cluster replication events are being authenticated
-                // event thought they originate from a client connection
-                sessionProvider.set(replicationSessionDetails);
-            }
-
-            onPut0(key, newValue, replacedValue, replicationEvent, added, hasValueChanged);
-        }
+    public ChronicleMap<K, V> chronicleMap() {
+        return chronicleMap;
     }
 
-    private class NullOldValuePublishingOperations extends BytesMapEventListener {
-        @Override
-        public void onPut(Bytes entry, long metaDataPos, long keyPos, long valuePos, boolean added, boolean replicationEvent, boolean hasValueChanged, byte identifier, byte replacedIdentifier, long timeStamp, long replacedTimeStamp, @NotNull SharedSegment segment) {
-            if (identifier == replacedIdentifier && timeStamp == replacedTimeStamp &&
-                    !hasValueChanged)
-                return;
-
-            K key = chronicleMap.readKey(entry, keyPos);
-            V value = chronicleMap.readValue(entry, valuePos);
-
-            segment.writeUnlock();
-            try {
-                if (added) {
-                    subscriptions.notifyEvent(InsertedEvent.of(assetFullName, key, value, replicationEvent));
-                } else {
-                    subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, null, value,
-                            replicationEvent, hasValueChanged));
-                }
-            } finally {
-                segment.writeLock();
-            }
-        }
-
-        @Override
-        public void onRemove(Bytes entry, long metaDataPos, long keyPos, long valuePos, boolean replicationEvent, byte identifier, byte replacedIdentifier, long timeStamp, long replacedTimeStamp, @NotNull SharedSegment segment) {
-            if (identifier == replacedIdentifier && timeStamp == replacedTimeStamp)
-                return;
-
-            K key = chronicleMap.readKey(entry, keyPos);
-            V value = chronicleMap.readValue(entry, valuePos);
-
-            segment.writeUnlock();
-            try {
-                subscriptions.notifyEvent(RemovedEvent.of(assetFullName, key, value, replicationEvent));
-            } finally {
-                segment.writeLock();
-            }
-        }
-    }
+//    private class PublishingOperations extends MapEventListener<K, V> {
+//        @Override
+//        public boolean isActive() {
+//            return subscriptions.hasSubscribers();
+//        }
+//
+//        @Override
+//        public boolean usesValue() {
+//            return subscriptions.hasValueSubscribers();
+//        }
+//
+//        @Override
+//        public void onRemove(@NotNull K key, V value, boolean replicationEvent, byte identifier, byte replacedIdentifier, long timestamp, long replacedTimeStamp) {
+//            if (replicationEvent &&
+//                    replicationSessionDetails != null &&
+//                    sessionProvider.get() == null) {
+//
+//                // todo - this is a bit of a hack, to prevent the AuthenticationKeyValueSubscription
+//                // from throwing an exception that there is has no session details from a replication event
+//                /// the reason that this was failing, is that client connection "don't and should not hold"
+//                // session details of their servers, however in a replication cluster replication events are being authenticated
+//                // event thought they originate from a client connect
+//                sessionProvider.set(replicationSessionDetails);
+//            }
+//
+//            onRemove0(key, value, replicationEvent);
+//        }
+//
+//        public void onRemove0(@NotNull K key, V value, boolean replicationEven) {
+//            subscriptions.notifyEvent(RemovedEvent.of(assetFullName, key, value, replicationEven));
+//        }
+//
+//        private void onPut0(@NotNull K key, V newValue, @Nullable V replacedValue,
+//                            boolean replicationEvent, boolean added, boolean hasValueChanged) {
+//            if (added) {
+//                subscriptions.notifyEvent(InsertedEvent.of(assetFullName, key, newValue, replicationEvent));
+//            } else {
+//                if (hasValueChanged)
+//                    subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, replacedValue,
+//                            newValue, replicationEvent, hasValueChanged));
+//            }
+//        }
+//
+//        @Override
+//        public void onPut(@NotNull K key,
+//                          V newValue,
+//                          @Nullable V replacedValue,
+//                          boolean replicationEvent,
+//                          boolean added,
+//                          boolean hasValueChanged,
+//                          byte identifier,
+//                          byte replacedIdentifier, long timestamp, long replacedTimestamp) {
+//
+//            if (!added && !hasValueChanged && replacedTimestamp == timestamp
+//                    && identifier == replacedIdentifier) {
+//                Jvm.debug().on(getClass(), "ignore update as nothing has changed");
+//                return;
+//            }
+//
+//            if (replicationEvent &&
+//                    replicationSessionDetails != null &&
+//                    sessionProvider.get() == null) {
+//
+//                // todo - this is a bit of a hack, to prevent the AuthenticationKeyValueSubscription
+//                // from throwing an exception that there is has no session details from a replication event
+//                /// the reason that this was failing, is that client connection "don't and should not hold"
+//                // session details of their servers, however in a replication cluster replication events are being authenticated
+//                // event thought they originate from a client connection
+//                sessionProvider.set(replicationSessionDetails);
+//            }
+//
+//            onPut0(key, newValue, replacedValue, replicationEvent, added, hasValueChanged);
+//        }
+//    }
+//
+//    private class NullOldValuePublishingOperations extends BytesMapEventListener {
+//        @Override
+//        public void onPut(Bytes entry, long metaDataPos, long keyPos, long valuePos, boolean added, boolean replicationEvent, boolean hasValueChanged, byte identifier, byte replacedIdentifier, long timeStamp, long replacedTimeStamp, @NotNull SharedSegment segment) {
+//            if (identifier == replacedIdentifier && timeStamp == replacedTimeStamp &&
+//                    !hasValueChanged)
+//                return;
+//
+//            K key = chronicleMap.readKey(entry, keyPos);
+//            V value = chronicleMap.readValue(entry, valuePos);
+//
+//            segment.writeUnlock();
+//            try {
+//                if (added) {
+//                    subscriptions.notifyEvent(InsertedEvent.of(assetFullName, key, value, replicationEvent));
+//                } else {
+//                    subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, null, value,
+//                            replicationEvent, hasValueChanged));
+//                }
+//            } finally {
+//                segment.writeLock();
+//            }
+//        }
+//
+//        @Override
+//        public void onRemove(Bytes entry, long metaDataPos, long keyPos, long valuePos, boolean replicationEvent, byte identifier, byte replacedIdentifier, long timeStamp, long replacedTimeStamp, @NotNull SharedSegment segment) {
+//            if (identifier == replacedIdentifier && timeStamp == replacedTimeStamp)
+//                return;
+//
+//            K key = chronicleMap.readKey(entry, keyPos);
+//            V value = chronicleMap.readValue(entry, valuePos);
+//
+//            segment.writeUnlock();
+//            try {
+//                subscriptions.notifyEvent(RemovedEvent.of(assetFullName, key, value, replicationEvent));
+//            } finally {
+//                segment.writeLock();
+//            }
+//        }
+//    }
 }

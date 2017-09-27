@@ -65,6 +65,10 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
         this.removeReturnsNull = context.removeReturnsNull() != Boolean.FALSE;
     }
 
+    public KeyValueStore<K, V> kvStore() {
+        return kvStore;
+    }
+
     @Override
     public Class<K> keyType() {
         return keyClass;

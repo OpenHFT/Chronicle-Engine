@@ -26,13 +26,13 @@ import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.map.replication.Bootstrap;
-import net.openhft.chronicle.hash.replication.EngineReplicationLangBytesConsumer;
-import net.openhft.chronicle.map.EngineReplicationLangBytes;
-import net.openhft.chronicle.map.EngineReplicationLangBytes.EngineModificationIterator;
+//import net.openhft.chronicle.hash.replication.EngineReplicationLangBytesConsumer;
+//import net.openhft.chronicle.map.EngineReplicationLangBytes;
+//import net.openhft.chronicle.map.EngineReplicationLangBytes.EngineModificationIterator;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.Wires;
-import net.openhft.lang.io.NativeBytes;
+//import net.openhft.lang.io.NativeBytes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -46,7 +46,7 @@ import static java.lang.ThreadLocal.withInitial;
 /*
  * Created by Rob Austin
  */
-public class CMap2EngineReplicator implements EngineReplication,
+public class CMap2EngineReplicator { /*implements EngineReplication,
         EngineReplicationLangBytesConsumer {
 
     private static final Logger LOG = LoggerFactory.getLogger(CMap2EngineReplicator.class);
@@ -178,23 +178,11 @@ public class CMap2EngineReplicator implements EngineReplication,
         return new EngineModificationIteratorAdaptor(instance, remoteIdentifier);
     }
 
-    /**
-     * @param remoteIdentifier the identifier of the remote node to check last replicated update
-     *                         time from
-     * @return the last time that host denoted by the {@code remoteIdentifier} was updated in
-     * milliseconds.
-     */
     @Override
     public long lastModificationTime(final byte remoteIdentifier) {
         return engineReplicationLang.lastModificationTime(remoteIdentifier);
     }
 
-    /**
-     * @param identifier the identifier of the remote node to check last replicated update time
-     *                   from
-     * @param timestamp  set the last time that host denoted by the {@code remoteIdentifier} was
-     *                   updated in milliseconds.
-     */
     @Override
     public void setLastModificationTime(final byte identifier, final long timestamp) {
         engineReplicationLang.setLastModificationTime(identifier, timestamp);
@@ -233,8 +221,8 @@ public class CMap2EngineReplicator implements EngineReplication,
             return value;
         }
     }
-
-    public static class VanillaReplicatedEntry implements ReplicationEntry {
+*/
+    public static class VanillaReplicatedEntry implements EngineReplication.ReplicationEntry {
 
         private final byte remoteIdentifier;
         private BytesStore key;
@@ -245,17 +233,7 @@ public class CMap2EngineReplicator implements EngineReplication,
         private boolean isDeleted;
         private long bootStrapTimeStamp;
 
-        /**
-         * @param key                the key of the entry
-         * @param value              the value of the entry
-         * @param timestamp          the timestamp send from the remote server, this time stamp was
-         *                           the time the entry was removed
-         * @param identifier         the identifier of the remote server
-         * @param bootStrapTimeStamp sent to the client on every update this is the timestamp that
-         *                           the remote client should bootstrap from when there has been a
-         * @param remoteIdentifier   the identifier of the server we are sending data to ( only used
-         *                           as a comment )
-         */
+
         VanillaReplicatedEntry(@NotNull final BytesStore key,
                                @Nullable final BytesStore value,
                                final long timestamp,
@@ -377,7 +355,7 @@ public class CMap2EngineReplicator implements EngineReplication,
 
         }
     }
-
+/*
     private class EngineModificationIteratorAdaptor implements ModificationIterator
     {
         private final EngineModificationIterator instance;
@@ -464,4 +442,4 @@ public class CMap2EngineReplicator implements EngineReplication,
             return pbs;
         }
     }
-}
+*/}

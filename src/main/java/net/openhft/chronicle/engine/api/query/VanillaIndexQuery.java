@@ -26,7 +26,6 @@ import net.openhft.chronicle.wire.Demarshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.Wires;
 import net.openhft.compiler.CompilerUtils;
-import net.openhft.lang.model.DataValueGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -198,7 +197,7 @@ public class VanillaIndexQuery<V> extends AbstractMarshallable implements Demars
                     "\t}\n" +
                     "}\n";
 
-            LoggerFactory.getLogger(DataValueGenerator.class).info(source);
+            LoggerFactory.getLogger(VanillaIndexQuery.class).info(source);
             ClassLoader classLoader = ClassCache.class.getClassLoader();
             try
 
