@@ -297,9 +297,9 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
             } finally {
                 assert outWire.endUse();
             }
-        }
+        };
 
-                ;
+
     }
 
     private boolean isValid(@NotNull Class viewType) {
@@ -355,10 +355,11 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
             prevLogMessage.append(currentLogMessage);
             currentLogMessage.setLength(0);
             logToBuffer(in, currentLogMessage, in.bytes().readPosition() - 4);
-        } else {
-            //log every message
-            logYamlToStandardOut(in);
         }
+
+        //log every message
+        logYamlToStandardOut(in);
+
 
         if (inDc.isMetaData()) {
             this.metaDataConsumer.readMarshallable(in);
