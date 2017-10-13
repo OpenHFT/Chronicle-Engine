@@ -186,6 +186,7 @@ public class RemoteQuery<E> implements Query<E> {
         return collector.finisher().apply(container);
     }
 
+    @FunctionalInterface
     public interface Subscribable<E> {
         void subscribe(@NotNull Subscriber<E> subscriber,
                        @NotNull Filter<E> filter,

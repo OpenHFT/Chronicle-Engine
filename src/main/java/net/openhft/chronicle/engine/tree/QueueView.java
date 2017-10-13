@@ -66,6 +66,7 @@ public interface QueueView<T, M> extends TopicPublisher<T, M>, KeyedView, Assett
         void clear();
     }
 
+    @FunctionalInterface
     interface Tailer<T, M> {
         /**
          * @return the next message from the current tailer

@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Rob Austin.
  */
+@FunctionalInterface
 public interface UserEvent extends Marshallable {
 
     /**

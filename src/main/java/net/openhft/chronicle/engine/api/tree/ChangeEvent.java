@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A super class for all change events.
  */
+@FunctionalInterface
 public interface ChangeEvent extends Marshallable {
     /**
      * @return The full name of the Asset which changed.
