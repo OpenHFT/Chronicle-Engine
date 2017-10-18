@@ -56,8 +56,6 @@ import net.openhft.chronicle.threads.Threads;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Comparator;
 import java.util.Map;
@@ -71,11 +69,11 @@ import java.util.function.Function;
 /*
  * Created by Peter Lawrey on 22/05/15.
  */
+@SuppressWarnings("unchecked")
 public class VanillaAsset implements Asset, Closeable {
 
     public static final Comparator<Class> CLASS_COMPARATOR = Comparator.comparing(Class::getName);
     public static final String LAST = "{last}";
-    private static final Logger LOG = LoggerFactory.getLogger(VanillaAsset.class);
     private static final BiPredicate<RequestContext, Asset> ALWAYS = (rc, asset) -> true;
     final Map<Class, Object> viewMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
     final ConcurrentMap<String, Asset> children = new ConcurrentSkipListMap<>();
@@ -284,6 +282,7 @@ public class VanillaAsset implements Asset, Closeable {
         @NotNull SessionProvider sessionProvider = new ClientSessionProvider(sessionDetails);
 
         @Nullable EventLoop eventLoop = findOrCreateView(EventLoop.class);
+        assert eventLoop != null;
         eventLoop.start();
         if (getView(TcpChannelHub.class) == null) {
 
@@ -374,7 +373,7 @@ public class VanillaAsset implements Asset, Closeable {
     @Override
     @ForceInline
     public <V> V getView(@NotNull Class<V> viewType) {
-        @NotNull @SuppressWarnings("unchecked")
+        @Nullable @SuppressWarnings("unchecked")
         V view = (V) viewMap.get(viewType);
         return view;
     }
@@ -566,7 +565,7 @@ public class VanillaAsset implements Asset, Closeable {
         return leafViewMap.containsKey(viewType) || wrappingViewFactoryMap.containsKey(viewType);
     }
 
-    @Nullable
+    @NotNull
     private Asset getAssetOrANFE(@NotNull String name) throws AssetNotFoundException {
         @Nullable Asset asset = children.get(name);
         if (asset == null) {
@@ -583,18 +582,20 @@ public class VanillaAsset implements Asset, Closeable {
         return children.computeIfAbsent(name, keyedAsset != Boolean.TRUE
                 ? n -> new VanillaAsset(this, name)
                 : n -> {
-            @Nullable MapView map = getView(MapView.class);
 
+            @Nullable SubAssetFactory saFactory = findOrCreateView(SubAssetFactory.class);
+            assert saFactory != null;
+
+            @Nullable MapView map = getView(MapView.class);
             if (map != null) {
-                @Nullable SubAssetFactory saFactory = findOrCreateView(SubAssetFactory.class);
                 return saFactory.createSubAsset(this, name, map.valueType());
             }
 
-            @Nullable SubAssetFactory saFactory = findOrCreateView(SubAssetFactory.class);
             return saFactory.createSubAsset(this, name, String.class);
         });
     }
 
+    @Nullable
     @Override
     public Asset getChild(String name) {
         return children.get(name);

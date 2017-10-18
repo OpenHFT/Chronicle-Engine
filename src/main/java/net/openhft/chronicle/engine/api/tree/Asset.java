@@ -20,7 +20,6 @@ package net.openhft.chronicle.engine.api.tree;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.util.ThrowingConsumer;
 import net.openhft.chronicle.engine.api.map.MapView;
-import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionCollection;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
@@ -41,6 +40,7 @@ import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContex
  * viewed in terms of the objects it holds e.g. String or Marshallable or the raw data i.e. as a
  * BytesStore.
  */
+@SuppressWarnings("unchecked")
 public interface Asset extends Closeable {
 
     /**
@@ -112,7 +112,8 @@ public interface Asset extends Closeable {
      *
      * @param childName name of the child asset.
      * @return Asset acquired
-     * @throws AssetNotFoundException
+     * @throws AssetNotFoundException if the Asset could not be created. This can happen if a
+     *                                required rule is not provided.
      */
     @NotNull
     Asset acquireAsset(String childName) throws AssetNotFoundException;
@@ -154,6 +155,8 @@ public interface Asset extends Closeable {
      *
      * @param viewType to obtain.
      * @return the view it could be created
+     * @throws AssetNotFoundException if the Asset could not be created. This can happen if a
+     *                                required rule is not provided.
      */
     @Nullable
     default <V> V findOrCreateView(@NotNull Class<V> viewType) throws AssetNotFoundException {
@@ -182,6 +185,7 @@ public interface Asset extends Closeable {
      * @param name of the child.
      * @return the Asset or null if it doesn't exist.
      */
+    @Nullable
     Asset getChild(String name);
 
     /**
@@ -202,7 +206,7 @@ public interface Asset extends Closeable {
      */
     @NotNull
     default <V> V acquireView(@NotNull RequestContext requestContext) throws AssetNotFoundException {
-        return (V) acquireView(requestContext.viewType(), requestContext);
+        return acquireView((Class<V>) requestContext.viewType(), requestContext);
     }
 
     /**
@@ -230,7 +234,7 @@ public interface Asset extends Closeable {
      *                                required rule is not provided.
      */
     @NotNull
-    default <V> V acquireView(Class<V> viewType) {
+    default <V> V acquireView(Class<V> viewType) throws AssetNotFoundException {
         return acquireView(viewType, RequestContext.requestContext(fullName()));
     }
 
@@ -311,7 +315,7 @@ public interface Asset extends Closeable {
      * adding rules.
      *
      * @param viewType to associate this implementation with.
-     * @param view
+     * @param view the implementation of a view
      * @return the view provided.
      */
     <V> V addView(Class<V> viewType, V view);
@@ -348,14 +352,14 @@ public interface Asset extends Closeable {
      * Iterate of all the children of this Asset.
      *
      * @param consumer to accept each child.
-     * @throws InvalidSubscriberException to throw if the accept is no longer interested in getting
+     * @throws T to throw if the accept is no longer interested in getting
      *                                    more children.
      */
     <T extends Throwable> void forEachChild(ThrowingConsumer<Asset, T> consumer) throws T;
 
     void getUsageStats(AssetTreeStats ats);
 
-    default <E> void unregisterSubscriber(
+    default void unregisterSubscriber(
             @NotNull RequestContext requestContext,
             @NotNull Subscriber<Object> subscriber) {
 

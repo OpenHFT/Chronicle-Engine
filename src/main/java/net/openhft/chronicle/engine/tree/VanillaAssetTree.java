@@ -222,6 +222,7 @@ public class VanillaAssetTree implements AssetTree {
         return forRemoteAccess(serverAddress, wireType);
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public VanillaAssetTree region(String region) {
         this.region = region;
         return this;

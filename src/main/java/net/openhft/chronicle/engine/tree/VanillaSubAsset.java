@@ -39,13 +39,14 @@ import java.util.function.Supplier;
 /*
  * Created by Peter Lawrey on 22/05/15.
  */
+@SuppressWarnings("unchecked")
 public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscriber<String, E> {
     @NotNull
     private final VanillaAsset parent;
     private final String name;
     @NotNull
     private final SimpleSubscription<E> subscription;
-    @Nullable
+    @NotNull
     private final Reference<E> reference;
 
     public VanillaSubAsset(@NotNull VanillaAsset parent, String name, Class<E> type, Function<Object, E> valueReader) throws AssetNotFoundException {
@@ -55,7 +56,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
         if (tcpChannelHub == null) {
             @Nullable QueueView queueView = parent.getView(QueueView.class);
             if (queueView == null) {
-                reference = new MapReference<>(name, type, this, parent.acquireView(MapView.class));
+                reference = new MapReference<E>(name, type, this, parent.acquireView(MapView.class));
                 subscription = new MapSimpleSubscription<>(reference, valueReader);
             } else {
                 reference = new QueueReference<>(type, parent, queueView, name);
@@ -79,7 +80,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
         return subscription;
     }
 
-    @NotNull
+    @Nullable
     @Override
     public <V> V getView(Class<V> viewType) {
         if (viewType == Reference.class || viewType == Publisher.class || viewType == Supplier.class)
@@ -102,19 +103,12 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
             return (V) reference;
         }
         if (viewType == Publisher.class) {
-            if (reference == null)
-                return acquireViewFor(viewType, rc);
             return (V) reference;
         }
         if (viewType == MapSimpleSubscription.class || viewType == ObjectSubscription.class) {
             return (V) subscription;
         }
         throw new UnsupportedOperationException("todo vClass: " + viewType + ", rc: " + rc);
-    }
-
-    @NotNull
-    private <V> V acquireViewFor(@NotNull Class<V> viewType, @NotNull RequestContext rc) throws AssetNotFoundException {
-        return parent.getView(viewType);
     }
 
     @Override
@@ -173,7 +167,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
         return false;
     }
 
-    @NotNull
+    @Nullable
     @Override
     public Asset getChild(String name) {
         return null;

@@ -38,7 +38,6 @@ import net.openhft.chronicle.engine.fs.EngineCluster;
 import net.openhft.chronicle.engine.fs.EngineHostDetails;
 import net.openhft.chronicle.engine.map.VanillaKeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
-import net.openhft.chronicle.engine.pubsub.QueueTopicPublisher;
 import net.openhft.chronicle.engine.query.Filter;
 import net.openhft.chronicle.engine.query.QueueConfig;
 import net.openhft.chronicle.network.cluster.ConnectionManager;
@@ -69,6 +68,7 @@ import static net.openhft.chronicle.wire.WireType.*;
 /**
  * @author Rob Austin.
  */
+@SuppressWarnings("unchecked")
 public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>, SubAssetFactory,
         Closeable {
 
@@ -125,7 +125,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         if (hostId != null)
             replication(context, asset);
 
-        @Nullable EventLoop eventLoop = asset.findOrCreateView(EventLoop.class);
+        EventLoop eventLoop = asset.findOrCreateView(EventLoop.class);
+        assert eventLoop != null;
         eventLoop.addHandler(new EventHandler() {
             @Override
             public boolean action() throws InvalidEventHandlerException, InterruptedException {
@@ -254,13 +255,13 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
 
     }
 
-    @Nullable
+    @NotNull
     public RollingChronicleQueue chronicleQueue() {
         return chronicleQueue;
     }
 
     public void replication(@NotNull RequestContext context, @NotNull Asset asset) {
-        @Nullable final HostIdentifier hostIdentifier;
+        final HostIdentifier hostIdentifier;
 
         try {
             hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
@@ -269,6 +270,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
                 Jvm.debug().on(getClass(), "replication not enabled " + anfe.getMessage());
             return;
         }
+        assert hostIdentifier != null;
 
         final int remoteSourceIdentifier = queueConfig.sourceHostId(context.fullName());
         isSource = hostIdentifier.hostId() == remoteSourceIdentifier;
@@ -421,10 +423,10 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         return mapView().longSize();
     }
 
-    @NotNull
+    @Nullable
     @Override
     public M getAndPut(T key, M value) {
-        return getAndPut(key, value);
+        return mapView().getAndPut(key, value);
     }
 
     @Nullable
@@ -465,9 +467,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         if (wireType != BINARY && wireType != DEFAULT_ZERO_BINARY)
             throw new IllegalArgumentException("Currently the chronicle queue only supports Binary and Default Zero Binary Wire");
 
-        RollingChronicleQueue chronicleQueue;
-
-        @Nullable File baseFilePath;
+        @NotNull File baseFilePath;
         if (basePath == null)
             baseFilePath = new File(defaultPath, "");
         else
@@ -694,13 +694,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
                 Jvm.debug().on(getClass(), "Unable to delete " + file, e);
             }
         }
-    }
-
-    private void deleteFiles(TopicPublisher p) {
-
-        if (p instanceof QueueTopicPublisher)
-            deleteFiles((ChronicleQueueView) ((QueueTopicPublisher) p).underlying());
-
     }
 
     @Override
