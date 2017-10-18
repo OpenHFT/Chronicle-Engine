@@ -374,15 +374,18 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
         }
     }
 
+    @FunctionalInterface
     public interface ChangeApplier<Store> {
         void applyChange(Store store, ReplicationEntry replicationEntry);
     }
 
+    @FunctionalInterface
     public interface GetValue<Store> {
         @NotNull
         BytesStore getValue(Store store, BytesStore key);
     }
 
+    @FunctionalInterface
     public interface SegmentForKey<Store> {
         int segmentForKey(Store store, BytesStore key);
     }

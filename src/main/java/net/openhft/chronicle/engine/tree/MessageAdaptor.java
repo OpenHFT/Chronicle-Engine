@@ -29,6 +29,7 @@ import java.util.function.BiFunction;
 /**
  * @author Rob Austin.
  */
+@FunctionalInterface
 public interface MessageAdaptor extends BiFunction<WireIn, WireOut, Boolean>, Demarshallable,
         WriteMarshallable {
 

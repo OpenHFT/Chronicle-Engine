@@ -25,6 +25,7 @@ import java.util.stream.Stream;
 /*
  * Created by peter.lawrey on 11/07/2015.
  */
+@FunctionalInterface
 public interface Queryable<E> {
     @NotNull
     default Query<E> query() {
