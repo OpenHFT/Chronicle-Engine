@@ -178,19 +178,19 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
      */
     @NotNull
     @SuppressWarnings("WeakerAccess")
-    public static WriteMarshallable newSync(
-            @NotNull Class topicType,
-            @NotNull Class elementType,
-            boolean acknowledgement,
-            @Nullable MessageAdaptor syncMessageAdaptor,
-            @NotNull WireType wireType,
-            @Nullable MessageAdaptor sourceMessageAdaptor) {
+    public static WriteMarshallable newSync(long nextIndexRequired,
+                                            @NotNull Class topicType,
+                                            @NotNull Class elementType,
+                                            boolean acknowledgement,
+                                            @Nullable MessageAdaptor syncMessageAdaptor,
+                                            @NotNull WireType wireType,
+                                            @Nullable MessageAdaptor sourceMessageAdaptor) {
         try {
 
             Class<?> aClass = Class.forName("software.chronicle.enterprise.queue.QueueSyncReplicationHandler");
-            Constructor<?> declaredConstructor = aClass.getConstructor(Class.class, Class.class,
+            Constructor<?> declaredConstructor = aClass.getConstructor(long.class, Class.class, Class.class,
                     boolean.class, MessageAdaptor.class, WireType.class, MessageAdaptor.class);
-            return (WriteMarshallable) declaredConstructor.newInstance(topicType, elementType,
+            return (WriteMarshallable) declaredConstructor.newInstance(nextIndexRequired, topicType, elementType,
                     acknowledgement, syncMessageAdaptor, wireType, sourceMessageAdaptor);
 
         } catch (Exception e) {
@@ -329,14 +329,16 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
 
                 final boolean isSource0 = (remoteIdentifier == remoteSourceIdentifier);
 
+                long index = chronicleQueue.createTailer().toEnd().index();
                 @NotNull WriteMarshallable h = isSource0 ?
 
-                        newSource(chronicleQueue.createTailer().toEnd().index(), context.topicType(),
+                        newSource(index, context.topicType(),
                                 context.elementType(),
                                 acknowledgement,
                                 messageAdaptor, sourceMessageAdaptor) :
 
-                        newSync(context.topicType(),
+                        newSync(index,
+                                context.topicType(),
                                 context.elementType(),
                                 acknowledgement,
                                 messageAdaptor,
