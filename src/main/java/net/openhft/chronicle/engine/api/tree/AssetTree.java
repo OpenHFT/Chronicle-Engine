@@ -413,8 +413,7 @@ public interface AssetTree extends Closeable {
     }
 
     @NotNull
-    default <T, M> QueueView<T, M> acquireQueue(@NotNull String uri, Class<T> typeClass, Class<M>
-            messageClass, final String cluster, String basePath) {
+    default <T, M> QueueView<T, M> acquireQueue(@NotNull String uri, Class<T> typeClass, Class<M> messageClass, final String cluster, String basePath) {
 
         @NotNull final RequestContext requestContext = requestContext(uri).basePath(basePath);
 
@@ -427,17 +426,9 @@ public interface AssetTree extends Closeable {
     }
 
     @NotNull
-    default <T, M> QueueView<T, M> acquireQueue(@NotNull String uri, String basePath, Class<T> typeClass,
-                                                Class<M> messageClass, final String cluster) {
-
-        @NotNull final RequestContext requestContext = requestContext(uri).basePath(basePath);
-
-        if (requestContext.bootstrap() != null)
-            throw new UnsupportedOperationException("Its not possible to set the bootstrap when " +
-                    "acquiring a queue");
-
-        return acquireView(requestContext.view("queue").type(typeClass).type2(messageClass)
-                .cluster(cluster));
+    @Deprecated
+    default <T, M> QueueView<T, M> acquireQueue(@NotNull String uri, String basePath, Class<T> typeClass, Class<M> messageClass, final String cluster) {
+        return acquireQueue(uri, typeClass, messageClass, cluster, basePath);
     }
 
 }
