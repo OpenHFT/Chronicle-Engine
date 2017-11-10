@@ -1,54 +1,70 @@
 --- !EngineCfg {
-#
-# Configuration files are being placed in /etc following the Unix convention, but could be anywhere
-#
-etc: {
   #
-  # Configures JMX supports
+  # Configuration files are being placed in /etc following the Unix convention, but could be anywhere
   #
-  jmx: !JmxCfg {
-    enabled: true
-    }
-  #
+  etc: {
+    #
+    # Configures JMX supports
+    # Disabled - starts up a very long time
+    #
+    #jmx: !JmxCfg {
+    #  enabled: true
+    #}
 
-  monitoring: !MonitorCfg {
-      subscriptionMonitoringEnabled: true
-      userMonitoringEnabled: true
-  }
-  #
-  # Configure a group of node which form a local cluster.
-  #
-  # Configure a cluster of one for now.
-  clusters: !ClustersCfg {
+    monitoring: !MonitorCfg {
+        subscriptionMonitoringEnabled: true
+        userMonitoringEnabled: false
+    },
+    #
+    # Configure a group of node which form a local cluster.
+    #
+    # Configure a cluster of one for now.
+    clusters: !ClustersCfg {
 
-    cluster: {
-      context: !EngineClusterContext {
-      }
-      host1: {
-         hostId: 1,
-         tcpBufferSize: 65536,
-         connectUri: localhost:8088,
-         timeoutMs: 1000,
-      }
-#      host2: {
-#         hostId: 2,
-#         tcpBufferSize: 65536,
-#         connectUri: server2:8088,
-#         timeoutMs: 1000,
-#      },
-#       host3: {
-#           hostId: 3,
-#           tcpBufferSize: 65536,
-#           connectUri: server3:8088,
-#           timeoutMs: 1000,
-#        }
+      cluster: {
+        context: !EngineClusterContext {
+          wireType: BINARY,
+          handlerFactory: !UberHandlerFactory {},
+          wireOutPublisherFactory: !VanillaWireOutPublisherFactory {},
+          networkContextFactory: !EngineWireNetworkContextFactory {},
+          connectionEventHandler:  !EngineConnectionManagerFactory {},
+          #
+          # this listener will log to a chronicle queue
+          networkStatsListenerFactory: !EngineNetworkStatsListenerFactory {},
+          heartbeatTimeoutMs: 500_000L,
+          heartbeatIntervalMs: 300_000L,
+          #
+          # controls how the heart-beating works
+          heartbeatFactory: !HeartbeatHandlerFactory {},
+          #
+          # connection are established originally bi-directionally, then the connection with the
+          # hostID is dropped
+          connectionStrategy: !HostIdConnectionStrategy {},
+          serverThreadingStrategy: CONCURRENT,
+        },
+        host1: {
+          hostId: 1,
+          tcpBufferSize: 65536,
+          connectUri: localhost:8088,
+        },
+        host2: {
+           hostId: 2,
+           tcpBufferSize: 65536,
+           connectUri: localhost:8089,
+        }
+  #       host3: {
+  #           hostId: 3,
+  #           tcpBufferSize: 65536,
+  #           connectUri: server3:8088,
+  #           timeoutMs: 1000,
+  #        }
       }
     }
-  }
-#
-# User space data resources, could be named anything
-#
-data: {
+  },
+  #
+  # User space data resources, could be named anything
+  #
+  data: {
     # a map with wraps a directory
     disk: !FilePerKeyMapCfg {
       keyType: !type String,
@@ -59,15 +75,15 @@ data: {
       diskPath: demo-data
     },
     chronicle: !ChronicleMapCfg {
-          diskPath: /tmp/data,
-          keyType: !type String,
-          valueType: !type String,
-          compression: none,
-          putReturnsNull: false,
-          removeReturnsNull: false,
-          entries: 2000,
-          averageSize: 1000
-        },
+      diskPath: /tmp/data,
+      keyType: !type String,
+      valueType: !type String,
+      compression: none,
+      putReturnsNull: false,
+      removeReturnsNull: false,
+      entries: 2000,
+      averageSize: 1000
+    },
     # a map which wraps ConcurrentHashMap
     map: !InMemoryMapCfg {
       keyType: !type String,
@@ -84,23 +100,23 @@ data: {
       putReturnsNull: true,
       removeReturnsNull: true,
     }
-  }
-stocks: {
-  ftse: !InMemoryMapCfg {
-    keyType: !type String,
-    valueType: !type EndOfDayShort,
-    compression: none,
-    putReturnsNull: true,
-    removeReturnsNull: true,
-    import: ftse350.csv
-    }
-  nyse: !InMemoryMapCfg {
-    keyType: !type String,
-    valueType: !type EndOfDay,
-    compression: none,
-    putReturnsNull: true,
-    removeReturnsNull: true,
-    import: nyse.csv
+  },
+  stocks: {
+    ftse: !InMemoryMapCfg {
+      keyType: !type String,
+      valueType: !type EndOfDayShort,
+      compression: none,
+      putReturnsNull: true,
+      removeReturnsNull: true,
+      import: ftse350.csv
+    },
+    nyse: !InMemoryMapCfg {
+      keyType: !type String,
+      valueType: !type EndOfDay,
+      compression: none,
+      putReturnsNull: true,
+      removeReturnsNull: true,
+      import: nyse.csv
     }
   }
 }
