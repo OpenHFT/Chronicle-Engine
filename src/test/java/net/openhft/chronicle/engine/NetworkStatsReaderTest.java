@@ -25,9 +25,6 @@ import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author Rob Austin.
- */
 public class NetworkStatsReaderTest {
 
     @NotNull

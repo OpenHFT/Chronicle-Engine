@@ -55,7 +55,7 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
     private static final String CONNECTIVITY_URI = PROC_CONNECTIONS_CLUSTER + "connectivity";
     private static final String CONNECTIVITY_HOSTS_URI = PROC_CONNECTIONS_CLUSTER + "hosts";
 
-    private Asset rootAsset;
+    private VanillaAsset rootAsset;
     private MapView<ConnectionDetails, ConnectionEvent> hostByConnectionStatus;
     private MapView<String, ConnectionStatus> connectivityHosts;
     private TcpHandler handler;
@@ -65,10 +65,10 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
     }
 
     public EngineWireNetworkContext(@NotNull Asset asset, String clusterName) {
-        this.rootAsset = asset.root();
+        this.rootAsset = (VanillaAsset) asset.root();
         // TODO make configurable
         serverThreadingStrategy(ServerThreadingStrategy.CONCURRENT);
-        ((VanillaAsset) rootAsset.acquireAsset("/proc")).configMapServer();
+        rootAsset.getRuleProvider().configMapServer((VanillaAsset) rootAsset.acquireAsset("/proc"));
 
         hostByConnectionStatus = rootAsset.root().acquireMap(
                 CONNECTIVITY_URI,

@@ -70,15 +70,28 @@ public class VanillaAssetTree implements AssetTree {
     private String clusterName;
 
     public VanillaAssetTree() {
-        this("");
-    }
-
-    public VanillaAssetTree(@Nullable String name) {
-        root = new VanillaAsset(null, name == null ? "" : name);
+        this(new VanillaAssetRuleProvider());
     }
 
     public VanillaAssetTree(int hostId) {
-        this();
+        this(hostId, new VanillaAssetRuleProvider());
+    }
+
+    public VanillaAssetTree(@Nullable String name) {
+        this(name, new VanillaAssetRuleProvider());
+    }
+
+
+    public VanillaAssetTree(AssetRuleProvider ruleProvider) {
+        this("", ruleProvider);
+    }
+
+    public VanillaAssetTree(@Nullable String name, AssetRuleProvider ruleProvider) {
+        root = new VanillaAsset(null, name == null ? "" : name, ruleProvider);
+    }
+
+    public VanillaAssetTree(int hostId, AssetRuleProvider ruleProvider) {
+        this(ruleProvider);
         root.addView(HostIdentifier.class, new HostIdentifier((byte) hostId));
     }
 
@@ -114,7 +127,7 @@ public class VanillaAssetTree implements AssetTree {
     public VanillaAssetTree forServer(boolean daemon, boolean binding) {
         @Nullable final HostIdentifier view = root.getView(HostIdentifier.class);
         final int hostId = view == null ? 1 : view.hostId();
-        root.forServer(daemon, (String uri) -> VanillaAsset.master(uri, hostId), binding);
+        root.forServer(daemon, (String uri) -> VanillaAsset.master(uri, hostId));
         return this;
     }
 

@@ -80,6 +80,7 @@ public class Clusters extends AbstractMarshallable implements Marshallable, Clos
         return clusterMap.entrySet();
     }
 
+    @NotNull
     public EngineCluster firstCluster() {
         return clusterMap.values().iterator().next();
     }

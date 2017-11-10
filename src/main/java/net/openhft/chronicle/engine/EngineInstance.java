@@ -14,7 +14,6 @@ import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.query.QueueConfig;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
-import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.NetworkStats;
@@ -53,22 +52,14 @@ public class EngineInstance {
         return engineMain(hostId, yamlConfigFile, cluster, "");
     }
 
+    public static VanillaAssetTree engineMain(final int hostId, final String yamlConfigFile) {
+        return engineMain(hostId, yamlConfigFile, null, null);
+    }
 
     public static VanillaAssetTree engineMain(final int hostId, final String yamlConfigFile, String cluster, String region) {
         try {
-
             @NotNull final VanillaAssetTree tree = createAssetTree(yamlConfigFile, region, hostId, cluster);
-
-            @Nullable final Clusters clusters = tree.root().getView(Clusters.class);
-
-            if (clusters == null || clusters.size() == 0) {
-                Jvm.warn().on(EngineInstance.class, "cluster not found");
-                return null;
-            }
-
-            setUpEndpoint(hostId, cluster, tree);
-            return tree;
-
+            return setUpEndpoint(hostId, cluster, tree);
         } catch (Exception e) {
             throw Jvm.rethrow(e);
         }
@@ -80,9 +71,16 @@ public class EngineInstance {
 
         @NotNull EngineCfg installable = (EngineCfg) yaml.readObject();
 
-        @NotNull final VanillaAssetTree tree = new VanillaAssetTree(hostId).forServer(false);
-        tree.region(region);
-        tree.clusterName(clusterName);
+        @NotNull final VanillaAssetTree tree = new VanillaAssetTree(hostId, installable.getRuleProvider()).forServer(false);
+        if (region != null)
+            tree.region(region);
+        String cluster;
+        if (clusterName == null) {
+            cluster = firstClusterName(tree);
+        } else {
+            tree.clusterName(clusterName);
+            cluster = clusterName;
+        }
 
         @NotNull final Asset connectivityMap = tree.acquireAsset("/proc/connections/cluster/connectivity");
         connectivityMap.addWrappingRule(MapView.class, "map directly to KeyValueStore",
@@ -91,7 +89,7 @@ public class EngineInstance {
         connectivityMap.addLeafRule(EngineReplication.class, "Engine replication holder",
                 CMap2EngineReplicator::new);
         connectivityMap.addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
-                new ChronicleMapKeyValueStore(context.cluster(clusterName), asset));
+                new ChronicleMapKeyValueStore(context.cluster(cluster), asset));
 
         try {
             installable.install("/", tree);
@@ -104,10 +102,7 @@ public class EngineInstance {
     }
 
 
-    public static ServerEndpoint setUpEndpoint(int hostId, String cluster, VanillaAssetTree tree) throws IOException {
-
-        tree.root().addView(HostIdentifier.class, new HostIdentifier((byte) hostId));
-
+    private static VanillaAssetTree setUpEndpoint(int hostId, String cluster, VanillaAssetTree tree) throws IOException {
 
         @Nullable final Clusters clusters = tree.root().getView(Clusters.class);
 
@@ -115,7 +110,16 @@ public class EngineInstance {
             throw new IllegalStateException("no clusters were found");
         }
 
-        final EngineCluster engineCluster = clusters.get(cluster);
+        final EngineCluster engineCluster;
+        if (cluster != null) {
+            engineCluster = clusters.get(cluster);
+        } else {
+            if (clusters.size() != 1)
+                throw new IllegalStateException("Ambiguous cluster, you have " + clusters.size() + " clusters, which one do you want to use?");
+            engineCluster = clusters.firstCluster();
+            cluster = engineCluster.clusterName();
+        }
+
 
         if (engineCluster == null) {
             throw new IllegalStateException("cluster=" + cluster + " not found");
@@ -153,84 +157,7 @@ public class EngineInstance {
                     NetworkStats.class, engineCluster.clusterName());
         }
 
-        return serverEndpoint;
-
-    }
-
-    public static VanillaAssetTree engineMain(final int hostId, final String yamlConfigFile) {
-        try {
-
-            @NotNull TextWire yaml = TextWire.fromFile(yamlConfigFile);
-
-            @NotNull EngineCfg installable = (EngineCfg) yaml.readObject();
-
-            @NotNull final VanillaAssetTree tree = new VanillaAssetTree(hostId).forServer(false);
-
-            @NotNull final Asset connectivityMap = tree.acquireAsset("/proc/connections/cluster/connectivity");
-            connectivityMap.addWrappingRule(MapView.class, "map directly to KeyValueStore",
-                    VanillaMapView::new,
-                    KeyValueStore.class);
-            connectivityMap.addLeafRule(EngineReplication.class, "Engine replication holder",
-                    CMap2EngineReplicator::new);
-            connectivityMap.addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
-                    new ChronicleMapKeyValueStore(context.cluster(firstClusterName(tree)), asset));
-
-            try {
-                installable.install("/", tree);
-                LOGGER.info("Engine started");
-            } catch (Exception e) {
-                LOGGER.error("Error starting a component, stopping", e);
-                tree.close();
-            }
-
-            @Nullable final Clusters clusters = tree.root().getView(Clusters.class);
-
-            if (clusters == null || clusters.size() == 0) {
-                Jvm.warn().on(EngineInstance.class, "cluster not found");
-                return null;
-            }
-            if (clusters.size() != 1) {
-                Jvm.warn().on(EngineInstance.class, "unambiguous cluster, you have " + clusters.size() + "" +
-                        " clusters which one do you want to use?");
-                return tree;
-            }
-
-            final EngineCluster engineCluster = clusters.firstCluster();
-            final HostDetails hostDetails = engineCluster.findHostDetails(hostId);
-            final String connectUri = hostDetails.connectUri();
-            engineCluster.clusterContext().assetRoot(tree.root());
-
-            final NetworkStatsListener networkStatsListener = engineCluster.clusterContext()
-                    .networkStatsListenerFactory()
-                    .apply(engineCluster.clusterContext());
-
-            @NotNull final ServerEndpoint serverEndpoint = new ServerEndpoint(connectUri, tree, networkStatsListener, engineCluster.clusterName());
-
-            // we add this as close will get called when the asset tree is closed
-            tree.root().addView(ServerEndpoint.class, serverEndpoint);
-            tree.registerSubscriber("", TopologicalEvent.class, e -> LOGGER.info("Tree change " + e));
-
-            // the reason that we have to do this is to ensure that the network stats are
-            // replicated between all hosts, if you don't acquire a queue it wont exist and so
-            // will not act as a slave in replication
-            for (@NotNull EngineHostDetails engineHostDetails : engineCluster.hostDetails()) {
-
-                final int id = engineHostDetails
-                        .hostId();
-                Asset asset = tree.acquireAsset("/proc/connections/cluster/throughput/" + id);
-
-                // sets the master of each of the queues
-                asset.addView(new QueueConfig(x -> id, false, null, WireType.BINARY));
-
-                tree.acquireQueue("/proc/connections/cluster/throughput/" + id,
-                        String.class,
-                        NetworkStats.class, engineCluster.clusterName());
-            }
-
-            return tree;
-        } catch (Exception e) {
-            throw Jvm.rethrow(e);
-        }
+        return tree;
 
     }
 
@@ -241,10 +168,7 @@ public class EngineInstance {
         @Nullable final Clusters clusters = tree.root().getView(Clusters.class);
         if (clusters == null)
             return "";
-        final EngineCluster engineCluster = clusters.firstCluster();
-        if (engineCluster == null)
-            return "";
-        return engineCluster.clusterName();
+        return clusters.firstCluster().clusterName();
     }
 
 

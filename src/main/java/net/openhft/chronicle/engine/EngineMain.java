@@ -30,7 +30,9 @@ import net.openhft.chronicle.engine.cfg.Installable;
 import net.openhft.chronicle.engine.cfg.JmxCfg;
 import net.openhft.chronicle.engine.cfg.MonitorCfg;
 import net.openhft.chronicle.engine.cfg.ServerCfg;
+import net.openhft.chronicle.engine.tree.AssetRuleProvider;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
+import net.openhft.chronicle.engine.tree.VanillaAssetRuleProvider;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.TextWire;
 import org.jetbrains.annotations.NotNull;
@@ -47,25 +49,25 @@ public class EngineMain {
     static final Logger LOGGER = LoggerFactory.getLogger(EngineMain.class);
     static final int HOST_ID = Integer.getInteger("engine.hostId", 0);
 
-    static <I extends Installable> void addClass(Class<I>... iClasses) {
-        ClassAliasPool.CLASS_ALIASES.addAlias(iClasses);
+    static {
+        ClassAliasPool.CLASS_ALIASES.addAlias(EngineCfg.class,
+                JmxCfg.class,
+                ServerCfg.class,
+                ClustersCfg.class,
+                InMemoryMapCfg.class,
+                FilePerKeyMapCfg.class,
+                ChronicleMapCfg.class,
+                MonitorCfg.class);
     }
 
     public static void main(@NotNull String[] args) throws IOException {
         ChronicleConfig.init();
-        addClass(EngineCfg.class);
-        addClass(JmxCfg.class);
-        addClass(ServerCfg.class);
-        addClass(ClustersCfg.class);
-        addClass(InMemoryMapCfg.class);
-        addClass(FilePerKeyMapCfg.class);
-        addClass(ChronicleMapCfg.class);
-        addClass(MonitorCfg.class);
 
         @NotNull String name = args.length > 0 ? args[0] : resolveConfigurationFile();
         @NotNull TextWire yaml = TextWire.fromFile(name);
         @NotNull Installable installable = (Installable) yaml.readObject();
-        @NotNull AssetTree assetTree = new VanillaAssetTree(HOST_ID).forServer(false);
+        @NotNull AssetRuleProvider ruleProvider = getRuleProvider(installable);
+        @NotNull AssetTree assetTree = new VanillaAssetTree(HOST_ID, ruleProvider).forServer(false);
         assetTree.registerSubscriber("", TopologicalEvent.class, e -> LOGGER.info("Tree change " + e));
         try {
             installable.install("/", assetTree);
@@ -75,6 +77,14 @@ public class EngineMain {
             LOGGER.error("Error starting a component, stopping", e);
             assetTree.close();
         }
+    }
+
+    private static AssetRuleProvider getRuleProvider(Installable installable) {
+        if (installable instanceof EngineCfg) {
+            EngineCfg engineCfg = (EngineCfg) installable;
+            return engineCfg.getRuleProvider();
+        }
+        return new VanillaAssetRuleProvider();
     }
 
     @NotNull

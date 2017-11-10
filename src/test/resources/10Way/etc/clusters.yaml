@@ -12,29 +12,24 @@ clusterTen: {
     connectionStrategy: !HostIdConnectionStrategy {},
   },
   host1: {
-     hostId: 1,
-     tcpBufferSize: 65536,
-     connectUri: host.port1,
+    hostId: 1,
+    tcpBufferSize: 65536,
+    connectUri: host.port1,
   },
   host2: {
-     hostId: 2,
-     tcpBufferSize: 65536,
-     connectUri: host.port2,
+    hostId: 2,
+    tcpBufferSize: 65536,
+    connectUri: host.port2,
   },
   host3: {
-     hostId: 3,
-     tcpBufferSize: 65536,
-     connectUri: host.port3,
-  },
-  host3: {
-     hostId: 3,
-     tcpBufferSize: 65536,
-     connectUri: host.port3,
-  },
-  host4: {
     hostId: 3,
     tcpBufferSize: 65536,
     connectUri: host.port3,
+  },
+  host4: {
+    hostId: 4,
+    tcpBufferSize: 65536,
+    connectUri: host.port4,
   },
   host5: {
     hostId: 5,

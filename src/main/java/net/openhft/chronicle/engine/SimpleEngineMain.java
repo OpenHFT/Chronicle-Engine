@@ -24,7 +24,9 @@ import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
+import net.openhft.chronicle.engine.tree.AssetRuleProvider;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
+import net.openhft.chronicle.engine.tree.VanillaAssetRuleProvider;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
@@ -32,13 +34,10 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-
 /**
  * This engine main creates an empty tree configured from the command line.
  *
- * @author peter
- * @author andre
+ * @author Peter Lawrey
  */
 public class SimpleEngineMain {
 
@@ -49,17 +48,27 @@ public class SimpleEngineMain {
     static final boolean MSG_DUMP = Boolean.getBoolean("engine.messages.dump");
     static final int PORT = Integer.getInteger("engine.port", 8088);
     static final WireType WIRE_TYPE = WireType.valueOf(System.getProperty("engine.wireType", "BINARY"));
+    static final Class RULE_PROVIDER = getRuleProvider();
+
+    private static Class<?> getRuleProvider() {
+        try {
+            return Class.forName(System.getProperty("engine.ruleProvider", "net.openhft.chronicle.engine.tree.VanillaAssetRuleProvider"));
+        } catch (ClassNotFoundException e) {
+            return VanillaAssetRuleProvider.class;
+        }
+    }
 
     static ServerEndpoint serverEndpoint;
 
-    public static void main(@NotNull String... args) throws IOException {
+    public static void main(@NotNull String... args) throws Exception {
         @NotNull VanillaAssetTree assetTree = tree();
     }
 
     @NotNull
-    public static VanillaAssetTree tree() throws IOException {
+    public static VanillaAssetTree tree() throws Exception {
         ChronicleConfig.init();
-        @NotNull VanillaAssetTree assetTree = new VanillaAssetTree(HOST_ID).forTesting(false);
+        AssetRuleProvider ruleProvider = (AssetRuleProvider) RULE_PROVIDER.newInstance();
+        @NotNull VanillaAssetTree assetTree = new VanillaAssetTree(HOST_ID, ruleProvider).forTesting(false);
         if (JMX)
             assetTree.enableManagement();
 

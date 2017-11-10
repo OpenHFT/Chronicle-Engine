@@ -49,10 +49,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import static org.junit.Assert.assertNotNull;
 
-/*
- * Created by Rob Austin
- */
-@Ignore
+@Ignore("Broken")
 public class Replication10WayTest {
     public static final WireType WIRE_TYPE = WireType.TEXT;
     public static final String NAME = "/ChMaps/test";
@@ -146,7 +143,6 @@ public class Replication10WayTest {
         threadDump.assertNoNewThreads();
     }
 
-    @Ignore("because it uses too much resources on a PC")
     @Test
     public void testTenWay() throws InterruptedException {
 

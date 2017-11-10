@@ -50,10 +50,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentMap;
 
-/*
- * Created by Rob Austin
- */
-
 public class Main2Way {
     public static final WireType WIRE_TYPE = WireType.COMPRESSED_BINARY;
     public static final int entries = 1000;

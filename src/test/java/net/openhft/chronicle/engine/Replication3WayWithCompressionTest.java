@@ -47,10 +47,6 @@ import java.util.concurrent.ConcurrentMap;
 
 import static org.junit.Assert.assertNotNull;
 
-/*
- * Created by Rob Austin
- */
-@Ignore
 public class Replication3WayWithCompressionTest extends ThreadMonitoringTest {
 
     @NotNull
@@ -78,7 +74,7 @@ public class Replication3WayWithCompressionTest extends ThreadMonitoringTest {
 
         name = testName.getMethodName();
 
-        Files.deleteIfExists(Paths.get(OS.TARGET, name.toString()));
+        Files.deleteIfExists(Paths.get(OS.TARGET, name));
 
         System.setProperty("ReplicationHandler3", "false");
         System.setProperty("EngineReplication.Compression", "gzip");
@@ -126,7 +122,7 @@ public class Replication3WayWithCompressionTest extends ThreadMonitoringTest {
     private AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
         @NotNull AssetTree tree = new VanillaAssetTree((byte) hostId)
                 .forTesting()
-                .withConfig(resourcesDir() + "/3wayLegacy", OS.TARGET + "/" + hostId);
+                .withConfig(resourcesDir() + "/3way", OS.TARGET + "/" + hostId);
 
         tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
                 VanillaMapView::new,

@@ -26,9 +26,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-/*
- * Created by Peter Lawrey on 17/08/15.
- */
 public class ServerMain {
     private static ServerEndpoint endpoint;
 

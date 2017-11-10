@@ -49,10 +49,6 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
-/*
- * Created by Rob Austin
- */
-
 public class MainCluster5 {
     public static final WireType WIRE_TYPE = WireType.BINARY;
     public static final int entries = 50;

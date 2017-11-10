@@ -4,7 +4,6 @@ import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.EngineInstance;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.query.*;
-import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.tree.VanillaAsset;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
@@ -51,11 +50,11 @@ public class TestIndexQueueView {
 
         startEngine();
 
-        AssetTree assetTree = (new VanillaAssetTree()).forRemoteAccess("host.port1", WireType.BINARY);
+        VanillaAssetTree assetTree = (new VanillaAssetTree()).forRemoteAccess("host.port1", WireType.BINARY);
 
 
         VanillaAsset asset = (VanillaAsset) assetTree.acquireAsset(uri);
-        asset.configQueueRemote();
+        assetTree.root().getRuleProvider().configQueueRemote(asset);
 
         IndexQueueView indexQueueView = assetTree.acquireAsset(uri).acquireView(IndexQueueView.class);
         VanillaIndexQuery indexQuery = new VanillaIndexQuery();

@@ -17,8 +17,10 @@
 
 package net.openhft.chronicle.engine.cfg;
 
+import net.openhft.chronicle.engine.tree.VanillaAssetRuleProvider;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
+import net.openhft.chronicle.engine.tree.AssetRuleProvider;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.WireIn;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /*
  * Created by Peter Lawrey on 26/08/15.
@@ -35,6 +38,7 @@ import java.util.Map;
 public class EngineCfg implements Installable {
     static final Logger LOGGER = LoggerFactory.getLogger(EngineCfg.class);
     public final Map<String, Installable> installableMap = new LinkedHashMap<>();
+    private AssetRuleProvider ruleProvider;
 
     @Nullable
     @Override
@@ -66,7 +70,9 @@ public class EngineCfg implements Installable {
             @NotNull ValueIn in = wire.read(name);
             long pos = wire.bytes().readPosition();
             @NotNull String path2 = path + "/" + name;
-            if (wire.getValueIn().isTyped()) {
+            if (path2.equals("/ruleProvider")) {
+                ruleProvider = in.typedMarshallable();
+            } else if (wire.getValueIn().isTyped()) {
                 wire.bytes().readPosition(pos);
                 @Nullable Object o = in.typedMarshallable();
                 installableMap.put(path2, (Installable) o);
@@ -76,5 +82,7 @@ public class EngineCfg implements Installable {
         }
     }
 
-
+    public AssetRuleProvider getRuleProvider() {
+        return Optional.ofNullable(ruleProvider).orElseGet(VanillaAssetRuleProvider::new);
+    }
 }

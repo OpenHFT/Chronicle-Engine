@@ -21,6 +21,7 @@ import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.onoes.ExceptionKey;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
+import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.ChronicleMapKeyValueStoreTest;
 import net.openhft.chronicle.engine.api.EngineReplication;
@@ -32,11 +33,13 @@ import net.openhft.chronicle.engine.fs.Clusters;
 import net.openhft.chronicle.engine.fs.EngineHostDetails;
 import net.openhft.chronicle.engine.fs.FilePerKeyGroupFS;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
+import net.openhft.chronicle.engine.tree.VanillaAsset;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.VanillaSessionDetails;
 import net.openhft.chronicle.network.api.session.SessionDetails;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
+import net.openhft.chronicle.queue.impl.single.StoreComponentReferenceHandler;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
@@ -56,10 +59,6 @@ import java.util.concurrent.ConcurrentMap;
 
 import static org.junit.Assert.assertNotNull;
 
-/*
- * Created by Rob Austin
- */
-@Ignore("todo fix - ROB")
 public class ReplicationTestBootstrappingAfterLostConnection {
     public static final WireType WIRE_TYPE = WireType.TEXT;
     public static final String NAME = "/ChMaps/test";
@@ -73,46 +72,64 @@ public class ReplicationTestBootstrappingAfterLostConnection {
     private static ThreadDump threadDump;
     private static Map<ExceptionKey, Integer> exceptions;
 
-    @BeforeClass
-    public static void before() throws IOException {
-        exceptions = Jvm.recordExceptions();
-        YamlLogging.setAll(false);
+    static {
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
         ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
+    }
+
+    @Before
+    public void before() throws IOException {
+        YamlLogging.setAll(false);
+        exceptions = Jvm.recordExceptions();
+        exceptions.clear();
+        threadDump = new ThreadDump();
+        threadDump.ignore("tree-1/Heartbeat");
+        threadDump.ignore("tree-2/Heartbeat");
+        threadDump.ignore("process reaper");
+        threadDump.ignore("tree-1/closer");
+        threadDump.ignore("main/ChronicleMapKeyValueStore Closer");
+        threadDump.ignore(StoreComponentReferenceHandler.THREAD_NAME);
+
         //Delete any files from the last run
         Files.deleteIfExists(Paths.get(OS.TARGET, NAME));
-        TCPRegistry.createServerSocketChannelFor("host.port1", "host.port2", "host.port3");
-        @NotNull WireType writeType = WireType.TEXT;
+        TCPRegistry.createServerSocketChannelFor("host.port1", "host.port2", "host.port3", "clusterThree.host.port1", "clusterThree.host.port2", "clusterThree.host.port3");
+        @NotNull WireType wireType = WireType.TEXT;
 
-        tree1 = create(1, writeType, "clusterTwo");
+        tree1 = create(1, wireType, "clusterTwo");
         serverEndpoint1 = new ServerEndpoint("host.port1", tree1, "cluster");
 
-        tree2 = create(2, writeType, "clusterTwo");
+        tree2 = create(2, wireType, "clusterTwo");
         serverEndpoint2 = new ServerEndpoint("host.port2", tree2, "cluster");
     }
 
-    @AfterClass
-    public static void after() {
+    @After
+    public void after() {
         if (serverEndpoint1 != null)
             serverEndpoint1.close();
         if (serverEndpoint2 != null)
             serverEndpoint2.close();
 
-        if (tree1 != null)
+        try {
             tree1.close();
-        if (tree2 != null)
             tree2.close();
+
+            tree1.root().findView(EventLoop.class).awaitTermination();
+            tree2.root().findView(EventLoop.class).awaitTermination();
+        } catch (RuntimeException e) {
+            System.err.println("Error while closing trees: " + e.getMessage());
+        }
 
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
+
         threadDump.assertNoNewThreads();
     }
 
     @NotNull
-    private static AssetTree create(final int hostId, WireType writeType, final String
+    private static AssetTree create(final int hostId, WireType wireType, final String
             clusterName) {
         @NotNull AssetTree tree = new VanillaAssetTree((byte) hostId)
-                .forTesting()
+                .forTesting(false)
                 .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);
 
         tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
@@ -121,7 +138,7 @@ public class ReplicationTestBootstrappingAfterLostConnection {
         tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",
                 CMap2EngineReplicator::new);
         tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
-                new ChronicleMapKeyValueStore(context.wireType(writeType).cluster(clusterName),
+                new ChronicleMapKeyValueStore(context.wireType(wireType).cluster(clusterName),
                         asset));
 
         //  VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
@@ -135,11 +152,6 @@ public class ReplicationTestBootstrappingAfterLostConnection {
         if (path == null)
             return ".";
         return new File(path).getParentFile().getParentFile() + "/src/test/resources";
-    }
-
-    @BeforeClass
-    public void threadDump() {
-        threadDump = new ThreadDump();
     }
 
     @Test
@@ -165,6 +177,7 @@ public class ReplicationTestBootstrappingAfterLostConnection {
     }
 
     @Test
+    @Ignore("EngineHostDetails no longer provides TcpChannelHub, so this is now broken")
     public void testBootstrapWhenTheClientConnectionIsKilled() throws InterruptedException {
 
         @NotNull final ConcurrentMap<String, String> map1 = tree2.acquireMap(NAME, String.class, String

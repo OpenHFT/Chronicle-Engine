@@ -49,10 +49,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-/*
- * Created by Rob Austin
- */
-
 public class RoundTripTest {
     public static final WireType WIRE_TYPE = WireType.BINARY;
     public static final int ENTRIES = 200;
@@ -168,17 +164,15 @@ public class RoundTripTest {
         @NotNull AssetTree serverAssetTree2 = create(2, WireType.BINARY, hostDetails);
         @NotNull AssetTree serverAssetTree3 = create(3, WireType.BINARY, hostDetails);
 
-        @NotNull ServerEndpoint serverEndpoint1 = new ServerEndpoint(CONNECTION_1, serverAssetTree1, "cluster");
-        @NotNull ServerEndpoint serverEndpoint2 = new ServerEndpoint(CONNECTION_2, serverAssetTree2, "cluster");
-        @NotNull ServerEndpoint serverEndpoint3 = new ServerEndpoint(CONNECTION_3, serverAssetTree3, "cluster");
-
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
         ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
 
         //Delete any files from the last run
         Files.deleteIfExists(Paths.get(basePath, "test"));
 
-        try {
+        try (ServerEndpoint serverEndpoint1 = new ServerEndpoint(CONNECTION_1, serverAssetTree1, "cluster");
+             ServerEndpoint serverEndpoint2 = new ServerEndpoint(CONNECTION_2, serverAssetTree2, "cluster");
+             ServerEndpoint serverEndpoint3 = new ServerEndpoint(CONNECTION_3, serverAssetTree3, "cluster")) {
             // configure them
             serverAssetTree1.acquireMap(NAME, String.class, String.class).size();
             serverAssetTree2.acquireMap(NAME, String.class, String.class).size();
@@ -191,11 +185,6 @@ public class RoundTripTest {
             map1.size();
             map2.size();
             map3.size();
-
-            ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
-            ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
-
-            @NotNull CountDownLatch l = new CountDownLatch(ENTRIES * TIMES);
 
             @NotNull VanillaAssetTree treeC1 = new VanillaAssetTree("tree1")
                     .forRemoteAccess(CONNECTION_1, WIRE_TYPE);
@@ -254,10 +243,6 @@ public class RoundTripTest {
 
             Assert.assertTrue(timeTaken <= target);
 
-        } finally {
-            serverEndpoint1.close();
-            serverEndpoint2.close();
-            serverEndpoint3.close();
         }
     }
 }

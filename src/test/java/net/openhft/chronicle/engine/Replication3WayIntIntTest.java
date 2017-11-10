@@ -53,19 +53,10 @@ import java.util.concurrent.ConcurrentMap;
 
 import static org.junit.Assert.assertNotNull;
 
-/*
- * Created by Rob Austin
- */
-
-@Ignore("fails in teamcity")
 @RunWith(value = Parameterized.class)
 public class  Replication3WayIntIntTest extends ThreadMonitoringTest {
     public static final WireType WIRE_TYPE = WireType.TEXT;
     public static final int NUMBER_OF_TIMES = 10;
-
-    static {
-        //System.setProperty("ReplicationHandler3", "true");
-    }
 
     public ServerEndpoint serverEndpoint1;
     public ServerEndpoint serverEndpoint2;

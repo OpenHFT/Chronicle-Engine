@@ -40,10 +40,6 @@ import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
 import static net.openhft.chronicle.engine.Utils.methodName;
 
 /**
- * @author Rob Austin.
- */
-
-/**
  * test using the listener both remotely or locally via the engine
  *
  * @author Rob Austin.

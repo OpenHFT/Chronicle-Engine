@@ -53,8 +53,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  *
  * @author Rob Austin.
  */
-
-@Ignore
 @RunWith(Parameterized.class)
 public class TcpFailoverWithMonitoringTest {
 
