@@ -57,7 +57,8 @@ public class EngineMain {
                 InMemoryMapCfg.class,
                 FilePerKeyMapCfg.class,
                 ChronicleMapCfg.class,
-                MonitorCfg.class);
+                MonitorCfg.class,
+                VanillaAssetRuleProvider.class);
     }
 
     public static void main(@NotNull String[] args) throws IOException {

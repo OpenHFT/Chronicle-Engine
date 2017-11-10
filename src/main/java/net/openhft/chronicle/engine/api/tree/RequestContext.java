@@ -45,6 +45,7 @@ import net.openhft.chronicle.engine.server.internal.MapReplicationHandler;
 import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.engine.tree.TopologySubscription;
+import net.openhft.chronicle.engine.tree.VanillaAssetRuleProvider;
 import net.openhft.chronicle.network.TcpEventHandler;
 import net.openhft.chronicle.network.cluster.ClusterContext;
 import net.openhft.chronicle.network.cluster.HostIdConnectionStrategy;
@@ -128,7 +129,8 @@ public class RequestContext implements Cloneable {
                 InMemoryMapCfg.class,
                 FilePerKeyMapCfg.class,
                 ChronicleMapCfg.class,
-                MonitorCfg.class);
+                MonitorCfg.class,
+                VanillaAssetRuleProvider.class);
         return true;
     }
 
