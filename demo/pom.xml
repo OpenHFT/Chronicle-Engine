@@ -49,12 +49,6 @@
                 <version>1.14.117</version>
                 <type>pom</type>
                 <scope>import</scope>
-                <exclusions>
-                    <exclusion>
-                        <groupId>net.openhft</groupId>
-                        <artifactId>chronicle-engine</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
 
         </dependencies>
@@ -64,7 +58,6 @@
         <dependency>
             <groupId>net.openhft</groupId>
             <artifactId>chronicle-engine</artifactId>
-            <version>1.14.4-SNAPSHOT</version>
         </dependency>
 
         <dependency>

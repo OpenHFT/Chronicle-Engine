@@ -33,8 +33,6 @@ public class RunEngineMain {
         addClass(EndOfDay.class);
         addClass(EndOfDayShort.class);
         addClass(EngineClusterContext.class);
-        // commented out as this class in not found
-        //  addClass(NfsCfg.class);
         EngineMain.main(args);
     }
 
