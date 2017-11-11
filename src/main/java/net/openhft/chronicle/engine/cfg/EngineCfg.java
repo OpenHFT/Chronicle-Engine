@@ -75,7 +75,7 @@ public class EngineCfg implements Installable {
             } else if (wire.getValueIn().isTyped()) {
                 wire.bytes().readPosition(pos);
                 @Nullable Object o = in.typedMarshallable();
-                installableMap.put(path2, (Installable) o);
+                    installableMap.put(path2, (Installable) o);
             } else {
                 in.marshallable(w -> this.readMarshallable(path2, w));
             }

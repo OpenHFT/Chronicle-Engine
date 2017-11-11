@@ -102,7 +102,7 @@ public class EngineInstance {
     }
 
 
-    private static VanillaAssetTree setUpEndpoint(int hostId, String cluster, VanillaAssetTree tree) throws IOException {
+    public static VanillaAssetTree setUpEndpoint(int hostId, String cluster, VanillaAssetTree tree) throws IOException {
 
         @Nullable final Clusters clusters = tree.root().getView(Clusters.class);
 
@@ -126,6 +126,9 @@ public class EngineInstance {
         }
 
         final HostDetails hostDetails = engineCluster.findHostDetails(hostId);
+        if (hostDetails == null) {
+            throw new IllegalStateException("hostId=" + hostId + " not found");
+        }
 
         final String connectUri = hostDetails.connectUri();
         engineCluster.clusterContext().assetRoot(tree.root());

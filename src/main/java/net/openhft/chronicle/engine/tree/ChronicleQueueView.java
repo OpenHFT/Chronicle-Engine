@@ -27,7 +27,10 @@ import net.openhft.chronicle.core.threads.HandlerPriority;
 import net.openhft.chronicle.core.threads.InvalidEventHandlerException;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
-import net.openhft.chronicle.engine.api.pubsub.*;
+import net.openhft.chronicle.engine.api.pubsub.Publisher;
+import net.openhft.chronicle.engine.api.pubsub.Reference;
+import net.openhft.chronicle.engine.api.pubsub.Subscriber;
+import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.api.tree.Asset;
@@ -144,20 +147,21 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
 
     @NotNull
     @SuppressWarnings("WeakerAccess")
-    public static WriteMarshallable newSource(long nextIndexRequired,
-                                              @NotNull Class topicType,
-                                              @NotNull Class elementType,
-                                              boolean acknowledgement,
-                                              @Nullable MessageAdaptor syncMessageAdaptor,
-                                              @Nullable MessageAdaptor sourceMessageAdaptor) {
+    public static WriteMarshallable newSource(
+            @NotNull Class topicType,
+            @NotNull Class elementType,
+            boolean acknowledgement,
+            @Nullable MessageAdaptor syncMessageAdaptor,
+            @Nullable MessageAdaptor sourceMessageAdaptor,
+            long nextIndexRequired) {
         Objects.requireNonNull(topicType);
         Objects.requireNonNull(elementType);
         try {
             Class<?> aClass = Class.forName("software.chronicle.enterprise.queue.QueueSourceReplicationHandler");
-            Constructor<?> declaredConstructor = aClass.getDeclaredConstructor(long.class, Class.class,
-                    Class.class, boolean.class, MessageAdaptor.class, MessageAdaptor.class);
-            return (WriteMarshallable) declaredConstructor.newInstance(nextIndexRequired,
-                    topicType, elementType, acknowledgement, syncMessageAdaptor, sourceMessageAdaptor);
+            Constructor<?> declaredConstructor = aClass.getDeclaredConstructor(Class.class,
+                    Class.class, boolean.class, MessageAdaptor.class, MessageAdaptor.class, long.class);
+            return (WriteMarshallable) declaredConstructor.newInstance(
+                    topicType, elementType, acknowledgement, syncMessageAdaptor, sourceMessageAdaptor, nextIndexRequired);
 
         } catch (Exception e) {
             @NotNull IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
@@ -178,20 +182,20 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
      */
     @NotNull
     @SuppressWarnings("WeakerAccess")
-    public static WriteMarshallable newSync(long nextIndexRequired,
-                                            @NotNull Class topicType,
-                                            @NotNull Class elementType,
-                                            boolean acknowledgement,
-                                            @Nullable MessageAdaptor syncMessageAdaptor,
-                                            @NotNull WireType wireType,
-                                            @Nullable MessageAdaptor sourceMessageAdaptor) {
+    public static WriteMarshallable newSync(
+            @NotNull Class topicType,
+            @NotNull Class elementType,
+            boolean acknowledgement,
+            @Nullable MessageAdaptor syncMessageAdaptor,
+            @NotNull WireType wireType,
+            @Nullable MessageAdaptor sourceMessageAdaptor, long nextIndexRequired) {
         try {
 
             Class<?> aClass = Class.forName("software.chronicle.enterprise.queue.QueueSyncReplicationHandler");
-            Constructor<?> declaredConstructor = aClass.getConstructor(long.class, Class.class, Class.class,
-                    boolean.class, MessageAdaptor.class, WireType.class, MessageAdaptor.class);
-            return (WriteMarshallable) declaredConstructor.newInstance(nextIndexRequired, topicType, elementType,
-                    acknowledgement, syncMessageAdaptor, wireType, sourceMessageAdaptor);
+            Constructor<?> declaredConstructor = aClass.getConstructor(Class.class, Class.class,
+                    boolean.class, MessageAdaptor.class, WireType.class, MessageAdaptor.class, long.class);
+            return (WriteMarshallable) declaredConstructor.newInstance(topicType, elementType,
+                    acknowledgement, syncMessageAdaptor, wireType, sourceMessageAdaptor, nextIndexRequired);
 
         } catch (Exception e) {
             @NotNull IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
@@ -332,17 +336,17 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
                 long index = chronicleQueue.createTailer().toEnd().index();
                 @NotNull WriteMarshallable h = isSource0 ?
 
-                        newSource(index, context.topicType(),
+                        newSource(context.topicType(),
                                 context.elementType(),
                                 acknowledgement,
-                                messageAdaptor, sourceMessageAdaptor) :
+                                messageAdaptor, sourceMessageAdaptor, index) :
 
-                        newSync(index,
+                        newSync(
                                 context.topicType(),
                                 context.elementType(),
                                 acknowledgement,
                                 messageAdaptor,
-                                chronicleQueue.wireType(), sourceMessageAdaptor);
+                                chronicleQueue.wireType(), sourceMessageAdaptor, index);
 
                 long cid = nc.newCid();
                 nc.wireOutPublisher().publish(w -> w.writeDocument(true, d ->
