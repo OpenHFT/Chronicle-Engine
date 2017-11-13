@@ -101,8 +101,11 @@ public class EngineInstance {
         return tree;
     }
 
-
     public static VanillaAssetTree setUpEndpoint(int hostId, String cluster, VanillaAssetTree tree) throws IOException {
+        return setUpEndpoint(hostId, cluster, tree, true);
+    }
+
+    public static VanillaAssetTree setUpEndpoint(int hostId, String cluster, VanillaAssetTree tree, boolean replicateNetworkStats) throws IOException {
 
         @Nullable final Clusters clusters = tree.root().getView(Clusters.class);
 
@@ -119,7 +122,6 @@ public class EngineInstance {
             engineCluster = clusters.firstCluster();
             cluster = engineCluster.clusterName();
         }
-
 
         if (engineCluster == null) {
             throw new IllegalStateException("cluster=" + cluster + " not found");
@@ -143,23 +145,24 @@ public class EngineInstance {
         tree.root().addView(ServerEndpoint.class, serverEndpoint);
         tree.registerSubscriber("", TopologicalEvent.class, e -> LOGGER.info("Tree change " + e));
 
-        // the reason that we have to do this is to ensure that the network stats are
-        // replicated between all hosts, if you don't acquire a queue it wont exist and so
-        // will not act as a slave in replication
-        for (@NotNull EngineHostDetails engineHostDetails : engineCluster.hostDetails()) {
+        if (replicateNetworkStats) {
+            // the reason that we have to do this is to ensure that the network stats are
+            // replicated between all hosts, if you don't acquire a queue it wont exist and so
+            // will not act as a slave in replication
+            for (@NotNull EngineHostDetails engineHostDetails : engineCluster.hostDetails()) {
 
-            final int id = engineHostDetails
-                    .hostId();
-            Asset asset = tree.acquireAsset("/proc/connections/cluster/throughput/" + id);
+                final int id = engineHostDetails
+                        .hostId();
+                Asset asset = tree.acquireAsset("/proc/connections/cluster/throughput/" + id);
 
-            // sets the master of each of the queues
-            asset.addView(new QueueConfig(x -> id, false, null, WireType.BINARY));
+                // sets the master of each of the queues
+                asset.addView(new QueueConfig(x -> id, false, null, WireType.BINARY));
 
-            tree.acquireQueue("/proc/connections/cluster/throughput/" + id,
-                    String.class,
-                    NetworkStats.class, engineCluster.clusterName());
+                tree.acquireQueue("/proc/connections/cluster/throughput/" + id,
+                        String.class,
+                        NetworkStats.class, engineCluster.clusterName());
+            }
         }
-
         return tree;
 
     }
