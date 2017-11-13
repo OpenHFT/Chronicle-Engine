@@ -248,6 +248,27 @@
         </plugins>
     </build>
 
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>2.19.1</version>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/Replication3WayIntIntTest.java</exclude>
+                                <exclude>**/TcpManyClientConnectionsOnManyMapsTest.java</exclude>
+                                <exclude>**/TcpManyClientConnectionsTest.java</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
     <scm>
         <url>scm:git:git@github.com:OpenHFT/Chronicle-Engine.git</url>
         <connection>scm:git:git@github.com:OpenHFT/Chronicle-Engine.git</connection>
