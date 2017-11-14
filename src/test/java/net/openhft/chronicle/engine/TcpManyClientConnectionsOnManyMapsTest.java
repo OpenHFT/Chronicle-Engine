@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -53,6 +54,8 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
     private static final String CONNECTION = "host.port.TcpManyConnectionsTest";
     @NotNull
     private static MapView[] maps = new MapView[MAX];
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
     @NotNull
     private AssetTree[] trees = new AssetTree[MAX];
     private VanillaAssetTree serverAssetTree;
@@ -60,14 +63,14 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
 
     @Before
     public void before() throws IOException {
-        serverAssetTree = new VanillaAssetTree().forTesting();
+        serverAssetTree = hooks.addCloseable(new VanillaAssetTree().forTesting());
 
         TCPRegistry.createServerSocketChannelFor(CONNECTION);
 
-        serverEndpoint = new ServerEndpoint(CONNECTION, serverAssetTree, "cluster");
+        serverEndpoint = hooks.addCloseable(new ServerEndpoint(CONNECTION, serverAssetTree, "cluster"));
 
         for (int i = 0; i < MAX; i++) {
-            trees[i] = new VanillaAssetTree().forRemoteAccess(CONNECTION, WIRE_TYPE);
+            trees[i] = hooks.addCloseable(new VanillaAssetTree().forRemoteAccess(CONNECTION, WIRE_TYPE));
             maps[i] = trees[i].acquireMap(NAME + i, String.class, String.class);
         }
     }

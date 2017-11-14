@@ -63,6 +63,8 @@ public class  Replication3WayIntIntTest extends ThreadMonitoringTest {
     @NotNull
     @Rule
     public TestName testName = new TestName();
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
     public String name;
     private ServerEndpoint serverEndpoint3;
     private AssetTree tree1;
@@ -108,9 +110,9 @@ public class  Replication3WayIntIntTest extends ThreadMonitoringTest {
         tree2 = create(2, writeType, "clusterThree");
         tree3 = create(3, writeType, "clusterThree");
 
-        serverEndpoint1 = new ServerEndpoint("host.port1", tree1, "cluster");
-        serverEndpoint2 = new ServerEndpoint("host.port2", tree2, "cluster");
-        serverEndpoint3 = new ServerEndpoint("host.port3", tree3, "cluster");
+        serverEndpoint1 = hooks.addCloseable(new ServerEndpoint("host.port1", tree1, "cluster"));
+        serverEndpoint2 = hooks.addCloseable(new ServerEndpoint("host.port2", tree2, "cluster"));
+        serverEndpoint3 = hooks.addCloseable(new ServerEndpoint("host.port3", tree3, "cluster"));
 
         name = testName.getMethodName();
 
@@ -135,9 +137,9 @@ public class  Replication3WayIntIntTest extends ThreadMonitoringTest {
 
     @NotNull
     private AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
-        @NotNull AssetTree tree = new VanillaAssetTree((byte) hostId)
+        @NotNull AssetTree tree = hooks.addCloseable(new VanillaAssetTree((byte) hostId)
                 .forTesting()
-                .withConfig(resourcesDir() + "/3way", OS.TARGET + "/" + hostId);
+                .withConfig(resourcesDir() + "/3way", OS.TARGET + "/" + hostId));
 
         tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
                 VanillaMapView::new,

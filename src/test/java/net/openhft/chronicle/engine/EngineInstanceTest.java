@@ -8,6 +8,7 @@ import net.openhft.chronicle.engine.tree.VanillaAssetRuleProvider;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -20,10 +21,13 @@ public class EngineInstanceTest {
         ClassAliasPool.CLASS_ALIASES.addAlias(MyRuleProvider.class, "MyRuleProvider");
     }
 
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
+
     @Test
     public void testEngineInstanceLoads() throws IOException {
         TCPRegistry.createServerSocketChannelFor("localhost9090", "localhost9091");
-        try (VanillaAssetTree assetTree = EngineInstance.engineMain(1, "engine.yaml")) {
+        try (VanillaAssetTree assetTree = hooks.addCloseable(EngineInstance.engineMain(1, "engine.yaml"))) {
             assertNotNull(assetTree);
             Asset asset = assetTree.getAsset("/queue/queue1");
             assertNotNull(asset);
@@ -39,7 +43,7 @@ public class EngineInstanceTest {
     @Test
     public void testEngineInstanceLoadsWithCustomRuleProvider() throws IOException {
         TCPRegistry.createServerSocketChannelFor("localhost9090", "localhost9091");
-        try (VanillaAssetTree assetTree = EngineInstance.engineMain(1, "engine2.yaml")) {
+        try (VanillaAssetTree assetTree = hooks.addCloseable(EngineInstance.engineMain(1, "engine2.yaml"))) {
             assertNotNull(assetTree);
             Asset asset = assetTree.getAsset("/queue/queue1");
             assertNotNull(asset);

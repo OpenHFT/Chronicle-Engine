@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -49,7 +50,8 @@ import static org.junit.Assert.*;
 public class ChassisTest {
 
     private ThreadDump threadDump;
-
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
     @Before
     public void threadDump() {
         threadDump = new ThreadDump();
@@ -62,6 +64,7 @@ public class ChassisTest {
     @Before
     public void setUp() {
         resetChassis();
+        hooks.addCloseable(Chassis.assetTree());
     }
 
     @Test

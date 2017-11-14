@@ -30,6 +30,7 @@ import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -49,17 +50,19 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
     private static final String NAME = "test";
     private static final String CONNECTION = "host.port.KeySubscriptionTest";
 
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
     private AssetTree clientTree;
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
     @Before
     public void before() throws IOException {
-        serverAssetTree = new VanillaAssetTree().forTesting();
+        serverAssetTree = hooks.addCloseable(new VanillaAssetTree().forTesting());
 
         TCPRegistry.createServerSocketChannelFor(CONNECTION);
-        serverEndpoint = new ServerEndpoint(CONNECTION, serverAssetTree, "cluster");
-        clientTree = new VanillaAssetTree().forRemoteAccess(CONNECTION, WIRE_TYPE);
+        serverEndpoint = hooks.addCloseable(new ServerEndpoint(CONNECTION, serverAssetTree, "cluster"));
+        clientTree = hooks.addCloseable(new VanillaAssetTree().forRemoteAccess(CONNECTION, WIRE_TYPE));
     }
 
     @Override

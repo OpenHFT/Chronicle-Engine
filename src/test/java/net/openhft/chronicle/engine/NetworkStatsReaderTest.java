@@ -30,6 +30,8 @@ public class NetworkStatsReaderTest {
     @NotNull
     @Rule
     public TestName name = new TestName();
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
 
     private AssetTree assetTree;
     private static final String URI = "queue/networkStats";
@@ -39,11 +41,11 @@ public class NetworkStatsReaderTest {
     @Before
     public void before() throws IOException {
         SimpleQueueViewTest.deleteFiles(new File(URI));
-        assetTree = (new VanillaAssetTree(1)).forServer();
+        assetTree = hooks.addCloseable((new VanillaAssetTree(1)).forServer());
         TCPRegistry.reset();
         @NotNull String hostPortDescription = "NetworkStatsReaderTest-" + name;
         TCPRegistry.createServerSocketChannelFor(hostPortDescription);
-        serverEndpoint = new ServerEndpoint(hostPortDescription, assetTree, "cluster");
+        serverEndpoint = hooks.addCloseable(new ServerEndpoint(hostPortDescription, assetTree, "cluster"));
     }
 
     @Test

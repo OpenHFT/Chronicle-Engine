@@ -36,16 +36,20 @@ public final class ShutdownHooks implements TestRule {
             for (Closeable closeable : closeables) {
                 try {
                     closeable.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
+                } catch (Throwable e) {
+                    if (!(e instanceof AssertionError)) {
+                        e.printStackTrace();
+                    }
                 }
             }
 
             for (ExecutorService executor : executors) {
                 try {
                     executor.shutdownNow();
-                } catch (Exception e) {
-                    e.printStackTrace();
+                } catch (Throwable e) {
+                    if (!(e instanceof AssertionError)) {
+                        e.printStackTrace();
+                    }
                 }
             }
             TcpChannelHub.closeAllHubs();

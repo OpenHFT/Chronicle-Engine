@@ -68,14 +68,16 @@ public class RoundTripTest {
     @NotNull
     private static String CONNECTION_3 = "CONNECTION_3";
 
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
     private ThreadDump threadDump;
     private Map<ExceptionKey, Integer> exceptions;
 
     @NotNull
-    static AssetTree create(final int hostId, WireType writeType, @NotNull final List<EngineHostDetails> hostDetails) {
+    AssetTree create(final int hostId, WireType writeType, @NotNull final List<EngineHostDetails> hostDetails) {
 
-        @NotNull AssetTree tree = new VanillaAssetTree((byte) hostId)
-                .forTesting();
+        @NotNull AssetTree tree = hooks.addCloseable(new VanillaAssetTree((byte) hostId)
+                .forTesting());
 
         @NotNull Map<String, EngineHostDetails> hostDetailsMap = new ConcurrentSkipListMap<>();
 
@@ -83,8 +85,8 @@ public class RoundTripTest {
             hostDetailsMap.put(hd.toString(), hd);
         }
 
-        @NotNull final Clusters testCluster = new Clusters(Collections.singletonMap("test",
-                new EngineCluster("test")));
+        @NotNull final Clusters testCluster = hooks.addCloseable(new Clusters(Collections.singletonMap("test",
+                new EngineCluster("test"))));
 
         tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
                 VanillaMapView::new,
@@ -186,11 +188,11 @@ public class RoundTripTest {
             map2.size();
             map3.size();
 
-            @NotNull VanillaAssetTree treeC1 = new VanillaAssetTree("tree1")
-                    .forRemoteAccess(CONNECTION_1, WIRE_TYPE);
+            @NotNull VanillaAssetTree treeC1 = hooks.addCloseable(new VanillaAssetTree("tree1")
+                    .forRemoteAccess(CONNECTION_1, WIRE_TYPE));
 
-            @NotNull VanillaAssetTree treeC3 = new VanillaAssetTree("tree1")
-                    .forRemoteAccess(CONNECTION_3, WIRE_TYPE);
+            @NotNull VanillaAssetTree treeC3 = hooks.addCloseable(new VanillaAssetTree("tree1")
+                    .forRemoteAccess(CONNECTION_3, WIRE_TYPE));
             @NotNull AtomicReference<CountDownLatch> latchRef = new AtomicReference<>();
 
             treeC3.registerSubscriber(NAME, String.class, z -> {

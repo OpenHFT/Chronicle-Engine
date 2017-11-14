@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -60,6 +61,8 @@ public class RemoteClientDataTypesTest {
     private static String _serverAddress = "host.port1";
     @NotNull
     private static AtomicReference<Throwable> t = new AtomicReference();
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
     private final WireType _wireType;
     private Class _keyClass;
     private Class _valueClass;
@@ -102,11 +105,11 @@ public class RemoteClientDataTypesTest {
     }
     @Before
     public void setUp() throws IOException {
-        _serverAssetTree = new VanillaAssetTree().forServer();
+        _serverAssetTree = hooks.addCloseable(new VanillaAssetTree().forServer());
 
         TCPRegistry.createServerSocketChannelFor(_serverAddress);
-        _serverEndpoint = new ServerEndpoint(_serverAddress, _serverAssetTree, "cluster");
-        _clientAssetTree = new VanillaAssetTree().forRemoteAccess(_serverAddress, _wireType);
+        _serverEndpoint = hooks.addCloseable(new ServerEndpoint(_serverAddress, _serverAssetTree, "cluster"));
+        _clientAssetTree = hooks.addCloseable(new VanillaAssetTree().forRemoteAccess(_serverAddress, _wireType));
     }
 
     @After

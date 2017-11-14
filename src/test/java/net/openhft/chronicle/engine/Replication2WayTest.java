@@ -63,6 +63,8 @@ public class Replication2WayTest extends ThreadMonitoringTest {
         //System.setProperty("ReplicationHandler3", "true");
     }
 
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
     public ServerEndpoint serverEndpoint1;
     public ServerEndpoint serverEndpoint2;
     @NotNull
@@ -95,8 +97,8 @@ public class Replication2WayTest extends ThreadMonitoringTest {
         tree1 = create(1, writeType, "clusterTwo");
         tree2 = create(2, writeType, "clusterTwo");
 
-        serverEndpoint1 = new ServerEndpoint("host.port1", tree1, "cluster");
-        serverEndpoint2 = new ServerEndpoint("host.port2", tree2, "cluster");
+        serverEndpoint1 = hooks.addCloseable(new ServerEndpoint("host.port1", tree1, "cluster"));
+        serverEndpoint2 = hooks.addCloseable(new ServerEndpoint("host.port2", tree2, "cluster"));
     }
 
     @Override
@@ -126,9 +128,9 @@ public class Replication2WayTest extends ThreadMonitoringTest {
 
     @NotNull
     private AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
-        @NotNull AssetTree tree = new VanillaAssetTree((byte) hostId)
+        @NotNull AssetTree tree = hooks.addCloseable(new VanillaAssetTree((byte) hostId)
                 .forTesting()
-                .withConfig(resourcesDir() + "/2way", OS.TARGET + "/" + hostId);
+                .withConfig(resourcesDir() + "/2way", OS.TARGET + "/" + hostId));
 
         tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
                 VanillaMapView::new,

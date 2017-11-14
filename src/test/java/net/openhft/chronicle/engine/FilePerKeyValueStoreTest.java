@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -53,6 +54,8 @@ public class FilePerKeyValueStoreTest {
     private Map<String, String> map;
 
     private ThreadDump threadDump;
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
 
     @Before
     public void threadDump() {
@@ -66,6 +69,7 @@ public class FilePerKeyValueStoreTest {
     @Before
     public void createMap() throws IOException {
         resetChassis();
+        hooks.addCloseable(Chassis.assetTree());
         @NotNull WireType writeType = WireType.TEXT;
         ((VanillaAsset) assetTree().root()).enableTranslatingValuesToBytesStore();
 

@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -60,6 +61,8 @@ public class BootStrapTest {
     private static ConcurrentMap<String, String> map1, map2;
     @NotNull
     private static AtomicReference<Throwable> t = new AtomicReference();
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
     private AssetTree client1;
     private AssetTree client2;
     private VanillaAssetTree serverAssetTree1;
@@ -87,17 +90,17 @@ public class BootStrapTest {
 
     @Before
     public void before() throws IOException {
-        serverAssetTree1 = new VanillaAssetTree().forTesting();
+        serverAssetTree1 = hooks.addCloseable(new VanillaAssetTree().forTesting());
 
         TCPRegistry.createServerSocketChannelFor(CONNECTION_1);
 
-        serverEndpoint1 = new ServerEndpoint(CONNECTION_1, serverAssetTree1, "cluster");
+        serverEndpoint1 = hooks.addCloseable(new ServerEndpoint(CONNECTION_1, serverAssetTree1, "cluster"));
 
-        client1 = new VanillaAssetTree("client1").forRemoteAccess
-                (CONNECTION_1, WIRE_TYPE);
+        client1 = hooks.addCloseable(new VanillaAssetTree("client1").forRemoteAccess
+                (CONNECTION_1, WIRE_TYPE));
 
-        client2 = new VanillaAssetTree("client2").forRemoteAccess
-                (CONNECTION_1, WIRE_TYPE);
+        client2 = hooks.addCloseable(new VanillaAssetTree("client2").forRemoteAccess
+                (CONNECTION_1, WIRE_TYPE));
 
     }
 

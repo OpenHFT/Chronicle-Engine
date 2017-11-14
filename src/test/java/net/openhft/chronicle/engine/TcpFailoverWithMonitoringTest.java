@@ -61,9 +61,11 @@ public class TcpFailoverWithMonitoringTest {
     private static final String CONNECTION_1 = "Test1.host.port";
     private final static String CONNECTION_2 = "Test2.host.port";
     private static ConcurrentMap<String, String> map;
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
     private final BlockingQueue<String> activity = new ArrayBlockingQueue<>(2);
-    ServerSocketChannel connection1;
-    ServerSocketChannel connection2;
+    private ServerSocketChannel connection1;
+    private ServerSocketChannel connection2;
     private AssetTree failOverClient;
     private VanillaAssetTree serverAssetTree1;
     private VanillaAssetTree serverAssetTree2;
@@ -98,24 +100,24 @@ public class TcpFailoverWithMonitoringTest {
     public void before() throws IOException {
         exceptions = Jvm.recordExceptions();
         //YamlLogging.setAll(true);
-        serverAssetTree1 = new VanillaAssetTree().forTesting();
-        serverAssetTree2 = new VanillaAssetTree().forTesting();
+        serverAssetTree1 = hooks.addCloseable(new VanillaAssetTree().forTesting());
+        serverAssetTree2 = hooks.addCloseable(new VanillaAssetTree().forTesting());
 
         TCPRegistry.createServerSocketChannelFor(CONNECTION_1);
         TCPRegistry.createServerSocketChannelFor(CONNECTION_2);
 
-        connection1 = TCPRegistry.acquireServerSocketChannel(CONNECTION_1);
-        connection2 = TCPRegistry.acquireServerSocketChannel(CONNECTION_2);
+        connection1 = hooks.addCloseable(TCPRegistry.acquireServerSocketChannel(CONNECTION_1));
+        connection2 = hooks.addCloseable(TCPRegistry.acquireServerSocketChannel(CONNECTION_2));
 
         @NotNull final String[] connection = {CONNECTION_1, CONNECTION_2};
 
-        failOverClient = new VanillaAssetTree("failoverClient").forRemoteAccess(connection,
-                WIRE_TYPE, clientConnectionMonitor());
+        failOverClient = hooks.addCloseable(new VanillaAssetTree("failoverClient").forRemoteAccess(connection,
+                WIRE_TYPE, clientConnectionMonitor()));
 
         map = failOverClient.acquireMap(NAME, String.class, String.class);
 
-        serverEndpoint1 = new ServerEndpoint(CONNECTION_1, serverAssetTree1, "cluster");
-        serverEndpoint2 = new ServerEndpoint(CONNECTION_2, serverAssetTree2, "cluster");
+        serverEndpoint1 = hooks.addCloseable(new ServerEndpoint(CONNECTION_1, serverAssetTree1, "cluster"));
+        serverEndpoint2 = hooks.addCloseable(new ServerEndpoint(CONNECTION_2, serverAssetTree2, "cluster"));
     }
 
     @NotNull
