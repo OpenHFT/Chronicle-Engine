@@ -24,6 +24,7 @@ import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.ChronicleMapKeyValueStoreTest;
+import net.openhft.chronicle.engine.ShutdownHooks;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -77,6 +78,9 @@ public class ReplicationTestBootstrappingAfterLostConnection {
         ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
     }
 
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
+
     @Before
     public void before() throws IOException {
         YamlLogging.setAll(false);
@@ -96,10 +100,10 @@ public class ReplicationTestBootstrappingAfterLostConnection {
         @NotNull WireType wireType = WireType.TEXT;
 
         tree1 = create(1, wireType, "clusterTwo");
-        serverEndpoint1 = new ServerEndpoint("host.port1", tree1, "cluster");
+        serverEndpoint1 = hooks.addCloseable(new ServerEndpoint("host.port1", tree1, "cluster"));
 
         tree2 = create(2, wireType, "clusterTwo");
-        serverEndpoint2 = new ServerEndpoint("host.port2", tree2, "cluster");
+        serverEndpoint2 = hooks.addCloseable(new ServerEndpoint("host.port2", tree2, "cluster"));
     }
 
     @After
@@ -254,7 +258,7 @@ public class ReplicationTestBootstrappingAfterLostConnection {
         map2.put("hello3", "world3");
 
         tree1 = create(1, WireType.TEXT, "clusterTwo");
-        serverEndpoint1 = new ServerEndpoint("host.port1", tree1, "cluster");
+        serverEndpoint1 = hooks.addCloseable(new ServerEndpoint("host.port1", tree1, "cluster"));
 
         map1 = tree1.acquireMap(NAME
                 , String.class, String.class);
@@ -292,7 +296,7 @@ public class ReplicationTestBootstrappingAfterLostConnection {
         map1.put("hello3", "world3");
 
         tree2 = create(2, WireType.TEXT, "clusterTwo");
-        serverEndpoint2 = new ServerEndpoint("host.port2", tree2, "cluster");
+        serverEndpoint2 = hooks.addCloseable(new ServerEndpoint("host.port2", tree2, "cluster"));
 
         map2 = tree2.acquireMap(NAME, String.class, String.class);
 
@@ -325,7 +329,7 @@ public class ReplicationTestBootstrappingAfterLostConnection {
 
         //recreate the map and load off the persisted file
         tree1 = create(1, WireType.TEXT, "clusterTwo");
-        serverEndpoint1 = new ServerEndpoint("host.port3", tree1, "cluster");
+        serverEndpoint1 = hooks.addCloseable(new ServerEndpoint("host.port3", tree1, "cluster"));
         @NotNull ConcurrentMap<String, String> map1a = tree1.acquireMap(NAME + "unique" + "?basePath=" +
                         basePath
                 , String.class, String.class);
@@ -361,7 +365,7 @@ public class ReplicationTestBootstrappingAfterLostConnection {
         map2.put("hello3", "world3");
 
         tree1 = create(1, WireType.TEXT, "clusterTwo");
-        serverEndpoint1 = new ServerEndpoint("host.port1", tree1, "cluster");
+        serverEndpoint1 = hooks.addCloseable(new ServerEndpoint("host.port1", tree1, "cluster"));
 
         map1 = tree1.acquireMap(NAME + "?basePath=" + basePath
                 , String.class, String.class);

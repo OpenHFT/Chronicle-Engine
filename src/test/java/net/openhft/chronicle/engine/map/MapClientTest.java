@@ -17,6 +17,7 @@
 
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.engine.ShutdownHooks;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
@@ -32,6 +33,7 @@ import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -39,14 +41,23 @@ import org.junit.runners.Parameterized.Parameters;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * test using the listener both remotely or locally via the engine
@@ -58,9 +69,11 @@ public class MapClientTest extends ThreadMonitoringTest {
     public static final WireType WIRE_TYPE = WireType.TEXT;
     private static int i;
 
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
     // server has it's own asset tree, to the client.
     @NotNull
-    private final VanillaAssetTree assetTree = new VanillaAssetTree();
+    private final VanillaAssetTree assetTree = hooks.addCloseable(new VanillaAssetTree());
     @Nullable
     private Class<? extends CloseableSupplier> supplier = null;
 
@@ -318,10 +331,10 @@ public class MapClientTest extends ThreadMonitoringTest {
 
         CloseableSupplier<MapView<K, V>> result;
         if (LocalMapSupplier.class.equals(supplier)) {
-            result = new LocalMapSupplier<>(kClass, vClass, assetTree);
+            result = hooks.addCloseable(new LocalMapSupplier<>(kClass, vClass, assetTree));
 
         } else if (RemoteMapSupplier.class.equals(supplier)) {
-            result = new RemoteMapSupplier<>("test", kClass, vClass, WireType.TEXT, assetTree, "test");
+            result = hooks.addCloseable(new RemoteMapSupplier<>("test", kClass, vClass, WireType.TEXT, assetTree, "test"));
             assertTrue(result.get() instanceof RemoteMapView);
 
         } else {

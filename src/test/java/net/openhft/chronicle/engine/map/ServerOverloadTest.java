@@ -17,6 +17,7 @@
 
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.engine.ShutdownHooks;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
@@ -59,7 +60,9 @@ public class ServerOverloadTest extends ThreadMonitoringTest {
     @NotNull
     @Rule
     public TestName name = new TestName();
-    private AssetTree assetTree = new VanillaAssetTree().forTesting();
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
+    private AssetTree assetTree = hooks.addCloseable(new VanillaAssetTree().forTesting());
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
@@ -79,15 +82,15 @@ public class ServerOverloadTest extends ThreadMonitoringTest {
 
     @Before
     public void before() throws IOException {
-        serverAssetTree = new VanillaAssetTree().forTesting();
+        serverAssetTree = hooks.addCloseable(new VanillaAssetTree().forTesting());
 
         if (isRemote) {
 
             methodName(name.getMethodName());
             connection = "ServerOverloadTest.testThatSendingAlotOfDataToTheServer.host.port";
             TCPRegistry.createServerSocketChannelFor(connection);
-            serverEndpoint = new ServerEndpoint(connection, serverAssetTree, "cluster");
-            assetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType);
+            serverEndpoint = hooks.addCloseable(new ServerEndpoint(connection, serverAssetTree, "cluster"));
+            assetTree = hooks.addCloseable(new VanillaAssetTree().forRemoteAccess(connection, wireType));
         } else {
             assetTree = serverAssetTree;
         }

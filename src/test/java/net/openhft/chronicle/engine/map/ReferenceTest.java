@@ -19,6 +19,7 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.threads.ThreadDump;
+import net.openhft.chronicle.engine.ShutdownHooks;
 import net.openhft.chronicle.engine.api.pubsub.Reference;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionCollection;
@@ -58,6 +59,8 @@ public class ReferenceTest {
     @NotNull
     @Rule
     public TestName name = new TestName();
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
     
     @Nullable
     WireType wireType;
@@ -97,16 +100,16 @@ public class ReferenceTest {
     @Before
     public void before() throws IOException {
         hostPortToken = "ReferenceTest.host.port";
-        serverAssetTree = new VanillaAssetTree().forTesting();
+        serverAssetTree = hooks.addCloseable(new VanillaAssetTree().forTesting());
 
         if (isRemote) {
 
             methodName(name.getMethodName());
             TCPRegistry.createServerSocketChannelFor(hostPortToken);
-            serverEndpoint = new ServerEndpoint(hostPortToken, serverAssetTree, "cluster");
+            serverEndpoint = hooks.addCloseable(new ServerEndpoint(hostPortToken, serverAssetTree, "cluster"));
 
-            assetTree = new VanillaAssetTree()
-                    .forRemoteAccess(hostPortToken, wireType);
+            assetTree = hooks.addCloseable(new VanillaAssetTree()
+                    .forRemoteAccess(hostPortToken, wireType));
         } else {
             assetTree = serverAssetTree;
         }

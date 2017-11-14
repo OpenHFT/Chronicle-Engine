@@ -20,6 +20,7 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.Closeable;
+import net.openhft.chronicle.engine.ShutdownHooks;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -73,7 +74,9 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     @NotNull
     @Rule
     public TestName name = new TestName();
-    private AssetTree assetTree = new VanillaAssetTree().forTesting();
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
+    private AssetTree assetTree = hooks.addCloseable(new VanillaAssetTree().forTesting());
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
@@ -94,7 +97,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
     @Before
     public void before() throws IOException {
-        serverAssetTree = new VanillaAssetTree().forTesting();
+        serverAssetTree = hooks.addCloseable(new VanillaAssetTree().forTesting());
 
         if (isRemote) {
 
@@ -102,9 +105,9 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
             @NotNull final String hostPort = "SubscriptionEventTest." + name.getMethodName() + ".host.port";
             TCPRegistry.reset();
             TCPRegistry.createServerSocketChannelFor(hostPort);
-            serverEndpoint = new ServerEndpoint(hostPort, serverAssetTree, "cluster");
+            serverEndpoint = hooks.addCloseable(new ServerEndpoint(hostPort, serverAssetTree, "cluster"));
 
-            assetTree = new VanillaAssetTree().forRemoteAccess(hostPort, wireType);
+            assetTree = hooks.addCloseable(new VanillaAssetTree().forRemoteAccess(hostPort, wireType));
         } else {
             assetTree = serverAssetTree;
         }

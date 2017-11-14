@@ -19,12 +19,14 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.Chassis;
+import net.openhft.chronicle.engine.ShutdownHooks;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.wire.AbstractMarshallable;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -47,6 +49,8 @@ import static org.junit.Assert.assertTrue;
 public class MapViewTest {
 
     private ThreadDump threadDump;
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
 
     @Before
     public void threadDump() {
@@ -61,6 +65,7 @@ public class MapViewTest {
     @Before
     public void setUp() {
         Chassis.resetChassis();
+        hooks.addCloseable(Chassis.assetTree());
     }
 
     @Test
@@ -79,7 +84,6 @@ public class MapViewTest {
 
     @Test
     public void testRemoteAccess() throws IOException {
-        Chassis.resetChassis();
 
         @NotNull MapView<String, UserInfo> userMap = Chassis.acquireMap("users", String.class, UserInfo.class);
         userMap.put("userid", new UserInfo("User's Name"));

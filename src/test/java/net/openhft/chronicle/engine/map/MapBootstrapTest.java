@@ -19,6 +19,7 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.onoes.ExceptionKey;
+import net.openhft.chronicle.engine.ShutdownHooks;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -50,6 +52,9 @@ public class MapBootstrapTest extends ThreadMonitoringTest {
     private static final String NAME = "MapBootstrapTest";
     private static final String CONNECTION_1 = "MapBootstrapTest.host.port";
 
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
+
     private AssetTree client;
     private VanillaAssetTree serverAssetTree1;
     private ServerEndpoint serverEndpoint1;
@@ -58,14 +63,14 @@ public class MapBootstrapTest extends ThreadMonitoringTest {
     @Before
     public void before() throws IOException {
         exceptions = Jvm.recordExceptions();
-        serverAssetTree1 = new VanillaAssetTree().forTesting();
+        serverAssetTree1 = hooks.addCloseable(new VanillaAssetTree().forTesting());
 
         TCPRegistry.createServerSocketChannelFor(CONNECTION_1);
 
-        serverEndpoint1 = new ServerEndpoint(CONNECTION_1, serverAssetTree1, "cluster");
+        serverEndpoint1 = hooks.addCloseable(new ServerEndpoint(CONNECTION_1, serverAssetTree1, "cluster"));
 
-        client = new VanillaAssetTree("client1").forRemoteAccess
-                (CONNECTION_1, WIRE_TYPE);
+        client = hooks.addCloseable(new VanillaAssetTree("client1").forRemoteAccess
+                (CONNECTION_1, WIRE_TYPE));
     }
 
     @Override

@@ -19,6 +19,7 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.engine.ShutdownHooks;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
@@ -61,7 +62,9 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
     @NotNull
     @Rule
     public TestName name = new TestName();
-    private AssetTree clientAssetTree = new VanillaAssetTree().forTesting();
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
+    private AssetTree clientAssetTree = hooks.addCloseable(new VanillaAssetTree().forTesting());
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
     public TopologicalSubscriptionEventTest(boolean isRemote, WireType wireType) {
@@ -80,14 +83,14 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
 
     @Before
     public void before() throws IOException {
-        serverAssetTree = new VanillaAssetTree().forTesting();
+        serverAssetTree = hooks.addCloseable(new VanillaAssetTree().forTesting());
 
         if (isRemote) {
             methodName(name.getMethodName());
             TCPRegistry.createServerSocketChannelFor("TopologicalSubscriptionEventTest.host.port");
-            serverEndpoint = new ServerEndpoint("TopologicalSubscriptionEventTest.host.port", serverAssetTree, "cluster");
+            serverEndpoint = hooks.addCloseable(new ServerEndpoint("TopologicalSubscriptionEventTest.host.port", serverAssetTree, "cluster"));
 
-            clientAssetTree = new VanillaAssetTree().forRemoteAccess("TopologicalSubscriptionEventTest.host.port", wireType);
+            clientAssetTree = hooks.addCloseable(new VanillaAssetTree().forRemoteAccess("TopologicalSubscriptionEventTest.host.port", wireType));
         } else {
             clientAssetTree = serverAssetTree;
         }

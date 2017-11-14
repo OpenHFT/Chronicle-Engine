@@ -20,6 +20,7 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.threads.ThreadDump;
+import net.openhft.chronicle.engine.ShutdownHooks;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.map.ChronicleMap;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
@@ -47,6 +49,8 @@ import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplicat
 
 public class CMap2EngineReplicatorTest {
 
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
     private ThreadDump threadDump;
 
     @Before
@@ -67,8 +71,8 @@ public class CMap2EngineReplicatorTest {
 
         @Nullable final CMap2EngineReplicator replicator = new CMap2EngineReplicator(null);
 
-        ChronicleMap<String, String> map = ChronicleMapBuilder.of(String.class, String.class).
-                replication(builder().engineReplication(replicator).createWithId((byte) 2)).create();
+        ChronicleMap<String, String> map = hooks.addCloseable(ChronicleMapBuilder.of(String.class, String.class).
+                replication(builder().engineReplication(replicator).createWithId((byte) 2)).create());
 
         @Nullable final ModificationIterator modificationIterator = replicator.acquireModificationIterator((byte) 1);
         map.put("hello", "world");
@@ -97,8 +101,8 @@ public class CMap2EngineReplicatorTest {
 
         @NotNull final CMap2EngineReplicator replicator = new CMap2EngineReplicator(null);
 
-        ChronicleMap map = ChronicleMapBuilder.of(String.class, String.class).
-                replication(builder().engineReplication(replicator).createWithId((byte) 2)).create();
+        ChronicleMap map = hooks.addCloseable(ChronicleMapBuilder.of(String.class, String.class).
+                replication(builder().engineReplication(replicator).createWithId((byte) 2)).create());
 
         final Bytes<ByteBuffer> key = wrap(allocateDirect(1024)).bytesForWrite();
         final Bytes<ByteBuffer> value = wrap(allocateDirect(1024)).bytesForWrite();

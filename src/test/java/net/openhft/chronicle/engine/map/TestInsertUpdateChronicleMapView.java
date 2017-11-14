@@ -18,6 +18,7 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.engine.ShutdownHooks;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
@@ -31,6 +32,7 @@ import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -49,12 +51,13 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  */
 @RunWith(value = Parameterized.class)
 public class TestInsertUpdateChronicleMapView extends ThreadMonitoringTest {
-
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
     private final WireType wireType;
     @NotNull
     public String connection = "RemoteSubscriptionTest.host.port";
     @NotNull
-    private AssetTree clientAssetTree = new VanillaAssetTree().forTesting();
+    private AssetTree clientAssetTree = hooks.addCloseable(new VanillaAssetTree().forTesting());
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
@@ -73,12 +76,12 @@ public class TestInsertUpdateChronicleMapView extends ThreadMonitoringTest {
 
     @Before
     public void before() throws IOException {
-        serverAssetTree = new VanillaAssetTree().forTesting();
+        serverAssetTree = hooks.addCloseable(new VanillaAssetTree().forTesting());
         YamlLogging.setAll(false);
 
         connection = "TestInsertUpdateChronicleMapView.host.port";
         TCPRegistry.createServerSocketChannelFor(connection);
-        serverEndpoint = new ServerEndpoint(connection, serverAssetTree, "cluster");
+        serverEndpoint = hooks.addCloseable(new ServerEndpoint(connection, serverAssetTree, "cluster"));
 
         serverAssetTree.root().addWrappingRule(MapView.class, "map directly to " + "KeyValueStore",
                 VanillaMapView::new, KeyValueStore.class);
@@ -87,7 +90,7 @@ public class TestInsertUpdateChronicleMapView extends ThreadMonitoringTest {
                 new ChronicleMapKeyValueStore(context.basePath(null).entries(100)
                         .putReturnsNull(false), asset));
 
-        clientAssetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType);
+        clientAssetTree = hooks.addCloseable(new VanillaAssetTree().forRemoteAccess(connection, wireType));
     }
 
     @Override

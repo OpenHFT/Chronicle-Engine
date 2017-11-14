@@ -19,6 +19,7 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.annotation.NotNull;
 import net.openhft.chronicle.core.threads.ThreadDump;
+import net.openhft.chronicle.engine.ShutdownHooks;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.Map;
@@ -37,6 +39,9 @@ import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplicat
  */
 
 public class CMap2EngineReplicatorMap2MapTest {
+
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
 
     @Nullable
     private final CMap2EngineReplicator replicator1 = new CMap2EngineReplicator(null);
@@ -55,9 +60,9 @@ public class CMap2EngineReplicatorMap2MapTest {
                                              final CMap2EngineReplicator replicator,
                                              @org.jetbrains.annotations.NotNull @NotNull final Class<K> keyClass,
                                              @org.jetbrains.annotations.NotNull @NotNull final Class<V> valueClass) {
-        return ChronicleMapBuilder.of(keyClass, valueClass).
+        return hooks.addCloseable(ChronicleMapBuilder.of(keyClass, valueClass).
                 replication(builder().engineReplication(replicator).createWithId((byte) localIdentifier))
-                .create();
+                .create());
     }
 
     @Before

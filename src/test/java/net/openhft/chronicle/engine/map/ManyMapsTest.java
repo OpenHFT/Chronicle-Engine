@@ -22,6 +22,7 @@ import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.onoes.ExceptionKey;
 import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.core.util.SerializablePredicate;
+import net.openhft.chronicle.engine.ShutdownHooks;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -45,6 +47,9 @@ public class ManyMapsTest {
 
     public static final String NAME =
             "ManyMapsTest.testConnectToMultipleMapsUsingTheSamePort.host.port";
+
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
     private ThreadDump threadDump;
     private Map<ExceptionKey, Integer> exceptions;
 
@@ -87,14 +92,14 @@ public class ManyMapsTest {
         TCPRegistry.reset();
 
         @NotNull String mapBaseName = "ManyMapsTest-";
-        try (@NotNull AssetTree assetTree = new VanillaAssetTree().forTesting()) {
+        try (@NotNull AssetTree assetTree = hooks.addCloseable(new VanillaAssetTree().forTesting())) {
 
             @NotNull Map<String, Map<String, String>> _clientMaps = new HashMap<>();
             TCPRegistry.createServerSocketChannelFor(NAME);
             //TODO CHENT-68 Only works with BINARY NOT TEXT.
-            @NotNull ServerEndpoint serverEndpoint = new ServerEndpoint(NAME, assetTree, "cluster");
+            @NotNull ServerEndpoint serverEndpoint = hooks.addCloseable(new ServerEndpoint(NAME, assetTree, "cluster"));
 
-            try (@NotNull AssetTree clientAssetTree = new VanillaAssetTree().forRemoteAccess(NAME, WireType.BINARY)) {
+            try (@NotNull AssetTree clientAssetTree = hooks.addCloseable(new VanillaAssetTree().forRemoteAccess(NAME, WireType.BINARY))) {
                 System.out.println("Creating maps.");
                 @NotNull AtomicInteger count = new AtomicInteger();
                 IntStream.rangeClosed(1, noOfMaps).forEach(i -> {

@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine;
 
+import net.openhft.chronicle.network.connection.TcpChannelHub;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -47,6 +48,7 @@ public final class ShutdownHooks implements TestRule {
                     e.printStackTrace();
                 }
             }
+            TcpChannelHub.closeAllHubs();
         }
     }
 

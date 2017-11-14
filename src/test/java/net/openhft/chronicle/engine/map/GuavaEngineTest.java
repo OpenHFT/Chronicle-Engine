@@ -28,6 +28,7 @@ import junit.framework.TestSuite;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.core.onoes.ExceptionKey;
+import net.openhft.chronicle.engine.ShutdownHooks;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.MapClientTest.LocalMapSupplier;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
@@ -51,20 +52,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
-import static com.google.common.collect.testing.features.MapFeature.*;
+import static com.google.common.collect.testing.features.MapFeature.GENERAL_PURPOSE;
+import static com.google.common.collect.testing.features.MapFeature.RESTRICTS_KEYS;
+import static com.google.common.collect.testing.features.MapFeature.RESTRICTS_VALUES;
 
 @SuppressWarnings("all")
 
 @RunWith(AllTests.class)
 public class GuavaEngineTest {
+
+    public static final ShutdownHooks HOOKS = new ShutdownHooks();
     public static final WireType WIRE_TYPE = WireType.TEXT;
     private Map<ExceptionKey, Integer> exceptions;
 
     @NotNull
     public static Test suite() throws IOException {
 
-        MapTestSuiteBuilder using = MapTestSuiteBuilder.using(new RemoteTestGenerator(new
-                VanillaAssetTree().forTesting()));
+        MapTestSuiteBuilder using = MapTestSuiteBuilder.using(new RemoteTestGenerator(
+                HOOKS.addCloseable(new VanillaAssetTree().forTesting())));
 
         TestSuite remoteMapTests = using.named("Chronicle RemoteEngine Guava tests")
                 .withFeatures(GENERAL_PURPOSE)
@@ -106,8 +111,8 @@ public class GuavaEngineTest {
 
     @NotNull
     static ConcurrentMap<CharSequence, CharSequence> newStrStrLocalMap() {
-        return new LocalMapSupplier(CharSequence.class, CharSequence.class, new
-                VanillaAssetTree().forTesting()).get();
+        return new LocalMapSupplier(CharSequence.class, CharSequence.class,
+                HOOKS.addCloseable(new VanillaAssetTree().forTesting())).get();
     }
 
     @AfterClass
@@ -123,6 +128,7 @@ public class GuavaEngineTest {
 
     @After
     public void tearDown() {
+        HOOKS.close();
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
 

@@ -21,6 +21,7 @@ import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.onoes.ExceptionKey;
 import net.openhft.chronicle.core.threads.ThreadDump;
+import net.openhft.chronicle.engine.ShutdownHooks;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
@@ -51,6 +52,8 @@ import static org.junit.Assert.assertNotNull;
  */
 public class ReferenceChronicleTest {
 
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
     private String hostPortToken;
 
     private ThreadDump threadDump;
@@ -93,13 +96,13 @@ public class ReferenceChronicleTest {
     @Test(timeout = 5000)
     public void testRemoteSubscriptionMUFGChronicle() throws IOException {
 
-        @NotNull AssetTree serverAssetTree = new VanillaAssetTree().forTesting();
+        @NotNull AssetTree serverAssetTree = hooks.addCloseable(new VanillaAssetTree().forTesting());
         serverAssetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore", VanillaMapView::new, KeyValueStore.class);
         serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
                 new ChronicleMapKeyValueStore(context.basePath(OS.TARGET).entries(50).averageValueSize(2_000_000), asset));
 
-        @NotNull ServerEndpoint serverEndpoint = new ServerEndpoint(hostPortToken, serverAssetTree, "cluster");
-        @NotNull AssetTree clientAssetTree = new VanillaAssetTree().forRemoteAccess(hostPortToken, WireType.BINARY);
+        @NotNull ServerEndpoint serverEndpoint = hooks.addCloseable(new ServerEndpoint(hostPortToken, serverAssetTree, "cluster"));
+        @NotNull AssetTree clientAssetTree = hooks.addCloseable(new VanillaAssetTree().forRemoteAccess(hostPortToken, WireType.BINARY));
 
         //noinspection TryFinallyCanBeTryWithResources
         try {
@@ -114,7 +117,7 @@ public class ReferenceChronicleTest {
     @Test(timeout = 5000)
     public void testLocalSubscriptionMUFGChronicle() throws IOException {
 
-        @NotNull AssetTree serverAssetTree = new VanillaAssetTree().forTesting();
+        @NotNull AssetTree serverAssetTree = hooks.addCloseable(new VanillaAssetTree().forTesting());
         serverAssetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore", VanillaMapView::new, KeyValueStore.class);
         serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
                 new ChronicleMapKeyValueStore(context.basePath(OS.TARGET).entries(50).averageValueSize(2_000_000), asset));

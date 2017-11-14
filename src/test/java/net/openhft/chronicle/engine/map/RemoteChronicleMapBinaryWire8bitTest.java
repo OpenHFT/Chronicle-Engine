@@ -19,6 +19,7 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.threads.EventLoop;
+import net.openhft.chronicle.engine.ShutdownHooks;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
@@ -49,10 +50,10 @@ import static org.junit.Assert.*;
  */
 
 public class RemoteChronicleMapBinaryWire8bitTest extends JSR166TestCase {
-
-    private static int s_port = 12050;
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
     @NotNull
-    private final AssetTree assetTree = new VanillaAssetTree();
+    private final AssetTree assetTree = hooks.addCloseable(new VanillaAssetTree());
     @NotNull
     @Rule
     public TestName name = new TestName();
@@ -365,7 +366,6 @@ public class RemoteChronicleMapBinaryWire8bitTest extends JSR166TestCase {
      */
     @Test(timeout = 50000)
     public void testPutAll() throws IOException {
-        int port = s_port++;
         try (@NotNull ClosableMapSupplier<Integer, CharSequence> emptySupplier = newIntString("test")) {
             final Map<Integer, CharSequence> empty = emptySupplier.get();
             try (@NotNull ClosableMapSupplier<Integer, CharSequence> supplier = map5()) {

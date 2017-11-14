@@ -19,6 +19,7 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.onoes.ExceptionKey;
+import net.openhft.chronicle.engine.ShutdownHooks;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
@@ -59,11 +60,13 @@ public class ArrayMapTest extends ThreadMonitoringTest {
 
     private final Boolean isRemote;
     private final WireType wireType;
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
     public String connection;
     @NotNull
     @Rule
     public TestName name = new TestName();
-    private AssetTree assetTree = new VanillaAssetTree().forTesting();
+    private AssetTree assetTree = hooks.addCloseable(new VanillaAssetTree().forTesting());
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
     private Map<ExceptionKey, Integer> exceptions;
@@ -79,29 +82,21 @@ public class ArrayMapTest extends ThreadMonitoringTest {
                 new Object[]{false, null}
                 , new Object[]{true, WireType.TEXT}
                 , new Object[]{true, WireType.BINARY}
-                , new Object[]{true, WireType.BINARY}
-                , new Object[]{true, WireType.BINARY}
-                , new Object[]{true, WireType.BINARY}
-                , new Object[]{true, WireType.BINARY}
-                , new Object[]{true, WireType.BINARY}
-                , new Object[]{true, WireType.BINARY}
-                , new Object[]{true, WireType.BINARY}
-                , new Object[]{true, WireType.BINARY}
         );
     }
 
     @Before
     public void before() throws IOException {
         exceptions = Jvm.recordExceptions();
-        serverAssetTree = new VanillaAssetTree().forTesting();
+        serverAssetTree = hooks.addCloseable(new VanillaAssetTree().forTesting());
 
         if (isRemote) {
 
             methodName(name.getMethodName());
             connection = "ArrayMapTest." + name.getMethodName() + ".host.port" + wireType;
             TCPRegistry.createServerSocketChannelFor(connection);
-            serverEndpoint = new ServerEndpoint(connection, serverAssetTree, "cluster");
-            assetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType);
+            serverEndpoint = hooks.addCloseable(new ServerEndpoint(connection, serverAssetTree, "cluster"));
+            assetTree = hooks.addCloseable(new VanillaAssetTree().forRemoteAccess(connection, wireType));
         } else {
             assetTree = serverAssetTree;
         }

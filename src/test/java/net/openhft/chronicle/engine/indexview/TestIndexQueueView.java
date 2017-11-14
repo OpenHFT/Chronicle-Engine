@@ -2,6 +2,7 @@ package net.openhft.chronicle.engine.indexview;
 
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.EngineInstance;
+import net.openhft.chronicle.engine.ShutdownHooks;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.query.*;
 import net.openhft.chronicle.engine.tree.VanillaAsset;
@@ -15,6 +16,7 @@ import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.File;
@@ -37,6 +39,8 @@ public class TestIndexQueueView {
     private static final String[] books = {"CASH_BOOK1", "CASH_BOOK2", "CASH_BOOK3", "REPO_BOOK1", "REPO_BOOK2"};
     private static final String[] cptys = {"x", "y", "z", "a", "b"};
 
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
 
     @Test
     public void test() throws IOException, InterruptedException {
@@ -50,7 +54,7 @@ public class TestIndexQueueView {
 
         startEngine();
 
-        VanillaAssetTree assetTree = (new VanillaAssetTree()).forRemoteAccess("host.port1", WireType.BINARY);
+        VanillaAssetTree assetTree = hooks.addCloseable((new VanillaAssetTree()).forRemoteAccess("host.port1", WireType.BINARY));
 
 
         VanillaAsset asset = (VanillaAsset) assetTree.acquireAsset(uri);
@@ -133,7 +137,8 @@ public class TestIndexQueueView {
 
 
     private void startEngine() {
-        VanillaAssetTree serverTree = EngineInstance.engineMain(1, "indexView-engine.yaml");
+        VanillaAssetTree serverTree =
+                hooks.addCloseable(EngineInstance.engineMain(1, "indexView-engine.yaml"));
 
         final TypeToString typesToString = new TypeToString() {
             @Override

@@ -18,6 +18,7 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.engine.ShutdownHooks;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.query.Query;
@@ -55,6 +56,8 @@ import static net.openhft.chronicle.engine.Utils.methodName;
 @RunWith(value = Parameterized.class)
 public class QueryableKeySetTest extends ThreadMonitoringTest {
 
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
     private final Boolean isRemote;
     private final WireType wireType;
     @NotNull
@@ -81,14 +84,14 @@ public class QueryableKeySetTest extends ThreadMonitoringTest {
 
     @Before
     public void before() throws IOException {
-        serverAssetTree = new VanillaAssetTree().forTesting();
+        serverAssetTree = hooks.addCloseable(new VanillaAssetTree().forTesting());
 
         if (isRemote) {
             methodName(name.getMethodName());
             connection = "QueryableKeySetTest.host.port";
             TCPRegistry.createServerSocketChannelFor(connection);
-            serverEndpoint = new ServerEndpoint(connection, serverAssetTree, "cluster");
-            assetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType);
+            serverEndpoint = hooks.addCloseable(new ServerEndpoint(connection, serverAssetTree, "cluster"));
+            assetTree = hooks.addCloseable(new VanillaAssetTree().forRemoteAccess(connection, wireType));
         } else {
             assetTree = serverAssetTree;
         }
