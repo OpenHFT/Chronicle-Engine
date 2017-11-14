@@ -252,11 +252,9 @@ public class  Replication3WayIntIntTest extends ThreadMonitoringTest {
                         Jvm.pause(100);
                         continue Outer;
                     }
-
-                    assert true;
-                    return;
                 }
             }
+            return;
         }
 
         assert false;
