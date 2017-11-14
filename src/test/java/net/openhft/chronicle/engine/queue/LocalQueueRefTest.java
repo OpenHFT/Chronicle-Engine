@@ -18,6 +18,7 @@
 package net.openhft.chronicle.engine.queue;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.engine.ShutdownHooks;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.pubsub.Reference;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
@@ -52,6 +53,8 @@ public class LocalQueueRefTest extends ThreadMonitoringTest {
     @NotNull
     @Rule
     public TestName name = new TestName();
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
     String methodName = "";
     private AssetTree assetTree;
 
@@ -59,7 +62,7 @@ public class LocalQueueRefTest extends ThreadMonitoringTest {
     public void before() throws IOException {
         methodName(name.getMethodName());
         methodName = name.getMethodName();
-        assetTree = (new VanillaAssetTree(1)).forTesting();
+        assetTree = hooks.addCloseable((new VanillaAssetTree(1)).forTesting());
         YamlLogging.setAll(false);
     }
 

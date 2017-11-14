@@ -3,6 +3,7 @@ package net.openhft.chronicle.engine.queue;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
+import net.openhft.chronicle.engine.ShutdownHooks;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
@@ -46,6 +47,8 @@ public class QueueAsMapViewTest extends ThreadMonitoringTest {
     @NotNull
     @Rule
     public TestName name = new TestName();
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
     @NotNull
     String methodName = "";
     private AssetTree assetTree;
@@ -68,17 +71,17 @@ public class QueueAsMapViewTest extends ThreadMonitoringTest {
     public QueueAsMapViewTest(Boolean isRemote) throws Exception {
 
         if (isRemote) {
-            serverAssetTree = new VanillaAssetTree().forTesting();
+            serverAssetTree = hooks.addCloseable(new VanillaAssetTree().forTesting());
 
             @NotNull String hostPortDescription = "SimpleQueueViewTest-methodName" + methodName;
             TCPRegistry.createServerSocketChannelFor(hostPortDescription);
-            serverEndpoint = new ServerEndpoint(hostPortDescription, serverAssetTree, "cluster");
+            serverEndpoint = hooks.addCloseable(new ServerEndpoint(hostPortDescription, serverAssetTree, "cluster"));
 
-            @NotNull final VanillaAssetTree client = new VanillaAssetTree();
+            @NotNull final VanillaAssetTree client = hooks.addCloseable(new VanillaAssetTree());
             assetTree = client.forRemoteAccess(hostPortDescription, WireType.BINARY);
 
         } else {
-            assetTree = (new VanillaAssetTree(1)).forTesting();
+            assetTree = hooks.addCloseable((new VanillaAssetTree(1)).forTesting());
             serverEndpoint = null;
             serverAssetTree = null;
         }

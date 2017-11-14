@@ -21,6 +21,7 @@ import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.Chassis;
+import net.openhft.chronicle.engine.ShutdownHooks;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -32,11 +33,21 @@ import net.openhft.chronicle.engine.map.FilePerKeyValueStore;
 import net.openhft.chronicle.engine.tree.VanillaAsset;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Rule;
+import org.junit.Test;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.IntStream;
@@ -54,6 +65,8 @@ public class SubscriptionModelFilePerKeyPerformanceTest {
     @NotNull
     private static String _mapName = "PerfTestMap";
     private ThreadDump threadDump;
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
 
     @BeforeClass
     public static void setUpBeforeClass() {
@@ -76,6 +89,7 @@ public class SubscriptionModelFilePerKeyPerformanceTest {
     @Before
     public void setUp() {
         Chassis.resetChassis();
+        hooks.addCloseable(Chassis.assetTree());
 
         ((VanillaAsset) Chassis.assetTree().root()).enableTranslatingValuesToBytesStore();
 
