@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine.column;
 
+import net.openhft.chronicle.engine.ShutdownHooks;
 import net.openhft.chronicle.engine.api.column.ClosableIterator;
 import net.openhft.chronicle.engine.api.column.ColumnViewInternal;
 import net.openhft.chronicle.engine.api.column.ColumnViewInternal.SortedFilter;
@@ -28,6 +29,8 @@ import java.util.*;
 @RunWith(value = Parameterized.class)
 public class ColumnViewTest {
 
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
 
     @NotNull
     @Rule
@@ -51,17 +54,18 @@ public class ColumnViewTest {
     public ColumnViewTest(Boolean isRemote) throws Exception {
 
         if (isRemote) {
-            @NotNull VanillaAssetTree assetTree0 = new VanillaAssetTree().forTesting();
+            @NotNull VanillaAssetTree assetTree0 = hooks.addCloseable(new VanillaAssetTree().forTesting());
+
 
             @NotNull String hostPortDescription = "SimpleQueueViewTest-methodName" + methodName;
             TCPRegistry.createServerSocketChannelFor(hostPortDescription);
-            serverEndpoint = new ServerEndpoint(hostPortDescription, assetTree0, "cluster");
+            serverEndpoint = hooks.addCloseable(new ServerEndpoint(hostPortDescription, assetTree0, "cluster"));
 
-            @NotNull final VanillaAssetTree client = new VanillaAssetTree();
+            @NotNull final VanillaAssetTree client = hooks.addCloseable(new VanillaAssetTree());
             assetTree = client.forRemoteAccess(hostPortDescription, WireType.BINARY);
 
         } else {
-            assetTree = (new VanillaAssetTree(1)).forTesting();
+            assetTree = hooks.addCloseable((new VanillaAssetTree(1)).forTesting());
             serverEndpoint = null;
         }
 

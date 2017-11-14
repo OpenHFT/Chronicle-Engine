@@ -22,26 +22,30 @@ import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.onoes.ExceptionKey;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.core.threads.ThreadDump;
+import net.openhft.chronicle.engine.ShutdownHooks;
 import net.openhft.chronicle.engine.VanillaAssetTreeEgMain;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
+import net.openhft.lang.thread.NamedThreadFactory;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 /*
  * Created by Peter Lawrey on 12/06/15.
  */
 public class ConfigurationFSTest {
+
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
 
     private ThreadDump threadDump;
     private Map<ExceptionKey, Integer> exceptions;
@@ -80,7 +84,7 @@ public class ConfigurationFSTest {
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
         ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
 
-        @NotNull AssetTree at = new VanillaAssetTree().forTesting();
+        @NotNull AssetTree at = hooks.addCloseable(new VanillaAssetTree().forTesting());
         at.registerSubscriber("", TopologicalEvent.class, System.out::println);
         at.registerSubscriber("/Data", TopologicalEvent.class, System.out::println);
 
@@ -135,8 +139,9 @@ public class ConfigurationFSTest {
                 "    valueType: !type String,\n" +
                 "    recurse: true\n" +
                 "  }\n");
-
-        VanillaAssetTreeEgMain.registerTextViewofTree("ConfigFS", at);
+        final ScheduledExecutorService ses =
+                hooks.shutdownExecutor(Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("all-trees-watcher", true)));
+        VanillaAssetTreeEgMain.registerTextViewofTree("ConfigFS", at, ses);
         Jvm.pause(100);
         at.close();
     }

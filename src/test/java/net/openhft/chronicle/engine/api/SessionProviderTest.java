@@ -19,6 +19,7 @@ package net.openhft.chronicle.engine.api;
 
 import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.Chassis;
+import net.openhft.chronicle.engine.ShutdownHooks;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.network.VanillaSessionDetails;
 import net.openhft.chronicle.network.api.session.SessionDetails;
@@ -27,11 +28,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
 public class SessionProviderTest {
+
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
 
     private ThreadDump threadDump;
 
@@ -44,9 +49,11 @@ public class SessionProviderTest {
     public void checkThreadDump() {
         threadDump.assertNoNewThreads();
     }
+
     @Test
     public void testAcquireSessionProvider() {
         Chassis.resetChassis();
+        hooks.addCloseable(Chassis.assetTree());
         @Nullable SessionProvider sessionProvider = Chassis.getAsset("").getView(SessionProvider.class);
         @NotNull VanillaSessionDetails sessionDetails0 = new VanillaSessionDetails();
 

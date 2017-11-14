@@ -3,6 +3,7 @@ package net.openhft.chronicle.engine.api.query;
 import net.openhft.chronicle.core.io.IOTools;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.EngineInstance;
+import net.openhft.chronicle.engine.ShutdownHooks;
 import net.openhft.chronicle.engine.api.query.events.EventProcessor;
 import net.openhft.chronicle.engine.api.query.events.WriterGateway;
 import net.openhft.chronicle.engine.api.query.events.instrumentdata.CorpBondStaticLoadEvent;
@@ -18,6 +19,7 @@ import net.openhft.chronicle.wire.Marshallable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.File;
@@ -41,11 +43,14 @@ public class VanillaIndexQueueViewTest {
         ClassAliasPool.CLASS_ALIASES.addAlias(MarketDataEvent.class);
     }
 
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
+
     @Test(timeout = 10000)
     public void shouldFilterEventsUsingEventName() throws Exception {
         TCPRegistry.reset();
         TCPRegistry.createServerSocketChannelFor("host.port1", "host.port2");
-        try (VanillaAssetTree tree = EngineInstance.engineMain(1, "indexView-engine.yaml")) {
+        try (VanillaAssetTree tree = hooks.addCloseable(EngineInstance.engineMain(1, "indexView-engine.yaml"))) {
             ChronicleQueue queue = null;
             try {
                 assert tree != null;
@@ -60,7 +65,7 @@ public class VanillaIndexQueueViewTest {
                 Thread.sleep(100);
                 tree.acquireAsset(URI).acquireView(IndexQueueView.class);
 
-                final Client client = new Client(URI, new String[]{"host.port1"}, typesToString);
+                final Client client = hooks.addCloseable(new Client(URI, new String[]{"host.port1"}, typesToString));
 
                 BlockingQueue<CorpBondStaticLoadEvent> eventCollector = new ArrayBlockingQueue<>(1000);
                 // should only receive onCorpBondStaticChange events
@@ -84,7 +89,7 @@ public class VanillaIndexQueueViewTest {
     public void testIsEndOfSnapshot() throws InterruptedException, IOException {
         TCPRegistry.reset();
         TCPRegistry.createServerSocketChannelFor("host.port1", "host.port2");
-        try (VanillaAssetTree tree = EngineInstance.engineMain(1, "indexView-engine.yaml")) {
+        try (VanillaAssetTree tree = hooks.addCloseable(EngineInstance.engineMain(1, "indexView-engine.yaml"))) {
             ChronicleQueue queue = null;
             try {
                 assert tree != null;
@@ -103,7 +108,7 @@ public class VanillaIndexQueueViewTest {
                 tree.acquireAsset(URI).acquireView(IndexQueueView.class);
 
                 /// CLIENT
-                final Client client = new Client(URI, new String[]{"host.port1"}, typesToString);
+                final Client client = hooks.addCloseable(new Client(URI, new String[]{"host.port1"}, typesToString));
                 ArrayDeque<IndexedValue> q = new ArrayDeque<IndexedValue>(20);
                 client.subscribes(MarketDataEvent.class, "true", FROM_END, v -> {
                     q.add(v);
@@ -134,7 +139,7 @@ public class VanillaIndexQueueViewTest {
     public void shouldReceiveEventViaSubscription() throws InterruptedException, IOException {
         TCPRegistry.reset();
         TCPRegistry.createServerSocketChannelFor("host.port1", "host.port2");
-        try (VanillaAssetTree tree = EngineInstance.engineMain(1, "indexView-engine.yaml")) {
+        try (VanillaAssetTree tree = hooks.addCloseable(EngineInstance.engineMain(1, "indexView-engine.yaml"))) {
             ChronicleQueue queue = null;
             try {
                 assert tree != null;
@@ -153,7 +158,7 @@ public class VanillaIndexQueueViewTest {
                 tree.acquireAsset(URI).acquireView(IndexQueueView.class);
 
                 /// CLIENT
-                final Client client = new Client(URI, new String[]{"host.port1"}, typesToString);
+                final Client client = hooks.addCloseable(new Client(URI, new String[]{"host.port1"}, typesToString));
 
                 BlockingQueue<CorpBondStaticLoadEvent> eventCollector = new ArrayBlockingQueue<>(1);
                 client.subscribes(CorpBondStaticLoadEvent.class, "true", FROM_END, v -> eventCollector.add(v.v()));

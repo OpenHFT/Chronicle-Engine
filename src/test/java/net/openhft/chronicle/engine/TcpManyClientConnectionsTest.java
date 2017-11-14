@@ -26,7 +26,10 @@ import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentMap;
@@ -39,7 +42,6 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Rob Austin.
  */
-@Ignore("Fails on teamcity")
 public class TcpManyClientConnectionsTest extends ThreadMonitoringTest {
 
     public static final WireType WIRE_TYPE = WireType.TEXT;

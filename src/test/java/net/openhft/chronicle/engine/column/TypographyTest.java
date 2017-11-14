@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine.column;
 
+import net.openhft.chronicle.engine.ShutdownHooks;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
@@ -38,6 +39,9 @@ public class TypographyTest {
 
     public static final String ADD_QUEUE_LATER = "/proc/connections/cluster/throughput/1";
 
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
+
     @NotNull
     @Rule
     public TestName name = new TestName();
@@ -61,13 +65,13 @@ public class TypographyTest {
     public TypographyTest(Boolean isRemote) throws Exception {
 
         if (isRemote) {
-            @NotNull VanillaAssetTree assetTree0 = new VanillaAssetTree().forTesting();
+            @NotNull VanillaAssetTree assetTree0 = hooks.addCloseable(new VanillaAssetTree().forTesting());
 
             @NotNull String hostPortDescription = "SimpleQueueViewTest-methodName" + methodName;
             TCPRegistry.createServerSocketChannelFor(hostPortDescription);
-            serverEndpoint = new ServerEndpoint(hostPortDescription, assetTree0, "cluster");
+            serverEndpoint = hooks.addCloseable(new ServerEndpoint(hostPortDescription, assetTree0, "cluster"));
 
-            @NotNull final VanillaAssetTree client = new VanillaAssetTree();
+            @NotNull final VanillaAssetTree client = hooks.addCloseable(new VanillaAssetTree());
             assetTree = client.forRemoteAccess(hostPortDescription, WireType.BINARY);
 
             //  assetTree.acquireMap(ADD_MAP_LATER, String.class, String.class).size();
@@ -90,7 +94,7 @@ public class TypographyTest {
 
 
         } else {
-            assetTree = (new VanillaAssetTree(1)).forTesting();
+            assetTree = hooks.addCloseable((new VanillaAssetTree(1)).forTesting());
             assetTree.acquireMap(ADD_MAP_LATER, String.class, String.class).size();
 
             @NotNull final RequestContext requestContext = requestContext(ADD_QUEUE_LATER);

@@ -64,7 +64,7 @@ public class VanillaAssetTreeEgMain {
         //tree.registerSubscriber("group2/subgroup/map3", String.class, (String s) -> System.out.println(s));
         tree.registerSubscriber("group2/subgroup/map3", String.class, System.out::println);
 
-        registerTextViewofTree("tree", tree);
+        registerTextViewofTree("tree", tree, ses);
 
         // added group2/subgroup/map4
         @NotNull ConcurrentMap<String, String> map4 = tree.acquireMap("group2/subgroup/map4", String.class, String.class);
@@ -108,10 +108,10 @@ public class VanillaAssetTreeEgMain {
 
     }
 
-    public static void registerTextViewofTree(String desc, @NotNull AssetTree tree) {
+    public static void registerTextViewofTree(String desc, @NotNull AssetTree tree, final ScheduledExecutorService executorService) {
         tree.registerSubscriber("", TopologicalEvent.class, e ->
                         // give the collection time to be setup.
-                        ses.schedule(() -> handleTreeUpdate(desc, tree, e), 50, TimeUnit.MILLISECONDS)
+                        executorService.schedule(() -> handleTreeUpdate(desc, tree, e), 50, TimeUnit.MILLISECONDS)
         );
     }
 
