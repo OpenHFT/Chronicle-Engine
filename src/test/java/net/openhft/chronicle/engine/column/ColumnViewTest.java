@@ -18,6 +18,7 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
+import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -31,6 +32,9 @@ public class ColumnViewTest {
 
     @Rule
     public ShutdownHooks hooks = new ShutdownHooks();
+
+    @Rule
+    public Timeout globalTimeout = Timeout.seconds(10);
 
     @NotNull
     @Rule
