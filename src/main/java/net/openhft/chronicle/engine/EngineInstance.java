@@ -87,14 +87,21 @@ public class EngineInstance {
 
         final EngineCluster engineCluster = clusterName != null ? clusters.clusters.get(clusterName) : clusters.clusters.firstCluster();
 
-        @NotNull final Asset connectivityMap = tree.acquireAsset("/proc/connections/cluster/connectivity");
-        connectivityMap.addWrappingRule(MapView.class, "map directly to KeyValueStore",
-                VanillaMapView::new,
-                KeyValueStore.class);
-        connectivityMap.addLeafRule(EngineReplication.class, "Engine replication holder",
-                CMap2EngineReplicator::new);
-        connectivityMap.addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
-                new ChronicleMapKeyValueStore(context.cluster(engineCluster.clusterName()), asset));
+        try {
+            Class.forName("net.openhft.chronicle.hash.replication.EngineReplicationLangBytesConsumer");
+            @NotNull final Asset connectivityMap = tree.acquireAsset("/proc/connections/cluster/connectivity");
+            connectivityMap.addWrappingRule(MapView.class, "map directly to KeyValueStore",
+                    VanillaMapView::new,
+                    KeyValueStore.class);
+            connectivityMap.addLeafRule(EngineReplication.class, "Engine replication holder",
+                    CMap2EngineReplicator::new);
+            connectivityMap.addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
+                    new ChronicleMapKeyValueStore(context.cluster(engineCluster.clusterName()), asset));
+
+        } catch (ClassNotFoundException e) {
+            //my class isn't there!
+        }
+
 
         try {
             installable.install("/", tree);
