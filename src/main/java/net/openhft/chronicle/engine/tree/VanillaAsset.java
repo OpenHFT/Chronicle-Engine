@@ -266,7 +266,7 @@ public class VanillaAsset implements Asset, Closeable {
 
     @NotNull
     @Override
-    public String fullName() {
+    public synchronized String fullName() {
         if (fullName == null)
             fullName = Asset.super.fullName();
         return fullName;
@@ -445,7 +445,6 @@ public class VanillaAsset implements Asset, Closeable {
     @NotNull
     @Override
     public Asset acquireAsset(@NotNull String childName) {
-        checkAllowedToCreateAsset(childName);
 
         if ("/".contentEquals(childName))
             return root();
@@ -466,15 +465,12 @@ public class VanillaAsset implements Asset, Closeable {
 
     }
 
-    private void checkAllowedToCreateAsset(@NotNull String childName) {
-        if (this != root())
-            return;
-
+    private synchronized void checkAllowedToCreateAsset(@NotNull String childName) {
         final StringBuilder sb = sbTl.get();
         sb.setLength(0);
         sb.append("/");
 
-        appendWithoutSlash(fullName, sb);
+        appendWithoutSlash(fullName(), sb);
         appendWithoutSlash(childName, sb);
 
         if (!ruleProvider.canCreateAsset(sb))
@@ -516,6 +512,7 @@ public class VanillaAsset implements Asset, Closeable {
 
     @Nullable
     protected Asset createAsset(@NotNull String name) {
+        checkAllowedToCreateAsset(name);
         assert name.length() > 0;
         return children.computeIfAbsent(name, keyedAsset != Boolean.TRUE
                 ? n -> new VanillaAsset(this, name, ruleProvider)
