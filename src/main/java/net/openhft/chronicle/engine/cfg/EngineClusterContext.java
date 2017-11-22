@@ -22,19 +22,17 @@ import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.core.util.ThrowingFunction;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.fs.EngineConnectionManager;
-import net.openhft.chronicle.engine.server.BootstrapHandlerFactory;
 import net.openhft.chronicle.engine.server.internal.EngineNetworkStatsListener;
-import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
 import net.openhft.chronicle.engine.server.internal.EngineWireNetworkContext;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
-import net.openhft.chronicle.network.*;
-import net.openhft.chronicle.network.api.TcpHandler;
-import net.openhft.chronicle.network.api.session.SessionDetailsProvider;
+import net.openhft.chronicle.network.NetworkContext;
+import net.openhft.chronicle.network.NetworkStatsListener;
+import net.openhft.chronicle.network.ServerThreadingStrategy;
+import net.openhft.chronicle.network.TcpEventHandler;
 import net.openhft.chronicle.network.cluster.ClusterContext;
 import net.openhft.chronicle.network.cluster.HostIdConnectionStrategy;
 import net.openhft.chronicle.network.cluster.handlers.HeartbeatHandler;
 import net.openhft.chronicle.network.cluster.handlers.UberHandler;
-import net.openhft.chronicle.network.connection.VanillaWireOutPublisher;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
@@ -43,10 +41,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.server.BootstrapHandlerFactory.forEngineClusterContext;
-import static net.openhft.chronicle.network.NetworkStatsListener.notifyHostPort;
 
 /**
  * @author Rob Austin.

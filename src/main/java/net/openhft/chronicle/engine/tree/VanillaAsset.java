@@ -22,6 +22,7 @@ import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.core.threads.HandlerPriority;
 import net.openhft.chronicle.core.util.ThrowingConsumer;
+import net.openhft.chronicle.engine.api.PermissionDeniedException;
 import net.openhft.chronicle.engine.api.column.ColumnView;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -138,28 +139,7 @@ public class VanillaAsset implements Asset, Closeable {
         return defaultMaster;
     }
 
-    public void forServer(boolean daemon, @NotNull final Function<String, Integer> uriToHostId) {
-        ruleProvider.configMapCommon(this);
-        standardStack(daemon);
-
-        ruleProvider.configMapServer(this);
-
-        @NotNull VanillaAsset queue = (VanillaAsset) acquireAsset("/queue");
-        ruleProvider.configQueueServer(queue);
-
-        @NotNull VanillaAsset clusterConnections = (VanillaAsset) acquireAsset(
-                "/proc/connections/cluster/throughput");
-
-        ruleProvider.configQueueServer(clusterConnections);
-
-        addView(QueueConfig.class, new QueueConfig(uriToHostId, true, null, WireType.BINARY));
-
-        addView(ObjectCacheFactory.class, VanillaObjectCacheFactory.INSTANCE);
-
-        addLeafRule(TopologySubscription.class, LAST + " VanillaTopologySubscription",
-                VanillaTopologySubscription::new);
-
-    }
+    private final ThreadLocal<StringBuilder> sbTl = ThreadLocal.withInitial(StringBuilder::new);
 
 
     public void forRemoteAccess(@NotNull String[] hostPortDescriptions,
@@ -438,9 +418,35 @@ public class VanillaAsset implements Asset, Closeable {
         return parent;
     }
 
+    public void forServer(boolean daemon, @NotNull final Function<String, Integer> uriToHostId) {
+
+        standardStack(daemon);
+
+        ruleProvider.configMapCommon(this);
+        ruleProvider.configMapServer(this);
+
+        @NotNull VanillaAsset queue = (VanillaAsset) acquireAsset("/queue");
+        ruleProvider.configQueueServer(queue);
+
+        @NotNull VanillaAsset clusterConnections = (VanillaAsset) acquireAsset(
+                "/proc/connections/cluster/throughput");
+
+        ruleProvider.configQueueServer(clusterConnections);
+
+        addView(QueueConfig.class, new QueueConfig(uriToHostId, true, null, WireType.BINARY));
+
+        addView(ObjectCacheFactory.class, VanillaObjectCacheFactory.INSTANCE);
+
+        addLeafRule(TopologySubscription.class, LAST + " VanillaTopologySubscription",
+                VanillaTopologySubscription::new);
+
+    }
+
     @NotNull
     @Override
     public Asset acquireAsset(@NotNull String childName) {
+        checkAllowedToCreateAsset(childName);
+
         if ("/".contentEquals(childName))
             return root();
 
@@ -457,6 +463,39 @@ public class VanillaAsset implements Asset, Closeable {
             }
         }
         return getAssetOrANFE(childName);
+
+    }
+
+    private void checkAllowedToCreateAsset(@NotNull String childName) {
+        if (this != root())
+            return;
+
+        final StringBuilder sb = sbTl.get();
+        sb.setLength(0);
+        sb.append("/");
+
+        appendWithoutSlash(fullName, sb);
+        appendWithoutSlash(childName, sb);
+
+        if (!ruleProvider.canCreateAsset(sb))
+            throw new PermissionDeniedException("path=" + sb);
+    }
+
+    private void appendWithoutSlash(@Nullable String str, StringBuilder sb0) {
+        if (str == null)
+            return;
+
+        int end = str.length();
+        if (str.endsWith("/"))
+            end--;
+
+        int start = (str.startsWith("/")) ? Math.min(1, end) : 0;
+
+        if (end <= start)
+            return;
+
+        sb0.append(str.subSequence(start, end));
+        sb0.append("/");
     }
 
     @Override

@@ -22,10 +22,26 @@ import org.jetbrains.annotations.NotNull;
 
 public interface AssetRuleProvider extends Marshallable {
     void configMapCommon(@NotNull VanillaAsset asset);
+
     void configMapServer(@NotNull VanillaAsset asset);
+
     void configMapRemote(@NotNull VanillaAsset asset);
+
     void configQueueCommon(@NotNull VanillaAsset asset);
+
     void configQueueServer(@NotNull VanillaAsset asset);
+
     void configQueueRemote(@NotNull VanillaAsset asset);
+
     void configColumnViewRemote(@NotNull VanillaAsset asset);
+
+    /**
+     * return true if you are ok for an asset to be created here
+     *
+     * @param path the path the asset that is being create
+     * @return {@code true} if it's ok to create an asset here
+     */
+    default boolean canCreateAsset(CharSequence path) {
+        return true;
+    }
 }

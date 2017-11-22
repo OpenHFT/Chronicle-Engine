@@ -200,7 +200,6 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
 
         try {
             this.eventLoop.start();
-
         } catch (RejectedExecutionException e) {
             Jvm.debug().on(getClass(), e);
         }
