@@ -98,7 +98,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
         @NotNull AtomicBoolean hasMovedToStart = new AtomicBoolean();
 
-        typeToString = asset.root().findView(TypeToString.class);
+        typeToString = asset.findView(TypeToString.class);
 
         eventLoop.addHandler(() -> handleAction(tailer, hasMovedToStart));
     }
