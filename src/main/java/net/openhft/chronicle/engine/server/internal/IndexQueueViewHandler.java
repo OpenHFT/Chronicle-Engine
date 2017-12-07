@@ -65,9 +65,9 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
 
 
             if (registerSubscriber.contentEquals(eventName)) {
-                if (tidToListener.containsKey(tid)) {
+                if (tidToListener.containsKey(inputTid)) {
                     skipValue(valueIn);
-                    LOG.info("Duplicate topic registration for tid " + tid);
+                    LOG.info("Duplicate topic registration for tid " + inputTid);
                     return;
                 }
 
@@ -111,7 +111,7 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
                      */
                     @Override
                     public void addSupplier(@NotNull Supplier<Marshallable> supplier) {
-                        publisher.addWireConsumer(wireOut -> {
+                        wireOutConsumer = wireOut -> {
 
                             Marshallable marshallable = supplier.get();
                             if (marshallable == null)
@@ -124,7 +124,8 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
                             wireOut.writeNotCompleteDocument(false,
                                     wire -> wire.writeEventName(reply).typedMarshallable(marshallable));
 
-                        });
+                        };
+                        publisher.addWireConsumer(wireOutConsumer);
                     }
 
                     @Override
@@ -132,6 +133,8 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
                         publisher.removeBytesConsumer(wireOutConsumer);
                     }
                 };
+
+                tidToListener.put(inputTid, listener);
 
                 @Nullable final VanillaIndexQuery<V> query = valueIn.typedMarshallable();
 

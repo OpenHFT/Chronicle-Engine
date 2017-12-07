@@ -16,7 +16,7 @@ import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -31,7 +31,6 @@ import java.util.function.Function;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-
 public class TestIndexQueueView {
 
     private static final int COUNT = 10_000;
@@ -42,20 +41,25 @@ public class TestIndexQueueView {
             "GB00B058DQ55"};
     private static final String[] books = {"CASH_BOOK1", "CASH_BOOK2", "CASH_BOOK3", "REPO_BOOK1", "REPO_BOOK2"};
     private static final String[] cptys = {"x", "y", "z", "a", "b"};
+    private static final String TRADES_Q = "tradesQ";
 
     @Rule
     public ShutdownHooks hooks = new ShutdownHooks();
 
+    @Before
+    public void setUp() {
+        deleteDir(new File("tradesQ"));
+    }
+
     @Test
     public void test() throws IOException, InterruptedException {
-        YamlLogging.setAll(true);
+        //YamlLogging.setAll(true);
 
         TCPRegistry.createServerSocketChannelFor("host.port1");
         ClassAliasPool.CLASS_ALIASES.addAlias(Trade.class, "TRADE_M");
         String uri = "/queue/trades";
 
-        TestIndexQueueView testServer = new TestIndexQueueView();
-        Set<String> tradeIds = testServer.publishMockData("tradesQ");
+        Set<String> tradeIds = publishMockData();
 
         startEngine();
 
@@ -83,11 +87,11 @@ public class TestIndexQueueView {
                 break;
         }
 
-        assertTrue(tradeIds.isEmpty());
+        assertTrue("Expected empty, but was: " + tradeIds.size(), tradeIds.isEmpty());
 
-        tradeIds.addAll(testServer.publishMockData("tradesQ"));
         indexQueueView.unregisterSubscriber(s);
 
+        tradeIds.addAll(publishMockData());
         int size = tradeIds.size();
         assertTrue(size > 0);
         Thread.sleep(2000);
@@ -100,7 +104,7 @@ public class TestIndexQueueView {
                 break;
         }
 
-        assertTrue(tradeIds.isEmpty());
+        assertTrue("Expected empty, but was: " + tradeIds.size(), tradeIds.isEmpty());
 
     }
 
@@ -135,14 +139,12 @@ public class TestIndexQueueView {
     /**
      * adds some test data to a queue
      *
-     * @param tradesQ
      * @return returns all the trade ID's that where used
      */
-    private Set<String> publishMockData(final String tradesQ) {
+    private static Set<String> publishMockData() {
         Set<String> tradeIds = new LinkedHashSet<>();
-        deleteDir(new File(tradesQ));
 
-        try (ChronicleQueue queue = SingleChronicleQueueBuilder.binary(tradesQ).build()) {
+        try (ChronicleQueue queue = SingleChronicleQueueBuilder.binary(TRADES_Q).build()) {
 
             ExcerptAppender excerptAppender = queue.acquireAppender();
             MockTradeGenerator mockTrade = new MockTradeGenerator();
