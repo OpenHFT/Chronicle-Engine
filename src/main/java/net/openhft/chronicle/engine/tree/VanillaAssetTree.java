@@ -30,6 +30,7 @@ import net.openhft.chronicle.engine.map.InsertedEvent;
 import net.openhft.chronicle.engine.map.RemovedEvent;
 import net.openhft.chronicle.engine.map.UpdatedEvent;
 import net.openhft.chronicle.engine.map.remote.*;
+import net.openhft.chronicle.network.ConnectionStrategy;
 import net.openhft.chronicle.network.VanillaSessionDetails;
 import net.openhft.chronicle.network.connection.ClientConnectionMonitor;
 import net.openhft.chronicle.network.connection.FatalFailureConnectionStrategy;
@@ -160,11 +161,27 @@ public class VanillaAssetTree implements AssetTree {
     public VanillaAssetTree forRemoteAccess(@NotNull String[] hostPortDescription,
                                             @NotNull WireType wire,
                                             @Nullable ClientConnectionMonitor clientConnectionMonitor) {
+        return forRemoteAccess(hostPortDescription, wire, clientConnectionMonitor, new FatalFailureConnectionStrategy(3));
+    }
 
+    /**
+     * creates an asset tree that connects to a remote server via tcp/ip
+     *
+     * @param hostPortDescription     the primary host and other failover hosts
+     * @param wire                    the type of wire
+     * @param clientConnectionMonitor used to monitor client failover
+     * @param connectionStrategy      connection strategy
+     * @return an instance of VanillaAssetTree
+     */
+    @NotNull
+    public VanillaAssetTree forRemoteAccess(@NotNull String[] hostPortDescription,
+                                            @NotNull WireType wire,
+                                            @Nullable ClientConnectionMonitor clientConnectionMonitor,
+                                            @NotNull final ConnectionStrategy connectionStrategy) {
         if (clientConnectionMonitor != null)
             root.viewMap.put(ClientConnectionMonitor.class, clientConnectionMonitor);
 
-        root.forRemoteAccess(hostPortDescription, wire, clientSession(), clientConnectionMonitor, new FatalFailureConnectionStrategy(3));
+        root.forRemoteAccess(hostPortDescription, wire, clientSession(), clientConnectionMonitor, connectionStrategy);
         return this;
     }
 
