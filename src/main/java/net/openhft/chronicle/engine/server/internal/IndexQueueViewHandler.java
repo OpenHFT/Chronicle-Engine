@@ -155,7 +155,7 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
 
             if (unregisterSubscriber.contentEquals(eventName)) {
                 skipValue(valueIn);
-                @NotNull VanillaIndexQueueView<V> indexQueueView = contextAsset.acquireView(VanillaIndexQueueView.class);
+                @NotNull IndexQueueView<ConsumingSubscriber<IndexedValue<V>>, V> indexQueueView = contextAsset.acquireView(IndexQueueView.class);
                 ConsumingSubscriber<IndexedValue<V>> listener = tidToListener.remove(inputTid);
 
                 if (listener == null) {

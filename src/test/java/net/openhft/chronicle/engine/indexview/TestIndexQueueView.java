@@ -14,6 +14,7 @@ import net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder;
 import net.openhft.chronicle.wire.DocumentContext;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireType;
+import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -26,6 +27,9 @@ import java.util.LinkedHashSet;
 import java.util.Random;
 import java.util.Set;
 import java.util.function.Function;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 
 public class TestIndexQueueView {
@@ -44,6 +48,7 @@ public class TestIndexQueueView {
 
     @Test
     public void test() throws IOException, InterruptedException {
+        YamlLogging.setAll(true);
 
         TCPRegistry.createServerSocketChannelFor("host.port1");
         ClassAliasPool.CLASS_ALIASES.addAlias(Trade.class, "TRADE_M");
@@ -67,7 +72,8 @@ public class TestIndexQueueView {
         indexQuery.eventName(TRADES);
         Set<String> m = new HashSet<>();
 
-        indexQueueView.registerSubscriber(subscribe(tradeIds, m), indexQuery);
+        Subscriber s = subscribe(tradeIds, m);
+        indexQueueView.registerSubscriber(s, indexQuery);
 
 
         // wait up to seconds for the expected result
@@ -77,7 +83,25 @@ public class TestIndexQueueView {
                 break;
         }
 
-        Assert.assertTrue(tradeIds.isEmpty());
+        assertTrue(tradeIds.isEmpty());
+
+        tradeIds.addAll(testServer.publishMockData("tradesQ"));
+        indexQueueView.unregisterSubscriber(s);
+
+        int size = tradeIds.size();
+        assertTrue(size > 0);
+        Thread.sleep(2000);
+        assertEquals(size, tradeIds.size());
+
+        indexQueueView.registerSubscriber(s, indexQuery);
+        for (int i = 0; i < 10_000; i++) {
+            Thread.sleep(1);
+            if (tradeIds.isEmpty())
+                break;
+        }
+
+        assertTrue(tradeIds.isEmpty());
+
     }
 
     @NotNull
