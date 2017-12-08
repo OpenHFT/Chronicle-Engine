@@ -154,6 +154,7 @@ public class  Replication3WayIntIntTest extends ThreadMonitoringTest {
     }
 
     @Test
+    @Ignore("Flaky")
     public void testAllDataGetsReplicated() {
 
         name = "testAllDataGetsReplicated";
