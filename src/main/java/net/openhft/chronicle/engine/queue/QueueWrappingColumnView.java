@@ -50,8 +50,10 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
         this.queueView = queueView;
 
         @Nullable final QueueView.Excerpt<String, V> excerpt = queueView.getExcerpt(0);
-        if (excerpt != null)
-            messageClass = excerpt.message().getClass();
+        if (excerpt != null) {
+            V message = excerpt.message();
+            messageClass = message == null ? Object.class : message.getClass();
+        }
         else
             messageClass = Object.class;
 
@@ -161,13 +163,16 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
                 return core.hasNext();
             }
 
-            @NotNull
+
             @Override
             public ChronicleQueueRow next() {
                 final QueueView.Excerpt<String, V> e = core.next();
                 @NotNull final ChronicleQueueRow row = new ChronicleQueueRow(columns());
                 @NotNull final Object value = e.message();
 
+                if (value == null)
+                    return null;
+                
                 row.set("index", Long.toHexString(e.index()));
                 row.index(e.index());
 
@@ -178,7 +183,7 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
                     try {
 
                         final Object newValue = info.get(value);
-//                            System.out.println("\t"+newValue);
+
                         row.set(info.name(), newValue);
 
                     } catch (Exception e1) {
@@ -389,20 +394,19 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
         } else
             iterator = iterator(filters);
 
-        boolean hasMoreData = false;
         @Nullable ChronicleQueueRow row = null;
 
         while (iterator.hasNext()) {
             row = iterator.next();
+            if (row == null)
+                continue;
             count++;
             row.seqNumber(count);
-            hasMoreData = true;
+
             if (row.seqNumber() % 1024 == 0)
                 map.put(count, row);
         }
 
-        if (hasMoreData)
-            map.put(count, row);
 
         return (int) count;
     }

@@ -21,6 +21,7 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.io.IORuntimeException;
+import net.openhft.chronicle.core.pool.StringBuilderPool;
 import net.openhft.chronicle.core.threads.EventHandler;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.core.threads.HandlerPriority;
@@ -93,7 +94,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
     private boolean isSource;
     private boolean isReplicating;
     private boolean dontPersist;
-
+    private static final StringBuilderPool SBP = new StringBuilderPool();
     @NotNull
     private QueueConfig queueConfig;
 
@@ -511,7 +512,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
                 excerpt.message(message);
             }
             return excerpt
-                    .topic(topic)
+                    .topic(topic == null ? "" : topic)
                     .index(excerptTailer.index());
         }
     }
@@ -535,8 +536,11 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         try (DocumentContext dc = excerptTailer.readingDocument()) {
             if (!dc.isPresent())
                 return null;
-            final StringBuilder topic = Wires.acquireStringBuilder();
-            @Nullable final M message = dc.wire().readEventName(topic).object(elementTypeClass);
+            final StringBuilder topic = SBP.acquireStringBuilder();
+
+            @Nullable final M message = (elementTypeClass.getSimpleName().equals("FixLog"))
+                    ? dc.wire().getValueIn().object(elementTypeClass)
+                    : dc.wire().readEventName(topic).object(elementTypeClass);
 
             return threadLocalData.excerpt
                     .message(message)
@@ -556,7 +560,15 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
             try (DocumentContext dc = excerptTailer.readingDocument()) {
                 if (!dc.isPresent())
                     return null;
-                final StringBuilder t = Wires.acquireStringBuilder();
+                final StringBuilder t = SBP.acquireStringBuilder();
+
+                if (elementTypeClass.getSimpleName().equals("FixLog")) {
+
+                    return threadLocalData.excerpt
+                            .message(dc.wire().getValueIn().object(elementTypeClass))
+                            .topic(null)
+                            .index(excerptTailer.index());
+                }
                 @NotNull final ValueIn valueIn = dc.wire().readEventName(t);
 
                 @Nullable final T topic1 = convertTo(messageTypeClass, t);
