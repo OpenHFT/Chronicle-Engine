@@ -396,6 +396,7 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
 
         @Nullable ChronicleQueueRow row = null;
 
+        boolean hasData = false;
         while (iterator.hasNext()) {
             row = iterator.next();
             if (row == null)
@@ -403,10 +404,14 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
             count++;
             row.seqNumber(count);
 
+            hasData = true;
             if (row.seqNumber() % 1024 == 0)
                 map.put(count, row);
         }
 
+        // ensure last item written to map
+        if (hasData)
+            map.put(count, row);
 
         return (int) count;
     }

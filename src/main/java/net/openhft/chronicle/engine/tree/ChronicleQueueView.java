@@ -537,10 +537,11 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
             if (!dc.isPresent())
                 return null;
             final StringBuilder topic = SBP.acquireStringBuilder();
-
-            @Nullable final M message = (elementTypeClass.getSimpleName().equals("FixLog"))
-                    ? dc.wire().getValueIn().object(elementTypeClass)
-                    : dc.wire().readEventName(topic).object(elementTypeClass);
+            topic.setLength(0);
+            ValueIn valueIn = dc.wire().readEventName(topic);
+            if (topic.length() == 0)
+                valueIn = dc.wire().getValueIn();
+            @Nullable final M message = valueIn.object(elementTypeClass);
 
             return threadLocalData.excerpt
                     .message(message)
@@ -561,15 +562,15 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
                 if (!dc.isPresent())
                     return null;
                 final StringBuilder t = SBP.acquireStringBuilder();
+                t.setLength(0);
+                @NotNull final ValueIn valueIn = dc.wire().readEventName(t);
 
-                if (elementTypeClass.getSimpleName().equals("FixLog")) {
-
+                if (t.length() == 0) {
                     return threadLocalData.excerpt
                             .message(dc.wire().getValueIn().object(elementTypeClass))
                             .topic(null)
                             .index(excerptTailer.index());
                 }
-                @NotNull final ValueIn valueIn = dc.wire().readEventName(t);
 
                 @Nullable final T topic1 = convertTo(messageTypeClass, t);
 
