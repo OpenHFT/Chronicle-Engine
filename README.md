@@ -1,8 +1,4 @@
 # Chronicle-Engine
-
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.openhft/chronicle-engine/badge.svg)](https://maven-badges.herokuapp.com/maven-central/net.openhft/chronicle-engine)
-
-
 A high performance, low latency, reactive processing framework
 
 [Chronicle Engine usage heatmap](http://jrvis.com/red-dwarf/?user=openhft&repo=Chronicle-Engine)
