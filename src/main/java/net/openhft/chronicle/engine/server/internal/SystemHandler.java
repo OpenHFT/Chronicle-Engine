@@ -105,10 +105,8 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
                  @NotNull final WireOut outWire, final long tid,
                  @NotNull final SessionDetailsProvider sessionDetails,
                  @Nullable Map<String, UserStat> monitoringMap,
-                 boolean isServerSocket,
-                 @Nullable Supplier<WireOutPublisher> publisher,
-                 @Nullable final HostIdentifier hostId,
-                 @NotNull Consumer<WireType> onWireType, @Nullable WireType wireType0) {
+                 @NotNull Consumer<WireType> onWireType,
+                 @Nullable WireType wireType0) {
 
         this.wasHeartBeat = false;
         this.sessionDetails = sessionDetails;
@@ -118,20 +116,11 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
 
         if (wireType0 == null && sessionDetails.wireType() != null)
             onWireType.accept(sessionDetails.wireType());
-/*
-        if (isServerSocket && sessionDetails.hostId() != 0) {
-            final VanillaSessionDetails sd = new VanillaSessionDetails();
-
-            sd.hostId(hostId.hostId());
-            sd.wireType(sessionDetails.wireType());
-            publisher.get().put(null, w -> w.writeDocument(false, sd));
-        }*/
     }
 
     @NotNull
     private WireParser<Void> wireParser() {
-        @NotNull final WireParser<Void> parser = new VanillaWireParser<>((s, v, $) -> {
-        });
+        @NotNull final WireParser<Void> parser = new VanillaWireParser<>((s, in, out) -> {}, (methodId, bytes, o) -> {});
         parser.register(EventId.domain::toString, (s, v, $) -> v.text(this, (o, x) -> o.sessionDetails.domain(x)));
         parser.register(EventId.sessionMode::toString, (s, v, $) -> v.text(this, (o, x) -> o
                 .sessionDetails.sessionMode(SessionMode.valueOf(x))));

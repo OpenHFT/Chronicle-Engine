@@ -116,7 +116,6 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
     private SessionProvider sessionProvider;
     @Nullable
     private EventLoop eventLoop;
-    private boolean isServerSocket;
     private Asset contextAsset;
 
     private WireAdapter<?, ?> wireAdapter;
@@ -204,7 +203,6 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
             Jvm.debug().on(getClass(), e);
         }
 
-        this.isServerSocket = nc.isAcceptor();
         this.sessionDetails = nc.sessionDetails();
         this.rootAsset = nc.rootAsset();
     }
@@ -375,9 +373,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                 };
 
                 if (isSystemMessage) {
-                    systemHandler.process(in, out, tid, sessionDetails, getMonitoringMap(),
-                            isServerSocket, this::publisher, hostIdentifier, wireTypeConsumer,
-                            wireType());
+                    systemHandler.process(in, out, tid, sessionDetails, getMonitoringMap(), wireTypeConsumer, wireType());
                     if (!systemHandler.wasHeartBeat()) {
                         if (!YamlLogging.showHeartBeats())
                             logBufferToStandardOut(prevLogMessage.append(currentLogMessage));
@@ -648,10 +644,11 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
             cspToCid.remove(removed);
     }
 
-    private final StringBuilder cspBuff = new StringBuilder();
+
 
     @Override
     public long createProxy(final String type) {
+        final StringBuilder cspBuff = new StringBuilder();
         createProxy0(type, cspBuff);
         final long cid = acquireCid(cspBuff);
         outWire.writeEventName(reply).typePrefix("set-proxy")
@@ -665,7 +662,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
 
     @Override
     public long createProxy(String type, long token) {
-
+        final StringBuilder cspBuff = new StringBuilder();
         createProxy0(type, cspBuff);
         cspBuff.append("&token=").append(token);
 
@@ -680,17 +677,17 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
     }
 
     private void createProxy0(String type, final StringBuilder cspBuff) {
-        this.cspBuff.setLength(0);
-        this.cspBuff.append(requestContext.fullName());
-        this.cspBuff.append("?");
-        this.cspBuff.append("view=").append(type);
+        cspBuff.setLength(0);
+        cspBuff.append(requestContext.fullName());
+        cspBuff.append("?");
+        cspBuff.append("view=").append(type);
 
         final Class keyType = requestContext.keyType();
         if (keyType != null)
-            this.cspBuff.append("&keyType=").append(keyType.getName());
+            cspBuff.append("&keyType=").append(keyType.getName());
         final Class valueType = requestContext.valueType();
         if (valueType != null)
-            this.cspBuff.append("&valueType=").append(valueType.getName());
+            cspBuff.append("&valueType=").append(valueType.getName());
     }
 
 
