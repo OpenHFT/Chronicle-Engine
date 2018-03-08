@@ -235,13 +235,13 @@ public class RequestContext implements Cloneable {
     }
 
     @NotNull
-    public Class<SubscriptionCollection> getSubscriptionType() {
+    public Class<? extends SubscriptionCollection> getSubscriptionType() {
         @NotNull Class elementType = elementType();
         return elementType == TopologicalEvent.class
-                ? (Class) TopologySubscription.class
+                ? TopologySubscription.class
                 : elementType == BytesStore.class
-                ? (Class) RawKVSSubscription.class
-                : (Class) ObjectSubscription.class;
+                ? RawKVSSubscription.class
+                : ObjectSubscription.class;
     }
 
     @NotNull
@@ -258,8 +258,7 @@ public class RequestContext implements Cloneable {
 
     @NotNull
     public WireParser<Void> getWireParser() {
-        @NotNull WireParser<Void> parser = new VanillaWireParser<>((s, v, $) -> {
-        });
+        @NotNull WireParser<Void> parser = new VanillaWireParser<>((s, in, out) -> {}, null);
         parser.register(() -> "cluster", (s, v, $) -> v.text(this, (o, x) -> o.cluster = x));
         parser.register(() -> "view", (s, v, $) -> v.text(this, RequestContext::view));
         parser.register(() -> "bootstrap", (s, v, $) -> v.bool(this, (o, x) -> o.bootstrap = x));

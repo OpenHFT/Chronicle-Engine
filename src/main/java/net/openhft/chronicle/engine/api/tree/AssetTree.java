@@ -278,7 +278,7 @@ public interface AssetTree extends Closeable {
     @NotNull
     default SubscriptionCollection acquireSubscription(@NotNull RequestContext requestContext) throws AssetNotFoundException {
         @NotNull Asset asset = acquireAsset(requestContext.fullName());
-        @NotNull Class<SubscriptionCollection> subscriptionType = requestContext.getSubscriptionType();
+        @NotNull Class<? extends SubscriptionCollection> subscriptionType = requestContext.getSubscriptionType();
         requestContext.viewType(subscriptionType);
         return asset.acquireView(subscriptionType, requestContext);
     }
@@ -325,7 +325,7 @@ public interface AssetTree extends Closeable {
     @Nullable
     default SubscriptionCollection getSubscription(@NotNull RequestContext requestContext) {
         @Nullable Asset asset = getAsset(requestContext.fullName());
-        @NotNull Class<SubscriptionCollection> subscriptionType = requestContext.getSubscriptionType();
+        @NotNull Class<? extends SubscriptionCollection> subscriptionType = requestContext.getSubscriptionType();
         requestContext.viewType(subscriptionType);
         return asset == null ? null : asset.getView(subscriptionType);
     }

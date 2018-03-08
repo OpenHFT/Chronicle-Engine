@@ -363,7 +363,7 @@ public interface Asset extends Closeable {
             @NotNull RequestContext requestContext,
             @NotNull Subscriber<Object> subscriber) {
 
-        @NotNull final Class<SubscriptionCollection> subscriptionType = requestContext.getSubscriptionType();
+        @NotNull final Class<? extends SubscriptionCollection> subscriptionType = requestContext.getSubscriptionType();
         @Nullable final SubscriptionCollection subscription = getView(subscriptionType);
 
         if (subscription == null)
@@ -406,7 +406,7 @@ public interface Asset extends Closeable {
 
     @NotNull
     default SubscriptionCollection acquireSubscription(@NotNull RequestContext requestContext) {
-        @NotNull Class<SubscriptionCollection> subscriptionType = requestContext.getSubscriptionType();
+        @NotNull Class<? extends SubscriptionCollection> subscriptionType = requestContext.getSubscriptionType();
         requestContext.viewType(subscriptionType);
         return acquireView(subscriptionType, requestContext);
     }
