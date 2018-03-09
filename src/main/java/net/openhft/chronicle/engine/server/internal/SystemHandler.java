@@ -18,12 +18,10 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.engine.cfg.UserStat;
-import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.network.ClientClosedProvider;
 import net.openhft.chronicle.network.SessionMode;
 import net.openhft.chronicle.network.api.session.SessionDetailsProvider;
 import net.openhft.chronicle.network.connection.CoreFields;
-import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +31,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 import static net.openhft.chronicle.engine.server.internal.SystemHandler.EventId.heartbeat;
 import static net.openhft.chronicle.engine.server.internal.SystemHandler.EventId.onClientClosing;
@@ -120,7 +117,8 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
 
     @NotNull
     private WireParser<Void> wireParser() {
-        @NotNull final WireParser<Void> parser = new VanillaWireParser<>((s, in, out) -> {}, null);
+        @NotNull final WireParser<Void> parser = new VanillaWireParser<>((s, in, out) -> {
+        }, VanillaWireParser.NO_OP);
         parser.register(EventId.domain::toString, (s, v, $) -> v.text(this, (o, x) -> o.sessionDetails.domain(x)));
         parser.register(EventId.sessionMode::toString, (s, v, $) -> v.text(this, (o, x) -> o
                 .sessionDetails.sessionMode(SessionMode.valueOf(x))));
