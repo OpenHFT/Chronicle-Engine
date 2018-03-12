@@ -118,7 +118,7 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
     @NotNull
     private WireParser<Void> wireParser() {
         @NotNull final WireParser<Void> parser = new VanillaWireParser<>((s, in, out) -> {
-        }, VanillaWireParser.NO_OP);
+        }, VanillaWireParser.SKIP_READABLE_BYTES);
         parser.register(EventId.domain::toString, (s, v, $) -> v.text(this, (o, x) -> o.sessionDetails.domain(x)));
         parser.register(EventId.sessionMode::toString, (s, v, $) -> v.text(this, (o, x) -> o
                 .sessionDetails.sessionMode(SessionMode.valueOf(x))));

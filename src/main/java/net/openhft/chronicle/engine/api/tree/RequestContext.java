@@ -259,7 +259,7 @@ public class RequestContext implements Cloneable {
     @NotNull
     public WireParser<Void> getWireParser() {
         @NotNull WireParser<Void> parser = new VanillaWireParser<>((s, in, out) -> {
-        }, net.openhft.chronicle.wire.WireParser.NO_OP);
+        }, WireParser.SKIP_READABLE_BYTES);
         parser.register(() -> "cluster", (s, v, $) -> v.text(this, (o, x) -> o.cluster = x));
         parser.register(() -> "view", (s, v, $) -> v.text(this, RequestContext::view));
         parser.register(() -> "bootstrap", (s, v, $) -> v.bool(this, (o, x) -> o.bootstrap = x));
