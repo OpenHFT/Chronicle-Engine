@@ -125,6 +125,7 @@
         <dependency>
             <groupId>net.openhft</groupId>
             <artifactId>chronicle-network</artifactId>
+            <version>1.11.3-SNAPSHOT</version>
         </dependency>
 
         <dependency>
