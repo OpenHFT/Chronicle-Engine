@@ -53,18 +53,17 @@
                 <scope>import</scope>
             </dependency>
 
-
             <!-- forces engine to use an older version of map, until it has been updated -->
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>chronicle-map</artifactId>
                 <version>2.4.17</version>
-            </dependency>
-
-            <dependency>
-                <groupId>net.openhft</groupId>
-                <artifactId>chronicle-network</artifactId>
-                <version>1.11.3</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>net.openhft</groupId>
+                        <artifactId>chronicle-network</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
         </dependencies>
