@@ -29,7 +29,7 @@
     <groupId>net.openhft</groupId>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>chronicle-engine</artifactId>
-    <version>1.14.24-SNAPSHOT</version>
+    <version>1.14.23</version>
     <name>OpenHFT/Chronicle-Engine</name>
     <description>Chronicle Engine Framework</description>
     <packaging>bundle</packaging>
