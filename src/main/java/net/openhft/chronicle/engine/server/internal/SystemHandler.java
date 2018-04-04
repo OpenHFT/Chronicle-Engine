@@ -41,7 +41,7 @@ import static net.openhft.chronicle.engine.server.internal.SystemHandler.EventId
 public class SystemHandler extends AbstractHandler implements ClientClosedProvider {
     private final StringBuilder eventName = new StringBuilder();
     private SessionDetailsProvider sessionDetails;
-    private final WireParser<Void> wireParser = wireParser();
+    private final WireParser wireParser = wireParser();
     @Nullable
     private Map<String, UserStat> monitoringMap;
     private volatile boolean hasClientClosed;
@@ -62,7 +62,7 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
                 }
 
                 while (inWire.bytes().readRemaining() > 0)
-                    wireParser.parseOne(inWire, null);
+                    wireParser.parseOne(inWire);
 
                 return;
             }
@@ -116,19 +116,19 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
     }
 
     @NotNull
-    private WireParser<Void> wireParser() {
-        @NotNull final WireParser<Void> parser = new VanillaWireParser<>((s, in, out) -> {
+    private WireParser wireParser() {
+        @NotNull final WireParser parser = new VanillaWireParser((s, in) -> {
         }, VanillaWireParser.SKIP_READABLE_BYTES);
-        parser.register(EventId.domain::toString, (s, v, $) -> v.text(this, (o, x) -> o.sessionDetails.domain(x)));
-        parser.register(EventId.sessionMode::toString, (s, v, $) -> v.text(this, (o, x) -> o
+        parser.register(EventId.domain::toString, (s, v) -> v.text(this, (o, x) -> o.sessionDetails.domain(x)));
+        parser.register(EventId.sessionMode::toString, (s, v) -> v.text(this, (o, x) -> o
                 .sessionDetails.sessionMode(SessionMode.valueOf(x))));
-        parser.register(EventId.securityToken::toString, (s, v, $) -> v.text(this, (o, x) -> o
+        parser.register(EventId.securityToken::toString, (s, v) -> v.text(this, (o, x) -> o
                 .sessionDetails.securityToken(x)));
-        parser.register(EventId.clientId::toString, (s, v, $) -> v.text(this, (o, x) -> o
+        parser.register(EventId.clientId::toString, (s, v) -> v.text(this, (o, x) -> o
                 .sessionDetails.clientId(UUID.fromString(x))));
-        parser.register(EventId.wireType::toString, (s, v, $) -> v.text(this, (o, x) -> o
+        parser.register(EventId.wireType::toString, (s, v) -> v.text(this, (o, x) -> o
                 .sessionDetails.wireType(WireType.valueOf(x))));
-        parser.register(EventId.hostId::toString, (s, v, $) -> v.int8(this, (o, x) -> o
+        parser.register(EventId.hostId::toString, (s, v) -> v.int8(this, (o, x) -> o
                 .sessionDetails.hostId(x)));
         return parser;
     }
