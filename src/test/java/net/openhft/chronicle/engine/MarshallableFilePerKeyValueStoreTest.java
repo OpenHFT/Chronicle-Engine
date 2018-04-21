@@ -30,11 +30,7 @@ import net.openhft.chronicle.engine.tree.VanillaAsset;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -52,10 +48,9 @@ import static org.junit.Assert.assertEquals;
  */
 public class MarshallableFilePerKeyValueStoreTest {
     public static final String NAME = "marsfileperkvstoretests";
-    private Map<String, TestMarshallable> map;
-
     @Rule
     public ShutdownHooks hooks = new ShutdownHooks();
+    private Map<String, TestMarshallable> map;
     private ThreadDump threadDump;
 
     @Before
@@ -67,6 +62,7 @@ public class MarshallableFilePerKeyValueStoreTest {
     public void checkThreadDump() {
         threadDump.assertNoNewThreads();
     }
+
     @Before
     public void createMap() throws IOException {
         resetChassis();
@@ -228,7 +224,7 @@ public class MarshallableFilePerKeyValueStoreTest {
         @Override
         public void writeMarshallable(@NotNull WireOut wireOut) {
             wireOut.write(TestKey.listDouble).sequence(v ->
-                            listDouble.stream().forEach(v::float64)
+                    listDouble.stream().forEach(v::float64)
             );
         }
 

@@ -56,7 +56,7 @@ public class ServerEndpoint implements Closeable {
     public ServerEndpoint(@NotNull String hostPortDescription,
                           @NotNull AssetTree assetTree,
                           @NotNull NetworkStatsListener networkStatsListener,
-                          @NotNull  String clusterName) throws IOException {
+                          @NotNull String clusterName) throws IOException {
 
         eg = assetTree.root().acquireView(EventLoop.class);
         Threads.<Void, IOException>withThreadGroup(assetTree.root().getView(ThreadGroup.class), () -> {
@@ -107,7 +107,6 @@ public class ServerEndpoint implements Closeable {
         }, clusterName);
 
     }
-
 
     @NotNull
     private AcceptorEventHandler start(@NotNull String hostPortDescription,

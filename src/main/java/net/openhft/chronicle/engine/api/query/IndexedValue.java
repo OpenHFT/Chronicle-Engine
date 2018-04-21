@@ -33,16 +33,22 @@ import java.util.function.Function;
  */
 public class IndexedValue<V extends Marshallable> implements Demarshallable, Marshallable {
 
+    private final Function<Class, ReadMarshallable> reuseFunction = new Function<Class, ReadMarshallable>() {
+        private final Map<Class<? extends ReadMarshallable>, ReadMarshallable> map = new ConcurrentHashMap<>();
+
+        @Override
+        public ReadMarshallable apply(@NotNull Class aClass) {
+            assert aClass != null;
+            return map.computeIfAbsent(aClass, ObjectUtils::newInstance);
+        }
+    };
     private long index;
     private long timePublished;
     private long maxIndex;
     private boolean isEndOfSnapshot;
-
     @Nullable
     private V v;
     private boolean isSnapshot;
-
-
     private transient Object k;
 
     public IndexedValue() {
@@ -140,18 +146,6 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
         return this;
     }
 
-
-    private final Function<Class, ReadMarshallable> reuseFunction = new Function<Class, ReadMarshallable>() {
-        private final Map<Class<? extends ReadMarshallable>, ReadMarshallable> map = new ConcurrentHashMap<>();
-
-        @Override
-        public ReadMarshallable apply(@NotNull Class aClass) {
-            assert aClass != null;
-            return map.computeIfAbsent(aClass, ObjectUtils::newInstance);
-        }
-    };
-
-
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IORuntimeException {
         index = wire.read(() -> "i").int64();
@@ -161,7 +155,6 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
         maxIndex = wire.read(() -> "m").int64();
         isEndOfSnapshot = wire.read(() -> "e").bool();
     }
-
 
     /**
      * @return {@code true} may be received in response to a subscription,
@@ -178,7 +171,6 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
         isEndOfSnapshot = endOfSnapshot;
         return this;
     }
-
 
 }
 

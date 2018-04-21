@@ -59,7 +59,7 @@ public class InsertedEventTest {
     public void testMarshalling() {
         YamlLogging.setAll(false);
         Bytes bytes = Bytes.elasticByteBuffer();
-        @NotNull InsertedEvent<String, String> insertedEvent = InsertedEvent.of("asset", "key", "name",false);
+        @NotNull InsertedEvent<String, String> insertedEvent = InsertedEvent.of("asset", "key", "name", false);
         @NotNull TextWire textWire = new TextWire(bytes);
         textWire.write(() -> "reply")
                 .typedMarshallable(insertedEvent);
@@ -72,7 +72,7 @@ public class InsertedEventTest {
     public void testMarshalling2() {
         YamlLogging.setAll(false);
         Bytes bytes = Bytes.elasticByteBuffer();
-        @NotNull InsertedEvent<String, Factor> insertedEvent = InsertedEvent.of("asset", "key", new Factor(),false);
+        @NotNull InsertedEvent<String, Factor> insertedEvent = InsertedEvent.of("asset", "key", new Factor(), false);
         @NotNull TextWire textWire = new TextWire(bytes);
         textWire.write(() -> "reply")
                 .typedMarshallable(insertedEvent);
@@ -112,7 +112,7 @@ public class InsertedEventTest {
     @Test
     public void testMarshallingB() {
         Bytes bytes = Bytes.elasticByteBuffer();
-        @NotNull InsertedEvent<String, String> insertedEvent = InsertedEvent.of("asset", "key", "name",false);
+        @NotNull InsertedEvent<String, String> insertedEvent = InsertedEvent.of("asset", "key", "name", false);
         @NotNull BinaryWire binaryWire = new BinaryWire(bytes);
         binaryWire.write(() -> "reply").typedMarshallable(insertedEvent);
         System.out.println("text: " + bytes);
@@ -123,7 +123,7 @@ public class InsertedEventTest {
     @Test
     public void testMarshalling2B() {
         Bytes bytes = Bytes.elasticByteBuffer();
-        @NotNull InsertedEvent<String, Factor> insertedEvent = InsertedEvent.of("asset", "key", new Factor(),false);
+        @NotNull InsertedEvent<String, Factor> insertedEvent = InsertedEvent.of("asset", "key", new Factor(), false);
         @NotNull BinaryWire binaryWire = new BinaryWire(bytes);
         binaryWire.write(() -> "reply")
                 .typedMarshallable(insertedEvent);

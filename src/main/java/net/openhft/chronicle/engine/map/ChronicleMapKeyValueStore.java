@@ -194,7 +194,6 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
                 if (remoteIdentifier == localIdentifier)
                     continue;
 
-
                 ConnectionManager connectionManager = engineCluster.findConnectionManager(remoteIdentifier);
                 if (connectionManager == null) {
                     Jvm.warn().on(getClass(), "connectionManager==null for remoteIdentifier=" + remoteIdentifier);
@@ -217,7 +216,6 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
                     WireOutPublisher publisher = nc.wireOutPublisher();
                     publisher.publish(newMapReplicationHandler(lastUpdateTime, keyType, valueType, csp, nc.newCid()));
                 });
-
 
             } catch (Exception e) {
                 Jvm.warn().on(getClass(), "hostDetails=" + hostDetails, e);

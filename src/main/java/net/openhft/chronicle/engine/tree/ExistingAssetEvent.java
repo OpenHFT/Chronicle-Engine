@@ -41,7 +41,6 @@ public class ExistingAssetEvent extends AbstractMarshallable implements Topologi
         return new ExistingAssetEvent(assetName, name, viewTypes);
     }
 
-
     @Override
     public boolean added() {
         return true;

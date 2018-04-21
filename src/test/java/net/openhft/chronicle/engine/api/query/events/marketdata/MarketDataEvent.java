@@ -28,5 +28,4 @@ public class MarketDataEvent extends MarketDataKey implements Marshallable {
         return askPrice;
     }
 
-
 }

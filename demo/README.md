@@ -1,6 +1,5 @@
 # Chronicle Demo.
 
-
 # Purpose
 
 Chronicle Engine supports a bootstrap configuration style.  
@@ -36,7 +35,6 @@ $ cd demo
 $ mvn exec:java
 
 ```
-
 
 Once the Chronicle-Engine project has been installed locally, you will be able to run the demo from your IDE.
 

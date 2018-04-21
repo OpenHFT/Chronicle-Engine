@@ -21,36 +21,10 @@ import static net.openhft.chronicle.network.connection.CoreFields.reply;
 public class ColumnViewIteratorHandler extends AbstractHandler {
 
     private final CspManager cspManager;
+    private final StringBuilder eventName = new StringBuilder();
     private Iterator<Row> iterator;
     private long cid;
-
-    ColumnViewIteratorHandler(CspManager cspManager) {
-        this.cspManager = cspManager;
-    }
-
-    private final StringBuilder eventName = new StringBuilder();
-
-    public void process(WireIn in, @NotNull WireOut out, long tid, Iterator<Row> iterator, long cid) {
-
-
-        setOutWire(out);
-
-        try {
-            this.inWire = in;
-            this.outWire = out;
-            this.iterator = iterator;
-            this.tid = tid;
-            this.cid = cid;
-            dataConsumer.accept(in, tid);
-        } catch (Exception e) {
-            Jvm.warn().on(getClass(), "", e);
-        }
-    }
-
-
     private long tid;
-
-
     @Nullable
     private WireIn inWire = null;
     @Nullable
@@ -97,12 +71,31 @@ public class ColumnViewIteratorHandler extends AbstractHandler {
 
             } catch (Exception e) {
                 Jvm.warn().on(getClass(), e);
-            }finally {
+            } finally {
                 assert endEnforceInValueReadCheck(inWire);
             }
         }
     };
 
+    ColumnViewIteratorHandler(CspManager cspManager) {
+        this.cspManager = cspManager;
+    }
+
+    public void process(WireIn in, @NotNull WireOut out, long tid, Iterator<Row> iterator, long cid) {
+
+        setOutWire(out);
+
+        try {
+            this.inWire = in;
+            this.outWire = out;
+            this.iterator = iterator;
+            this.tid = tid;
+            this.cid = cid;
+            dataConsumer.accept(in, tid);
+        } catch (Exception e) {
+            Jvm.warn().on(getClass(), "", e);
+        }
+    }
 
     public enum EventId implements ParameterizeWireKey {
         next,
@@ -120,6 +113,5 @@ public class ColumnViewIteratorHandler extends AbstractHandler {
             return (P[]) this.params;
         }
     }
-
 
 }

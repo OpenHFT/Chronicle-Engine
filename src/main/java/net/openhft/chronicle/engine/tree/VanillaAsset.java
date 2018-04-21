@@ -73,10 +73,10 @@ public class VanillaAsset implements Asset, Closeable {
     private final Map<Class, SortedMap<String, WrappingViewRecord>> wrappingViewFactoryMap =
             new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
     private final Map<Class, LeafView> leafViewMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
+    private final ThreadLocal<StringBuilder> sbTl = ThreadLocal.withInitial(StringBuilder::new);
     @Nullable
     private String fullName = null;
     private Boolean keyedAsset;
-
     @NotNull
     private AssetRuleProvider ruleProvider;
 
@@ -92,6 +92,20 @@ public class VanillaAsset implements Asset, Closeable {
             if (parentSubs != null && !(parentSubs instanceof RemoteTopologySubscription))
                 parentSubs.notifyEvent(AddedAssetEvent.of(parent.fullName(), name, parent.viewTypes()));
         }
+    }
+
+    @Nullable
+    static Integer master(@NotNull String s, int defaultMaster) {
+        if (s.startsWith("/proc/connections/cluster/throughput")) {
+            @NotNull final String[] split = s.split("/");
+            if (split.length > 5) {
+                try {
+                    return Integer.valueOf(split[4]);
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+        return defaultMaster;
     }
 
     @NotNull
@@ -124,23 +138,6 @@ public class VanillaAsset implements Asset, Closeable {
     public void forServer() {
         forServer(true, s -> master(s, 1));
     }
-
-    @Nullable
-    static Integer master(@NotNull String s, int defaultMaster) {
-        if (s.startsWith("/proc/connections/cluster/throughput")) {
-            @NotNull final String[] split = s.split("/");
-            if (split.length > 5) {
-                try {
-                    return Integer.valueOf(split[4]);
-                } catch (NumberFormatException ignored) {
-                }
-            }
-        }
-        return defaultMaster;
-    }
-
-    private final ThreadLocal<StringBuilder> sbTl = ThreadLocal.withInitial(StringBuilder::new);
-
 
     public void forRemoteAccess(@NotNull String[] hostPortDescriptions,
                                 @NotNull WireType wire,
@@ -355,7 +352,6 @@ public class VanillaAsset implements Asset, Closeable {
 //        if (o != null && !o.equals(view))
 //            throw new IllegalStateException("Attempt to replace " + viewType + " with " + view + " was " + viewMap.get(viewType));
 
-
         @Nullable TopologySubscription topologySubscription = this.root().findView(TopologySubscription.class);
         if (topologySubscription != null) {
 
@@ -567,6 +563,12 @@ public class VanillaAsset implements Asset, Closeable {
         forEachChild(ca -> ca.getUsageStats(ats));
     }
 
+    @NotNull
+    @Override
+    public Set<Class> viewTypes() {
+        return viewMap.keySet();
+    }
+
     static class LeafView extends AbstractMarshallable {
         String name;
         transient LeafViewFactory factory;
@@ -598,11 +600,5 @@ public class VanillaAsset implements Asset, Closeable {
             return "wraps " + underlyingType;
         }
 
-    }
-
-    @NotNull
-    @Override
-    public Set<Class> viewTypes() {
-        return viewMap.keySet();
     }
 }

@@ -39,9 +39,10 @@ import static org.junit.Assert.assertEquals;
  */
 public class ChassisRFCTest {
 
-    private ThreadDump threadDump;
     @Rule
     public ShutdownHooks hooks = new ShutdownHooks();
+    private ThreadDump threadDump;
+
     @Before
     public void threadDump() {
         threadDump = new ThreadDump();
@@ -51,6 +52,7 @@ public class ChassisRFCTest {
     public void checkThreadDump() {
         threadDump.assertNoNewThreads();
     }
+
     @Before
     public void setUpTest() {
         Chassis.resetChassis();

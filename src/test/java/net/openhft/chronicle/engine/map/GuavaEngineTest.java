@@ -52,9 +52,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
-import static com.google.common.collect.testing.features.MapFeature.GENERAL_PURPOSE;
-import static com.google.common.collect.testing.features.MapFeature.RESTRICTS_KEYS;
-import static com.google.common.collect.testing.features.MapFeature.RESTRICTS_VALUES;
+import static com.google.common.collect.testing.features.MapFeature.*;
 
 @SuppressWarnings("all")
 

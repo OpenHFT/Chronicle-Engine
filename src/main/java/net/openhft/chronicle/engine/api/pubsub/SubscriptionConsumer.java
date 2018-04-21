@@ -43,7 +43,7 @@ public interface SubscriptionConsumer<T> {
     default void notifyEachSubscriber(@NotNull Set<T> subs) {
         subs.forEach(s -> {
             try {
-       
+
                 accept(s);
 
             } catch (InvalidSubscriberException ise) {

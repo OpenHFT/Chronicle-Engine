@@ -1,6 +1,5 @@
 package net.openhft.chronicle.engine.api.column;
 
-
 import net.openhft.chronicle.wire.AbstractMarshallable;
 import org.jetbrains.annotations.NotNull;
 

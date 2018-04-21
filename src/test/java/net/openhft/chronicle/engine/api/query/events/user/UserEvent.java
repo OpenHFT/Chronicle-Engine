@@ -17,4 +17,3 @@ public interface UserEvent extends Marshallable {
 
 }
 
-

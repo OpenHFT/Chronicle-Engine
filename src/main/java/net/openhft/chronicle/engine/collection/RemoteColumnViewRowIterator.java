@@ -36,8 +36,8 @@ public class RemoteColumnViewRowIterator extends
         AbstractStatelessClient<CollectionWireHandler.EventId> implements ClosableIterator<Row> {
 
     private static final int ITTERATOR_PAGE_SIZE = 300;
-    private Iterator<Row> iterator;
     private final WriteValue pageSize = valueOut -> valueOut.int32(ITTERATOR_PAGE_SIZE);
+    private Iterator<Row> iterator;
     @NotNull
     private AtomicBoolean isClosed = new AtomicBoolean();
 

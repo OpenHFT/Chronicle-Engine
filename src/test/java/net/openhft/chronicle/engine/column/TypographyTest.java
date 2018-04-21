@@ -38,29 +38,18 @@ public class TypographyTest {
     public static final String ADD_MAP_LATER = "/add/map/later";
 
     public static final String ADD_QUEUE_LATER = "/proc/connections/cluster/throughput/1";
-
+    @NotNull
+    private final VanillaAssetTree assetTree;
+    @Nullable
+    private final ServerEndpoint serverEndpoint;
     @Rule
     public ShutdownHooks hooks = new ShutdownHooks();
-
     @NotNull
     @Rule
     public TestName name = new TestName();
     @NotNull
     String methodName = "";
-
-    @NotNull
-    private final VanillaAssetTree assetTree;
-    @Nullable
-    private final ServerEndpoint serverEndpoint;
     private MapView<String, String> map;
-
-
-    @Parameterized.Parameters
-    public static Collection<Object[]> data() {
-        return Arrays.asList(new Boolean[][]{
-                {false}, {true}
-        });
-    }
 
     public TypographyTest(Boolean isRemote) throws Exception {
 
@@ -92,7 +81,6 @@ public class TypographyTest {
 
                     }, 500, TimeUnit.MILLISECONDS);
 
-
         } else {
             assetTree = hooks.addCloseable((new VanillaAssetTree(1)).forTesting());
             assetTree.acquireMap(ADD_MAP_LATER, String.class, String.class).size();
@@ -110,6 +98,12 @@ public class TypographyTest {
 
     }
 
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Boolean[][]{
+                {false}, {true}
+        });
+    }
 
     @Before
     public void before() {
@@ -120,7 +114,7 @@ public class TypographyTest {
 
     @Test
     public void testTypography() throws InterruptedException {
-              YamlLogging.setAll(false);
+        YamlLogging.setAll(false);
         //  map.put("hello", "world");
         //YamlLogging.setAll(true);
         @NotNull CountDownLatch latch = new CountDownLatch(1);
@@ -160,7 +154,6 @@ public class TypographyTest {
         latch.await(100000, TimeUnit.SECONDS);
     }
 
-
     @Test
     public void testWhenQueueIsAddedLater() throws InterruptedException {
 
@@ -181,6 +174,5 @@ public class TypographyTest {
 
         latch.await(100000, TimeUnit.SECONDS);
     }
-
 
 }

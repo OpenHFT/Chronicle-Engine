@@ -59,12 +59,12 @@ public class QueryableEntrySetTest extends ThreadMonitoringTest {
 
     private static final String NAME = "test";
     private static MapView<String, String> map;
+    private final Boolean isRemote;
+    private final WireType wireType;
     @NotNull
 
     @Rule
     public ShutdownHooks hooks = new ShutdownHooks();
-    private final Boolean isRemote;
-    private final WireType wireType;
     @NotNull
     public String connection = "QueryableTest.host.port";
     @NotNull
@@ -73,6 +73,7 @@ public class QueryableEntrySetTest extends ThreadMonitoringTest {
     private AssetTree assetTree = hooks.addCloseable(new VanillaAssetTree().forTesting());
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
+
     public QueryableEntrySetTest(boolean isRemote, WireType wireType) {
         this.isRemote = isRemote;
         this.wireType = wireType;

@@ -18,40 +18,6 @@ import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
  */
 public interface ColumnViewInternal {
 
-    class MarshableFilter extends AbstractMarshallable {
-        public final String columnName;
-        public final String filter;
-
-        public MarshableFilter(String columnName, String filter) {
-            this.columnName = columnName;
-            this.filter = filter;
-        }
-    }
-
-    class MarshableOrderBy extends AbstractMarshallable {
-        public final String column;
-        public final boolean isAscending;
-
-        public MarshableOrderBy(String column) {
-            this.column = column;
-            this.isAscending = false;
-        }
-
-        public MarshableOrderBy(String column, boolean isAscending) {
-            this.column = column;
-            this.isAscending = isAscending;
-        }
-    }
-
-    class SortedFilter extends AbstractMarshallable {
-        public long countFromEnd;
-        public long fromIndex;
-        @NotNull
-        public List<MarshableOrderBy> marshableOrderBy = new ArrayList<>();
-        @NotNull
-        public List<MarshableFilter> marshableFilters = new ArrayList<>();
-    }
-
     Asset asset();
 
     @Nullable
@@ -88,14 +54,12 @@ public interface ColumnViewInternal {
     @Nullable
     ObjectSubscription objectSubscription();
 
-
     @Nullable
     default Predicate<Number> toPredicate(@NotNull String value) {
         if (value.contains(",")) {
             @NotNull String[] v = value.split("\\,");
             // if (v.length != 2)
             //    return DOp.toPredicate(value, true);
-
 
             @Nullable Predicate<Number> predicate = null;
             for (@NotNull String x : v) {
@@ -121,6 +85,18 @@ public interface ColumnViewInternal {
         }
     }
 
+    @Nullable
+    default Predicate<Number> predicate(@NotNull List<MarshableFilter> filters) {
+        @Nullable Predicate<Number> predicate = null;
+        {
+            for (@NotNull MarshableFilter f : filters) {
+                predicate = (predicate == null) ?
+                        toPredicate(f.filter.trim()) :
+                        predicate.and(toPredicate(f.filter.trim()));
+            }
+        }
+        return predicate;
+    }
 
     enum DOp {
         GE(true, ">=", "[") {
@@ -183,24 +159,6 @@ public interface ColumnViewInternal {
             this.operationAtStart = operationAtStart;
         }
 
-
-        @Nullable
-        private Number number(@NotNull String op, @NotNull String value, Class<? extends Number> clazz) throws Exception {
-            @NotNull final String number;
-
-
-            number = (operationAtStart)
-                    ? value.substring(op.length()).trim()
-                    : value.substring(0, value.length() - op.length()).trim();
-            if (!number.isEmpty())
-                return convertTo(clazz, number);
-
-            throw new RuntimeException("can not parse number from '" + value + "'");
-
-        }
-
-        abstract boolean compare(double a, double b);
-
         private static Boolean isAtStart(@NotNull String value) {
             for (@NotNull DOp dop : DOp.OPS) {
 
@@ -214,7 +172,6 @@ public interface ColumnViewInternal {
                     }
 
                 }
-
 
             }
 
@@ -234,13 +191,11 @@ public interface ColumnViewInternal {
          */
         private static Predicate<Number> toPredicate(@NotNull String value, boolean operationAtStart) {
 
-
             for (@NotNull DOp dop : DOp.OPS) {
                 if (dop.operationAtStart != operationAtStart)
                     continue;
 
                 for (@NotNull String op : dop.op) {
-
 
                     if (dop.operationAtStart) {
                         if (!value.startsWith(op))
@@ -269,22 +224,57 @@ public interface ColumnViewInternal {
             return n -> false;
         }
 
+        @Nullable
+        private Number number(@NotNull String op, @NotNull String value, Class<? extends Number> clazz) throws Exception {
+            @NotNull final String number;
+
+            number = (operationAtStart)
+                    ? value.substring(op.length()).trim()
+                    : value.substring(0, value.length() - op.length()).trim();
+            if (!number.isEmpty())
+                return convertTo(clazz, number);
+
+            throw new RuntimeException("can not parse number from '" + value + "'");
+
+        }
+
+        abstract boolean compare(double a, double b);
+
     }
 
-    @Nullable
-    default Predicate<Number> predicate(@NotNull List<MarshableFilter> filters) {
-        @Nullable Predicate<Number> predicate = null;
-        {
-            for (@NotNull MarshableFilter f : filters) {
-                predicate = (predicate == null) ?
-                        toPredicate(f.filter.trim()) :
-                        predicate.and(toPredicate(f.filter.trim()));
-            }
+    class MarshableFilter extends AbstractMarshallable {
+        public final String columnName;
+        public final String filter;
+
+        public MarshableFilter(String columnName, String filter) {
+            this.columnName = columnName;
+            this.filter = filter;
         }
-        return predicate;
+    }
+
+    class MarshableOrderBy extends AbstractMarshallable {
+        public final String column;
+        public final boolean isAscending;
+
+        public MarshableOrderBy(String column) {
+            this.column = column;
+            this.isAscending = false;
+        }
+
+        public MarshableOrderBy(String column, boolean isAscending) {
+            this.column = column;
+            this.isAscending = isAscending;
+        }
+    }
+
+    class SortedFilter extends AbstractMarshallable {
+        public long countFromEnd;
+        public long fromIndex;
+        @NotNull
+        public List<MarshableOrderBy> marshableOrderBy = new ArrayList<>();
+        @NotNull
+        public List<MarshableFilter> marshableFilters = new ArrayList<>();
     }
 
 }
-
-
 

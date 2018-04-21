@@ -49,6 +49,7 @@ public class SimpleEngineMain {
     static final int PORT = Integer.getInteger("engine.port", 8088);
     static final WireType WIRE_TYPE = WireType.valueOf(System.getProperty("engine.wireType", "BINARY"));
     static final Class RULE_PROVIDER = getRuleProvider();
+    static ServerEndpoint serverEndpoint;
 
     private static Class<?> getRuleProvider() {
         try {
@@ -57,8 +58,6 @@ public class SimpleEngineMain {
             return VanillaAssetRuleProvider.class;
         }
     }
-
-    static ServerEndpoint serverEndpoint;
 
     public static void main(@NotNull String... args) throws Exception {
         @NotNull VanillaAssetTree assetTree = tree();

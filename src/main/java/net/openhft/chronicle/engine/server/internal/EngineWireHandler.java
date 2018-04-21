@@ -111,37 +111,11 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
     private final StringBuilder currentLogMessage = new StringBuilder();
     private final StringBuilder prevLogMessage = new StringBuilder();
     @NotNull
-    private Asset rootAsset;
-    @Nullable
-    private SessionProvider sessionProvider;
-    @Nullable
-    private EventLoop eventLoop;
-    private Asset contextAsset;
-
-    private WireAdapter<?, ?> wireAdapter;
-    private Object view;
-    private boolean isSystemMessage = true;
-    private RequestContext requestContext;
-
-    private SessionDetailsProvider sessionDetails;
-
-
-    @NotNull
     private final Map<Long, String> cidToCsp = new HashMap<>();
-
     @NotNull
     private final Map<Long, Object> cidToObject = new HashMap<>();
-
     @NotNull
     private final Map<String, Long> cspToCid = new HashMap<>();
-
-    @Nullable
-    private Class viewType;
-    private long tid;
-    private long cid;
-
-    @Nullable
-    private HostIdentifier hostIdentifier;
     private final Class[] views = {MapView.class
             , EntrySetView.class
             , ValuesCollection.class
@@ -160,7 +134,25 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
             , ColumnView.class
             , ColumnViewIterator.class
             , VaadinChart.class};
-
+    private final AtomicLong nextCid = new AtomicLong(1);
+    @NotNull
+    private Asset rootAsset;
+    @Nullable
+    private SessionProvider sessionProvider;
+    @Nullable
+    private EventLoop eventLoop;
+    private Asset contextAsset;
+    private WireAdapter<?, ?> wireAdapter;
+    private Object view;
+    private boolean isSystemMessage = true;
+    private RequestContext requestContext;
+    private SessionDetailsProvider sessionDetails;
+    @Nullable
+    private Class viewType;
+    private long tid;
+    private long cid;
+    @Nullable
+    private HostIdentifier hostIdentifier;
 
     public EngineWireHandler() {
         this.mapWireHandler = new MapWireHandler<>(this);
@@ -191,7 +183,6 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
         rootAsset = nc.rootAsset().root();
         contextAsset = nc.isAcceptor() ? rootAsset : nc.rootAsset();
         hostIdentifier = rootAsset.findOrCreateView(HostIdentifier.class);
-
 
         this.sessionProvider = rootAsset.getView(SessionProvider.class);
         this.eventLoop = rootAsset.findOrCreateView(EventLoop.class);
@@ -296,7 +287,6 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
             }
         };
 
-
     }
 
     private boolean isValid(@NotNull Class viewType) {
@@ -356,7 +346,6 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
 
         //log every message
         logYamlToStandardOut(in);
-
 
         if (inDc.isMetaData()) {
             this.metaDataConsumer.readMarshallable(in);
@@ -608,8 +597,6 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
         super.close();
     }
 
-    private final AtomicLong nextCid = new AtomicLong(1);
-
     /**
      * create a new cid if one does not already exist for this csp
      *
@@ -629,12 +616,10 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
         return newCid;
     }
 
-
     @Override
     public void storeObject(long cid, Object object) {
         cidToObject.put(cid, object);
     }
-
 
     @Override
     public void removeCid(long cid) {
@@ -643,8 +628,6 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
         if (removed != null)
             cspToCid.remove(removed);
     }
-
-
 
     @Override
     public long createProxy(final String type) {
@@ -690,7 +673,6 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
             cspBuff.append("&valueType=").append(valueType.getName());
     }
 
-
     public CharSequence getCspForCid(long cid) {
         return cidToCsp.get(cid);
     }
@@ -698,6 +680,5 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
     public void setCid(String csp, long cid) {
         cidToCsp.put(cid, csp);
     }
-
 
 }

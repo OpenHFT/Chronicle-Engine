@@ -94,11 +94,11 @@ public class RemotePublisher<T, M> extends AbstractStatelessClient<EventId> impl
     }
 
     private void onEvent(T topic, @Nullable M message, @NotNull TopicSubscriber<T, M> topicSubscriber) throws InvalidSubscriberException {
-            if (message != null) {
-                topicSubscriber.onMessage(topic, message);
-            } else {
-                // todo
-            }
+        if (message != null) {
+            topicSubscriber.onMessage(topic, message);
+        } else {
+            // todo
+        }
     }
 
     private void onEvent(@Nullable M message, @NotNull Subscriber<M> topicSubscriber) throws InvalidSubscriberException {

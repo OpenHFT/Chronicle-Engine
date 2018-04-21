@@ -109,7 +109,6 @@ public interface AssetTree extends Closeable {
         return acquireView(requestContext(uri).view("pub").elementType(eClass));
     }
 
-
     /**
      * Acquire a publisher to a single URI.
      *
@@ -136,7 +135,6 @@ public interface AssetTree extends Closeable {
     default <E> Reference<E> acquireReference(@NotNull String uri, Class<E> eClass) throws AssetNotFoundException {
         return acquireView(requestContext(uri).view("ref").type(eClass));
     }
-
 
     /**
      * Acquire a Topic Publisher view for a URI. A Topic Publisher can publish to any topic in a

@@ -2,12 +2,7 @@ package net.openhft.chronicle.engine.server;
 
 import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
 import net.openhft.chronicle.engine.server.internal.EngineWireNetworkContext;
-import net.openhft.chronicle.network.HeaderTcpHandler;
-import net.openhft.chronicle.network.NetworkContext;
-import net.openhft.chronicle.network.NetworkStatsListener;
-import net.openhft.chronicle.network.ServerThreadingStrategy;
-import net.openhft.chronicle.network.TcpEventHandler;
-import net.openhft.chronicle.network.WireTypeSniffingTcpHandler;
+import net.openhft.chronicle.network.*;
 import net.openhft.chronicle.network.api.TcpHandler;
 import net.openhft.chronicle.network.api.session.SessionDetailsProvider;
 import net.openhft.chronicle.network.connection.VanillaWireOutPublisher;
@@ -20,6 +15,10 @@ import java.util.function.Function;
 import static net.openhft.chronicle.network.NetworkStatsListener.notifyHostPort;
 
 public final class BootstrapHandlerFactory {
+    private final Function<NetworkContext, ServerThreadingStrategy> threadingStrategyMapper;
+    private final boolean notifyHostPort;
+    private final NetworkStatsListener networkStatsListener;
+
     private BootstrapHandlerFactory(final Function<NetworkContext, ServerThreadingStrategy> threadingStrategyMapper, final boolean notifyHostPort, final NetworkStatsListener networkStatsListener) {
         this.threadingStrategyMapper = threadingStrategyMapper;
         this.notifyHostPort = notifyHostPort;
@@ -33,10 +32,6 @@ public final class BootstrapHandlerFactory {
     static BootstrapHandlerFactory forServerEndpoint() {
         return new BootstrapHandlerFactory(NetworkContext::serverThreadingStrategy, false, null);
     }
-
-    private final Function<NetworkContext, ServerThreadingStrategy> threadingStrategyMapper;
-    private final boolean notifyHostPort;
-    private final NetworkStatsListener networkStatsListener;
 
     @NotNull
     public TcpEventHandler bootstrapHandlerFactory(final NetworkContext networkContext) {

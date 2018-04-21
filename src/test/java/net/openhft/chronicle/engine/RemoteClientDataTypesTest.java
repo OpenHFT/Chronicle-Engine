@@ -27,11 +27,7 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.slf4j.Logger;
@@ -61,9 +57,9 @@ public class RemoteClientDataTypesTest {
     private static String _serverAddress = "host.port1";
     @NotNull
     private static AtomicReference<Throwable> t = new AtomicReference();
+    private final WireType _wireType;
     @Rule
     public ShutdownHooks hooks = new ShutdownHooks();
-    private final WireType _wireType;
     private Class _keyClass;
     private Class _valueClass;
     private Object _key;
@@ -103,6 +99,7 @@ public class RemoteClientDataTypesTest {
     public void checkThreadDump() {
         threadDump.assertNoNewThreads();
     }
+
     @Before
     public void setUp() throws IOException {
         _serverAssetTree = hooks.addCloseable(new VanillaAssetTree().forServer());

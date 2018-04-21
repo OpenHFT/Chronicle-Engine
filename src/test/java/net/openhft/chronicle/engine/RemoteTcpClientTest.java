@@ -91,7 +91,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
                         System.out.println("put key" + i);
                 });
                 long duration1 = System.currentTimeMillis() - start1;
-                   /* if (j >= 0)*/
+                /* if (j >= 0)*/
                 {
                     System.out.printf("Took %.3f seconds to perform %,d puts%n", duration1 / 1e3, noPutsAndGets);
 //                        Assert.assertTrue("This should take 1 second but took " + duration1 / 1e3 + " seconds. ", duration1 < 1000);

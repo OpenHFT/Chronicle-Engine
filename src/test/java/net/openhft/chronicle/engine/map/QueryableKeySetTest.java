@@ -56,10 +56,10 @@ import static net.openhft.chronicle.engine.Utils.methodName;
 @RunWith(value = Parameterized.class)
 public class QueryableKeySetTest extends ThreadMonitoringTest {
 
-    @Rule
-    public ShutdownHooks hooks = new ShutdownHooks();
     private final Boolean isRemote;
     private final WireType wireType;
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
     @NotNull
     public String connection = "QueryableTest.host.port";
     @NotNull
@@ -68,6 +68,7 @@ public class QueryableKeySetTest extends ThreadMonitoringTest {
     private AssetTree assetTree = new VanillaAssetTree().forTesting();
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
+
     public QueryableKeySetTest(boolean isRemote, WireType wireType) {
         this.isRemote = isRemote;
         this.wireType = wireType;

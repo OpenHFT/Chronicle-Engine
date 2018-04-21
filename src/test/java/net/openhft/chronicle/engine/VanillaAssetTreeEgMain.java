@@ -82,7 +82,7 @@ public class VanillaAssetTreeEgMain {
         Jvm.pause(2 * 60 * 1000);
 
         for (int i = 0; i < 1000; i++) {
-            map4.put("Key"+i,"Value"+i);
+            map4.put("Key" + i, "Value" + i);
         }
 
         System.out.println("Here..............");
@@ -100,9 +100,9 @@ public class VanillaAssetTreeEgMain {
         //Jvm.pause(50000);
         tree1.root().getAsset("group1/1").removeChild("map");
         map_tree.remove("key4");
-        System.out.println("count="+ ManagementTools.getCount());
+        System.out.println("count=" + ManagementTools.getCount());
         //tree.disableManagement();
-        System.out.println("After disable tree count="+ ManagementTools.getCount());
+        System.out.println("After disable tree count=" + ManagementTools.getCount());
 
         //Jvm.pause(2000);
 
@@ -110,8 +110,8 @@ public class VanillaAssetTreeEgMain {
 
     public static void registerTextViewofTree(String desc, @NotNull AssetTree tree, final ScheduledExecutorService executorService) {
         tree.registerSubscriber("", TopologicalEvent.class, e ->
-                        // give the collection time to be setup.
-                        executorService.schedule(() -> handleTreeUpdate(desc, tree, e), 50, TimeUnit.MILLISECONDS)
+                // give the collection time to be setup.
+                executorService.schedule(() -> handleTreeUpdate(desc, tree, e), 50, TimeUnit.MILLISECONDS)
         );
     }
 

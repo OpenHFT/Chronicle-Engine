@@ -67,6 +67,7 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
     private AssetTree clientAssetTree = hooks.addCloseable(new VanillaAssetTree().forTesting());
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
+
     public TopologicalSubscriptionEventTest(boolean isRemote, WireType wireType) {
         this.isRemote = isRemote;
         this.wireType = wireType;

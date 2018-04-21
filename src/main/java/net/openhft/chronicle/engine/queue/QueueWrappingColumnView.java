@@ -38,9 +38,11 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
     private final Asset asset;
     @NotNull
     private final QueueView<String, V> queueView;
+    private final Class<?> messageClass;
+    @NotNull
+    Map<List<MarshableFilter>, NavigableMap<Long, ChronicleQueueRow>> indexCache = new ConcurrentHashMap<>();
     @Nullable
     private ArrayList<String> columnNames = null;
-    private final Class<?> messageClass;
 
     public QueueWrappingColumnView(
             RequestContext requestContext,
@@ -53,8 +55,7 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
         if (excerpt != null) {
             V message = excerpt.message();
             messageClass = message == null ? Object.class : message.getClass();
-        }
-        else
+        } else
             messageClass = Object.class;
 
     }
@@ -80,9 +81,6 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
         else
             return iterator(filters.marshableFilters, filters.fromIndex);
     }
-
-    @NotNull
-    Map<List<MarshableFilter>, NavigableMap<Long, ChronicleQueueRow>> indexCache = new ConcurrentHashMap<>();
 
     @NotNull
     private ClosableIterator<ChronicleQueueRow> iterator(@NotNull final List<MarshableFilter> filters, long fromSequenceNumber) {
@@ -163,7 +161,6 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
                 return core.hasNext();
             }
 
-
             @Override
             public ChronicleQueueRow next() {
                 final QueueView.Excerpt<String, V> e = core.next();
@@ -172,7 +169,7 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
 
                 if (value == null)
                     return null;
-                
+
                 row.set("index", Long.toHexString(e.index()));
                 row.index(e.index());
 
@@ -274,12 +271,10 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
         return columnNames;
     }
 
-
     @Override
     public boolean canDeleteRows() {
         return false;
     }
-
 
     @Override
     public int changedRow(@NotNull Map<String, Object> row, @NotNull Map<String, Object> oldRow) {
@@ -352,7 +347,6 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
         };
     }
 
-
     /**
      * @param filters if {@code sortedFilter} == null or empty all the total number of rows is
      *                returned
@@ -373,7 +367,6 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
             }
             return count0;
         }
-
 
         final NavigableMap<Long, ChronicleQueueRow> map = indexCache.computeIfAbsent(filters.marshableFilters, k
                 -> new ConcurrentSkipListMap<>());

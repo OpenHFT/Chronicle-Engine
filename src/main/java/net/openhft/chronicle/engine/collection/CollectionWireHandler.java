@@ -59,8 +59,7 @@ public class CollectionWireHandler<U, C extends Collection<U>> {
 
             try {
                 final StringBuilder eventName = Wires.acquireStringBuilder();
-                @NotNull @SuppressWarnings("ConstantConditions")
-                final ValueIn valueIn = inWire.readEventName(eventName);
+                @NotNull @SuppressWarnings("ConstantConditions") final ValueIn valueIn = inWire.readEventName(eventName);
 
                 outWire.writeDocument(true, w -> w.writeEventName(CoreFields.tid).int64
                         (CollectionWireHandler.this.tid));
@@ -162,7 +161,7 @@ public class CollectionWireHandler<U, C extends Collection<U>> {
 
                             LOG.info("server writes:\n\n" + s);
                         }
-                    }finally {
+                    } finally {
                         assert outWire.endUse();
                     }
                 }
@@ -172,8 +171,7 @@ public class CollectionWireHandler<U, C extends Collection<U>> {
 
     private C collectionFromWire() {
         C c = factory.get();
-        @NotNull @SuppressWarnings("ConstantConditions")
-        final ValueIn valueIn = ((Wire) outWire).getValueIn();
+        @NotNull @SuppressWarnings("ConstantConditions") final ValueIn valueIn = ((Wire) outWire).getValueIn();
         while (valueIn.hasNextSequenceItem()) {
             c.add(fromWire.apply(valueIn));
         }
@@ -204,7 +202,7 @@ public class CollectionWireHandler<U, C extends Collection<U>> {
         } catch (RuntimeException e) {
             Jvm.warn().on(getClass(), e);
 
-        }finally {
+        } finally {
             assert in.endUse();
         }
     }

@@ -27,10 +27,10 @@ import java.io.Serializable;
  * Created by Peter Lawrey on 27/08/15.
  */
 public class EndOfDayShort implements Marshallable, Serializable {
-    long daysVolume;
     // Symbol,Company,Price,Change,ChangePercent,Day's Volume
     public String name;
     public double closingPrice, change, changePercent;
+    long daysVolume;
 
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {

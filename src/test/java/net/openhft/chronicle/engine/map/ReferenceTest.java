@@ -61,7 +61,7 @@ public class ReferenceTest {
     public TestName name = new TestName();
     @Rule
     public ShutdownHooks hooks = new ShutdownHooks();
-    
+
     @Nullable
     WireType wireType;
     VanillaAssetTree serverAssetTree;
@@ -71,7 +71,7 @@ public class ReferenceTest {
     private String hostPortToken;
     private ThreadDump threadDump;
 
-    public ReferenceTest(boolean isRemote, @Nullable  WireType wireType) {
+    public ReferenceTest(boolean isRemote, @Nullable WireType wireType) {
         this.wireType = wireType;
         this.isRemote = isRemote;
         YamlLogging.setAll(false);
@@ -80,7 +80,7 @@ public class ReferenceTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
-                 new Object[]{false, null}
+                new Object[]{false, null}
                 , new Object[]{true, WireType.TEXT}
                 , new Object[]{true, WireType.BINARY}
         );

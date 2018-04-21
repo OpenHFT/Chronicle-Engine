@@ -112,7 +112,6 @@ public class EngineClusterContext extends ClusterContext {
         return forEngineClusterContext(defaultNetworkStatsListener)::bootstrapHandlerFactory;
     }
 
-
     public Asset assetRoot() {
         return assetRoot;
     }

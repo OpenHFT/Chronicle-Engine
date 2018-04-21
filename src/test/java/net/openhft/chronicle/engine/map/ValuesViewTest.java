@@ -65,6 +65,7 @@ public class ValuesViewTest extends ThreadMonitoringTest {
     private AssetTree assetTree = hooks.addCloseable(new VanillaAssetTree().forTesting());
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
+
     public ValuesViewTest(boolean isRemote, WireType wireType) {
         this.isRemote = isRemote;
         this.wireType = wireType;

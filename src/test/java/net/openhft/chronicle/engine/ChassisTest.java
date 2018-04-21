@@ -29,11 +29,7 @@ import net.openhft.chronicle.engine.map.InsertedEvent;
 import net.openhft.chronicle.engine.map.RemovedEvent;
 import net.openhft.chronicle.engine.map.UpdatedEvent;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentMap;
@@ -49,9 +45,10 @@ import static org.junit.Assert.*;
  */
 public class ChassisTest {
 
-    private ThreadDump threadDump;
     @Rule
     public ShutdownHooks hooks = new ShutdownHooks();
+    private ThreadDump threadDump;
+
     @Before
     public void threadDump() {
         threadDump = new ThreadDump();
@@ -61,6 +58,7 @@ public class ChassisTest {
     public void checkThreadDump() {
         threadDump.assertNoNewThreads();
     }
+
     @Before
     public void setUp() {
         resetChassis();
@@ -257,8 +255,8 @@ public class ChassisTest {
 
         // test the bootstrap finds old keys
         Subscriber<MapEvent<String, String>> subscriber = createMock(Subscriber.class);
-        subscriber.onMessage(InsertedEvent.of("/map-name", "Key-1", "Value-1",false));
-        subscriber.onMessage(InsertedEvent.of("/map-name", "Key-2", "Value-2",false));
+        subscriber.onMessage(InsertedEvent.of("/map-name", "Key-1", "Value-1", false));
+        subscriber.onMessage(InsertedEvent.of("/map-name", "Key-2", "Value-2", false));
         replay(subscriber);
         registerSubscriber("map-name?bootstrap=true", MapEvent.class, (Subscriber) subscriber);
         verify(subscriber);
@@ -269,7 +267,7 @@ public class ChassisTest {
         // test the topic publish triggers events
         subscriber.onMessage(UpdatedEvent.of("/map-name", "Key-1", "Value-1", "Message-1", false,
                 true));
-        subscriber.onMessage(InsertedEvent.of("/map-name", "Topic-1", "Message-1",false));
+        subscriber.onMessage(InsertedEvent.of("/map-name", "Topic-1", "Message-1", false));
         replay(subscriber);
 
         @NotNull TopicPublisher<String, String> publisher = acquireTopicPublisher("map-name", String.class, String.class);
@@ -279,9 +277,9 @@ public class ChassisTest {
         reset(subscriber);
         assertEquals(3, map.size());
 
-        subscriber.onMessage(InsertedEvent.of("/map-name", "Hello", "World",false));
-        subscriber.onMessage(InsertedEvent.of("/map-name", "Bye", "soon",false));
-        subscriber.onMessage(RemovedEvent.of("/map-name", "Key-1", "Message-1",false));
+        subscriber.onMessage(InsertedEvent.of("/map-name", "Hello", "World", false));
+        subscriber.onMessage(InsertedEvent.of("/map-name", "Bye", "soon", false));
+        subscriber.onMessage(RemovedEvent.of("/map-name", "Key-1", "Message-1", false));
         replay(subscriber);
 
         // test plain puts trigger events

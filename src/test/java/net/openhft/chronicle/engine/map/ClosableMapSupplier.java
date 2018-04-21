@@ -24,5 +24,5 @@ import java.util.function.Supplier;
 /*
  * Created by Rob Austin
  */
-interface ClosableMapSupplier<K, V> extends Closeable, Supplier<Map<K,V>> {
+interface ClosableMapSupplier<K, V> extends Closeable, Supplier<Map<K, V>> {
 }

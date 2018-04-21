@@ -79,6 +79,8 @@ public class RemoteIndexQueueView<K extends Marshallable, V extends Marshallable
                 csp,
                 "RemoteIndexQueueView registerTopicSubscriber") {
 
+            private final IndexedValue<V> instance = new IndexedValue<>();
+            private final Function<Class, ReadMarshallable> reuseFunction = c -> instance;
             // this allows us to resubscribe from the last index we received
             volatile long fromIndex = 0;
 
@@ -98,9 +100,6 @@ public class RemoteIndexQueueView<K extends Marshallable, V extends Marshallable
                 wireOut.writeEventName(registerSubscriber)
                         .typedMarshallable(q);
             }
-
-            private final IndexedValue<V> instance = new IndexedValue<>();
-            private final Function<Class, ReadMarshallable> reuseFunction = c -> instance;
 
             @Override
             public void onConsumer(@NotNull final WireIn inWire) {

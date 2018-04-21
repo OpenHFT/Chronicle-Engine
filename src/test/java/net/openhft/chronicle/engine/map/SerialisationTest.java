@@ -15,7 +15,7 @@ public class SerialisationTest {
     @Test
     public void textWire() {
         CMap2EngineReplicator.VanillaReplicatedEntry dto = new CMap2EngineReplicator.VanillaReplicatedEntry(), dto2 = null;
-        byte[] binaryData = new byte[] { 1, 2, 3, 4};
+        byte[] binaryData = new byte[]{1, 2, 3, 4};
         dto.key(Bytes.wrapForRead(binaryData));
         dto.timestamp(123L);
         String cs = dto.toString();

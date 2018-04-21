@@ -378,15 +378,13 @@ public class CMap2EngineReplicator implements EngineReplication,
         }
     }
 
-    private class EngineModificationIteratorAdaptor implements ModificationIterator
-    {
+    private class EngineModificationIteratorAdaptor implements ModificationIterator {
         private final EngineModificationIterator instance;
         private final byte remoteIdentifier;
         private Consumer<ReplicationEntry> replicationEntryListener;
         private volatile Thread consumerThread;
 
-        private EngineModificationIteratorAdaptor(final EngineModificationIterator instance, final byte remoteIdentifier)
-        {
+        private EngineModificationIteratorAdaptor(final EngineModificationIterator instance, final byte remoteIdentifier) {
             this.instance = instance;
             this.remoteIdentifier = remoteIdentifier;
         }

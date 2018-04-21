@@ -48,9 +48,9 @@ import static org.junit.Assert.assertTrue;
  */
 public class MapViewTest {
 
-    private ThreadDump threadDump;
     @Rule
     public ShutdownHooks hooks = new ShutdownHooks();
+    private ThreadDump threadDump;
 
     @Before
     public void threadDump() {

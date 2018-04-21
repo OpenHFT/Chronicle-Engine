@@ -102,7 +102,6 @@ public class EngineInstance {
             //my class isn't there!
         }
 
-
         try {
             installable.install("/", tree);
             // the reason that we have to do this is to ensure that the network stats are
@@ -188,6 +187,5 @@ public class EngineInstance {
             return "";
         return clusters.firstCluster().clusterName();
     }
-
 
 }

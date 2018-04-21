@@ -43,7 +43,6 @@ class StartEngineWithDummyData {
         //      YamlLogging.setAll(true);
         try {
 
-
             //Delete any files from the last run
             Files.deleteIfExists(Paths.get(OS.TARGET, NAME));
         } catch (Exception e) {
@@ -63,7 +62,6 @@ class StartEngineWithDummyData {
         addCountryNumerics(tree);
         addCountryNumerics(tree);
     }
-
 
     private static void addCountryNumerics(@NotNull VanillaAssetTree tree) {
         @NotNull MapView<String, String> mapView = tree.acquireMap("/my/demo", String.class,
@@ -399,7 +397,6 @@ class StartEngineWithDummyData {
 
     private static void addApplShares(@NotNull VanillaAssetTree tree) {
 
-
         @NotNull String csp = "/queue/shares/APPL";
 
         @NotNull QueueView<String, MarketData2> q = tree.acquireQueue
@@ -410,13 +407,11 @@ class StartEngineWithDummyData {
         barChart.series(new VaadinChartSeries("volume"));
         barChart.dataSource(q);
 
-
         @NotNull final ChartProperties chartProperties = new ChartProperties();
         chartProperties.title = "APPL Volume";
         chartProperties.menuLabel = "volume";
         barChart.chartProperties(chartProperties);
         @NotNull SimpleDateFormat sd = new SimpleDateFormat("dd MMM yyyy");
-
 
         try {
             q.publishAndIndex("", new MarketData2(sd.parse("7 Oct 2016"), 114.31, 114.56, 113.51, 114.06, 114.06, 24358400L));

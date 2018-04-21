@@ -61,5 +61,4 @@ public class ColumnViewInternalTest {
         Assert.assertFalse(cv.toPredicate("4").test(3));
     }
 
-
 }

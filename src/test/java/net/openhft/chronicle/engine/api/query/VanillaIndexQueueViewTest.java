@@ -38,7 +38,6 @@ import static net.openhft.chronicle.engine.api.query.IndexQuery.FROM_START;
 public class VanillaIndexQueueViewTest {
     private static final String URI = "/queue/main";
 
-
     static {
         ClassAliasPool.CLASS_ALIASES.addAlias(MarketDataEvent.class);
     }
@@ -122,7 +121,6 @@ public class VanillaIndexQueueViewTest {
                 Assert.assertNotNull(o);
                 Assert.assertTrue(o.isEndOfSnapshot());
 
-
             } finally {
                 final File file = queue.file();
                 tree.close();
@@ -133,7 +131,6 @@ public class VanillaIndexQueueViewTest {
         }
 
     }
-
 
     @Test(timeout = 10000)
     public void shouldReceiveEventViaSubscription() throws InterruptedException, IOException {

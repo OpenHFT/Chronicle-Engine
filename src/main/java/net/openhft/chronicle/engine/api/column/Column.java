@@ -15,9 +15,9 @@ public class Column extends AbstractMarshallable {
     public final String name;
     public final boolean readOnly;
     public final boolean primaryKey;
+    public final boolean sortable;
     public Object value;
     public transient Class<?> type;
-    public final boolean sortable;
     public String unaliased;
     public String typeName;
 
@@ -38,14 +38,12 @@ public class Column extends AbstractMarshallable {
         return type;
     }
 
-
     @Override
     public void writeMarshallable(@NotNull WireOut wire) {
         unaliased = type.getName();
         typeName = ClassAliasPool.CLASS_ALIASES.nameFor(type);
         super.writeMarshallable(wire);
     }
-
 
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IORuntimeException {

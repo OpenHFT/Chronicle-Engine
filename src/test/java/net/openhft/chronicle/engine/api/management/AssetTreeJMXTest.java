@@ -100,7 +100,7 @@ public class AssetTreeJMXTest {
     }
 
     @Test
-    public void addStringValuesMapIntoTree(){
+    public void addStringValuesMapIntoTree() {
         @NotNull AssetTree tree = new VanillaAssetTree().forTesting();
         tree.enableManagement();
         @NotNull ConcurrentMap<String, String> map = tree.acquireMap("group/map", String.class, String.class);
@@ -112,7 +112,7 @@ public class AssetTreeJMXTest {
     }
 
     @Test
-    public void addDoubleValuesMapIntoTree(){
+    public void addDoubleValuesMapIntoTree() {
         @NotNull AssetTree tree = new VanillaAssetTree().forTesting();
         tree.enableManagement();
         @NotNull ConcurrentMap<Double, Double> map = tree.acquireMap("group/map", Double.class, Double.class);
@@ -124,7 +124,7 @@ public class AssetTreeJMXTest {
     }
 
     @Test
-    public void addIntegerValuesMapIntoTree(){
+    public void addIntegerValuesMapIntoTree() {
         @NotNull AssetTree tree = new VanillaAssetTree().forTesting();
         tree.enableManagement();
         @NotNull ConcurrentMap<Integer, Integer> map = tree.acquireMap("group/map", Integer.class, Integer.class);
@@ -137,7 +137,7 @@ public class AssetTreeJMXTest {
 
     @Ignore("todo add assertions")
     @Test
-    public void addMarshallableValuesMapIntoTree(){
+    public void addMarshallableValuesMapIntoTree() {
         @NotNull AssetTree tree = new VanillaAssetTree().forTesting();
         tree.enableManagement();
 
@@ -150,9 +150,9 @@ public class AssetTreeJMXTest {
         m.readMarshallable(wire);
 
         @NotNull ConcurrentMap<String, Marshallable> map = tree.acquireMap("group/map", String.class, Marshallable.class);
-        map.put("1",m);
-        map.put("2",m);
-        map.put("3",m);
+        map.put("1", m);
+        map.put("2", m);
+        map.put("3", m);
         Jvm.pause(200);
     }
 
@@ -166,8 +166,8 @@ public class AssetTreeJMXTest {
         @NotNull AssetTree tree = new VanillaAssetTree().forTesting();
         tree.enableManagement();
 
-        for (int i = 1; i <= number ; i++) {
-            @NotNull ConcurrentMap<String, String> map1 = tree.acquireMap("group/map"+i, String.class, String.class);
+        for (int i = 1; i <= number; i++) {
+            @NotNull ConcurrentMap<String, String> map1 = tree.acquireMap("group/map" + i, String.class, String.class);
             map1.put("key1", "value1");
         }
         Jvm.pause(200);
@@ -186,11 +186,11 @@ public class AssetTreeJMXTest {
 
         long timeToStop = System.currentTimeMillis() + 3600000;  //3600000 = 60*60*1000 milliseconds = 1 Hour
         int count = 0;
-        while (System.currentTimeMillis()<=timeToStop){
-            @NotNull ConcurrentMap<String, String> map1 = tree.acquireMap("group/map"+count, String.class, String.class);
+        while (System.currentTimeMillis() <= timeToStop) {
+            @NotNull ConcurrentMap<String, String> map1 = tree.acquireMap("group/map" + count, String.class, String.class);
             map1.put("key1", "value1");
             Jvm.pause(milliSeconds);
-            tree.root().getAsset("group").removeChild("map"+count);
+            tree.root().getAsset("group").removeChild("map" + count);
             count++;
         }
     }

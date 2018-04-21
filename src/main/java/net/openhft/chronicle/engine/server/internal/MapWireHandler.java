@@ -301,7 +301,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
             } catch (Exception e) {
                 Jvm.warn().on(getClass(), e);
             } finally {
-                assert endEnforceInValueReadCheck(inWire );
+                assert endEnforceInValueReadCheck(inWire);
             }
         }
     };
@@ -346,7 +346,6 @@ public class MapWireHandler<K, V> extends AbstractHandler {
             Jvm.warn().on(getClass(), "", e);
         }
     }
-
 
     public enum Params implements WireKey {
         key,

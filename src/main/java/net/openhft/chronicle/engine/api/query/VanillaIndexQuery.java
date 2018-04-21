@@ -59,12 +59,10 @@ public class VanillaIndexQuery<V> extends AbstractMarshallable implements Demars
         readMarshallable(wire);
     }
 
-
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IORuntimeException {
         Wires.readMarshallable(this, wire, false);
     }
-
 
     public Class<V> valueClass() {
         return valueClass;

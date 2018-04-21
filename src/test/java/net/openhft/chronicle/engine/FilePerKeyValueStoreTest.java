@@ -30,11 +30,7 @@ import net.openhft.chronicle.engine.tree.VanillaAsset;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -51,11 +47,10 @@ import static org.junit.Assert.assertEquals;
  */
 public class FilePerKeyValueStoreTest {
     public static final String NAME = "fileperkvstoretests";
-    private Map<String, String> map;
-
-    private ThreadDump threadDump;
     @Rule
     public ShutdownHooks hooks = new ShutdownHooks();
+    private Map<String, String> map;
+    private ThreadDump threadDump;
 
     @Before
     public void threadDump() {
@@ -66,6 +61,7 @@ public class FilePerKeyValueStoreTest {
     public void checkThreadDump() {
         threadDump.assertNoNewThreads();
     }
+
     @Before
     public void createMap() throws IOException {
         resetChassis();

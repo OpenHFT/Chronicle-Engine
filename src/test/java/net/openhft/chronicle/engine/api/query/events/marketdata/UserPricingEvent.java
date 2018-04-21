@@ -2,7 +2,6 @@ package net.openhft.chronicle.engine.api.query.events.marketdata;
 
 import net.openhft.chronicle.wire.Marshallable;
 
-
 public class UserPricingEvent extends UserPricingKey implements Marshallable {
 
     private double bidQty;

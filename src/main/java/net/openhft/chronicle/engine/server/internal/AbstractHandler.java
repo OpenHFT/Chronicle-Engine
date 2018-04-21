@@ -44,6 +44,11 @@ abstract class AbstractHandler {
     long readPosAfterValueIn = -1;
     private boolean hasSkipped;
 
+    static void nullCheck(@Nullable Object o) {
+        if (o == null)
+            throw new NullPointerException();
+    }
+
     boolean startEnforceInValueReadCheck(@NotNull WireIn w) {
         assert readPosAfterValueIn == -1;
         readPosAfterValueIn = w.bytes().readPosition();
@@ -66,11 +71,6 @@ abstract class AbstractHandler {
         } finally {
             readPosAfterValueIn = -1;
         }
-    }
-
-    static void nullCheck(@Nullable Object o) {
-        if (o == null)
-            throw new NullPointerException();
     }
 
     void setOutWire(@NotNull final WireOut outWire) {

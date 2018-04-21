@@ -23,7 +23,7 @@ public class Gateway implements EventProcessor {
     }
 
     @Override
-    public void onMarketDataChanged(@NotNull MarketDataEvent  marketData) {
+    public void onMarketDataChanged(@NotNull MarketDataEvent marketData) {
         actions.onMarketDataChanged(marketData);
     }
 

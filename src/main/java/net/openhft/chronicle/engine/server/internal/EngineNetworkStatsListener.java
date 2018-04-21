@@ -58,6 +58,15 @@ import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContex
 public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWireNetworkContext> {
 
     private static final String PROC_CONNECTIONS_CLUSTER_THROUGHPUT = "/proc/connections/cluster/throughput/";
+    @NotNull
+    private static ThreadLocal<SimpleDateFormat> HH_MM_SS = ThreadLocal.withInitial(() -> new
+            SimpleDateFormat
+            ("HH:mm.ss"));
+
+    static {
+        RequestContext.loadDefaultAliases();
+    }
+
     private final Asset asset;
     private final int localIdentifier;
     private final WireNetworkStats wireNetworkStats = new WireNetworkStats();
@@ -66,10 +75,6 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
     private EngineWireNetworkContext nc;
     @Nullable
     private Histogram histogram = null;
-
-    static {
-        RequestContext.loadDefaultAliases();
-    }
 
     public EngineNetworkStatsListener(Asset asset, int localIdentifier) {
         this.localIdentifier = localIdentifier;
@@ -189,23 +194,6 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
         return histogram;
     }
 
-    @NotNull
-    private static ThreadLocal<SimpleDateFormat> HH_MM_SS = ThreadLocal.withInitial(() -> new
-            SimpleDateFormat
-            ("HH:mm.ss"));
-
-
-    @SuppressWarnings("WeakerAccess")
-    public enum HourMinSecRenderer implements Function<Object, String> {
-
-        INSTANCE;
-
-        @Override
-        public String apply(Object timeMs) {
-            return HH_MM_SS.get().format(new Date((Long) timeMs));
-        }
-    }
-
     private void createVaadinChart() {
 
         @NotNull final String csp = PROC_CONNECTIONS_CLUSTER_THROUGHPUT + "replication-latency/" +
@@ -256,6 +244,17 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
     @Override
     public boolean isClosed() {
         return isClosed;
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    public enum HourMinSecRenderer implements Function<Object, String> {
+
+        INSTANCE;
+
+        @Override
+        public String apply(Object timeMs) {
+            return HH_MM_SS.get().format(new Date((Long) timeMs));
+        }
     }
 
     public static class Factory implements

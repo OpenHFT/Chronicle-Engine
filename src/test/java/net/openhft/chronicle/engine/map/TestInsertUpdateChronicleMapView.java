@@ -51,9 +51,9 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  */
 @RunWith(value = Parameterized.class)
 public class TestInsertUpdateChronicleMapView extends ThreadMonitoringTest {
+    private final WireType wireType;
     @Rule
     public ShutdownHooks hooks = new ShutdownHooks();
-    private final WireType wireType;
     @NotNull
     public String connection = "RemoteSubscriptionTest.host.port";
     @NotNull

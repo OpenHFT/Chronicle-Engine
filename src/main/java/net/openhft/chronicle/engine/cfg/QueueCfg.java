@@ -18,7 +18,7 @@ import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContex
 
 /**
  * @author Rob Austin.
- *         Configures a Chronicle Queue
+ * Configures a Chronicle Queue
  */
 public class QueueCfg extends AbstractMarshallableCfg implements Installable {
 

@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static net.openhft.chronicle.wire.WireMarshaller.WIRE_MARSHALLER_CL;
 
-
 public class CorpBondStaticKey extends AbstractMarshallable implements KeyedMarshallable {
     private int uiid;
 

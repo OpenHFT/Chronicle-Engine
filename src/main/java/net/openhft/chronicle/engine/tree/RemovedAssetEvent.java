@@ -26,10 +26,9 @@ import java.util.Set;
  * Created by Peter Lawrey on 22/05/15.
  */
 public class RemovedAssetEvent extends AbstractMarshallable implements TopologicalEvent {
+    private final Set<Class> viewTypes;
     private String assetName;
     private String name;
-
-    private final Set<Class> viewTypes;
 
     private RemovedAssetEvent(String assetName, String name, Set<Class> viewTypes) {
         this.assetName = assetName;

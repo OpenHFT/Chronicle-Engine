@@ -25,11 +25,7 @@ import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.tree.*;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 
 import java.util.Collections;
 
@@ -40,10 +36,10 @@ import static org.easymock.EasyMock.*;
  */
 public class AssetSubscriptionsTest {
 
-    private ThreadDump threadDump;
-
     @Rule
     public ShutdownHooks hooks = new ShutdownHooks();
+    private ThreadDump threadDump;
+
     @Before
     public void threadDump() {
         threadDump = new ThreadDump();

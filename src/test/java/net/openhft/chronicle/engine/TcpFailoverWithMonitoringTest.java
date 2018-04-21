@@ -61,9 +61,9 @@ public class TcpFailoverWithMonitoringTest {
     private static final String CONNECTION_1 = "Test1.host.port";
     private final static String CONNECTION_2 = "Test2.host.port";
     private static ConcurrentMap<String, String> map;
+    private final BlockingQueue<String> activity = new ArrayBlockingQueue<>(2);
     @Rule
     public ShutdownHooks hooks = new ShutdownHooks();
-    private final BlockingQueue<String> activity = new ArrayBlockingQueue<>(2);
     private ServerSocketChannel connection1;
     private ServerSocketChannel connection2;
     private AssetTree failOverClient;
@@ -168,7 +168,6 @@ public class TcpFailoverWithMonitoringTest {
     /**
      * the fail over client connects to  server1 ( server1 is the primary) , server1 is then shut
      * down and the client connects to the secondary
-     *
      */
     @Test
     public void test() throws InterruptedException {

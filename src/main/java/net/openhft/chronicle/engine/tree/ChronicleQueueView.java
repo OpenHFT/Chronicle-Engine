@@ -77,7 +77,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         Closeable {
 
     private static final Logger LOG = LoggerFactory.getLogger(ChronicleQueueView.class);
-
+    private static final StringBuilderPool SBP = new StringBuilderPool();
     @NotNull
     private final RollingChronicleQueue chronicleQueue;
     private final Class<T> messageTypeClass;
@@ -94,7 +94,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
     private boolean isSource;
     private boolean isReplicating;
     private boolean dontPersist;
-    private static final StringBuilderPool SBP = new StringBuilderPool();
     @NotNull
     private QueueConfig queueConfig;
 
@@ -316,7 +315,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
 
                 if (remoteIdentifier == localIdentifier)
                     continue;
-
 
                 ConnectionManager connectionManager = engineCluster.findConnectionManager(remoteIdentifier);
                 if (connectionManager == null) {

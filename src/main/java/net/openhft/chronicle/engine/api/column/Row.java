@@ -44,7 +44,6 @@ public class Row extends AbstractMarshallable {
         return data.get(columnNames.get(columnIndex));
     }
 
-
     @Override
     public void writeMarshallable(@NotNull WireOut wire) {
         super.writeMarshallable(wire);

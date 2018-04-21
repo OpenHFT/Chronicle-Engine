@@ -29,5 +29,4 @@ public class CellKey extends AbstractMarshallable implements KeyedMarshallable {
         return cellId;
     }
 
-
 }

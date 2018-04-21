@@ -119,21 +119,6 @@ public class RequestContext implements Cloneable {
                 TerminatorHandler.class);
     }
 
-    public static boolean loadDefaultAliases() {
-
-        ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class,
-                EngineCfg.class,
-                JmxCfg.class,
-                ServerCfg.class,
-                ClustersCfg.class,
-                InMemoryMapCfg.class,
-                FilePerKeyMapCfg.class,
-                ChronicleMapCfg.class,
-                MonitorCfg.class,
-                VanillaAssetRuleProvider.class);
-        return true;
-    }
-
     private String pathName;
     private String name;
     private Class viewType, type, type2;
@@ -150,17 +135,30 @@ public class RequestContext implements Cloneable {
     private Boolean recurse;
     private boolean sealed = false;
     private String cluster = "cluster";
-
     private int throttlePeriodMs = 0;
     private boolean dontPersist;
     private long token;
-
     private RequestContext() {
     }
 
     public RequestContext(String pathName, String name) {
         this.pathName = pathName;
         this.name = name;
+    }
+
+    public static boolean loadDefaultAliases() {
+
+        ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class,
+                EngineCfg.class,
+                JmxCfg.class,
+                ServerCfg.class,
+                ClustersCfg.class,
+                InMemoryMapCfg.class,
+                FilePerKeyMapCfg.class,
+                ChronicleMapCfg.class,
+                MonitorCfg.class,
+                VanillaAssetRuleProvider.class);
+        return true;
     }
 
     private static void addAlias(Class type, @NotNull String aliases) {

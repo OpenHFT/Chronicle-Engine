@@ -51,7 +51,6 @@ public class TopologySubscriptionHandler extends SubscriptionHandler<TopologySub
         } finally {
             assert endEnforceInValueReadCheck(inWire);
         }
-            
 
         outWire.writeDocument(true, wire -> outWire.writeEventName(tid).int64(inputTid));
 

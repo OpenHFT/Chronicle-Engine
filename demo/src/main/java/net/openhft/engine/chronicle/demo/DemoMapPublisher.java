@@ -1,7 +1,6 @@
 package net.openhft.engine.chronicle.demo;
 
 import net.openhft.chronicle.engine.api.pubsub.Publisher;
-import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.WireType;

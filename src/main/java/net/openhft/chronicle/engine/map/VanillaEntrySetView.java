@@ -48,7 +48,7 @@ public class VanillaEntrySetView<K, MV, V> extends AbstractCollection<Entry<K, V
     @NotNull
     @Override
     public Iterator<Entry<K, V>> iterator() {
-        return ((KeyValueStore<K,V>)mapView.underlying()).entrySetIterator();
+        return ((KeyValueStore<K, V>) mapView.underlying()).entrySetIterator();
     }
 
     @Override

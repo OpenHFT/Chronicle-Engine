@@ -27,15 +27,16 @@ import static net.openhft.chronicle.wire.Wires.project;
  */
 public class NetworkStatsSummary implements EventHandler {
     private final long index;
-    private double alpha = 1.0 / 60.0;
     @Nullable
     private final RollingChronicleQueue rollingChronicleQueue;
-
     @NotNull
     private final MapView<String, Stats> latestStatsPerClientId;
-
+    private final NetworkStats ns = new WireNetworkStats();
+    private double alpha = 1.0 / 60.0;
     @NotNull
     private ExcerptTailer tailer = null;
+    @NotNull
+    private Stats stats0 = new Stats();
 
     public NetworkStatsSummary(@NotNull ChronicleQueueView qv, @NotNull MapView<String, Stats> latestStatsPerClientId) {
         rollingChronicleQueue = qv.chronicleQueue();
@@ -46,8 +47,6 @@ public class NetworkStatsSummary implements EventHandler {
         this.index = index.get();
 
     }
-
-    private final NetworkStats ns = new WireNetworkStats();
 
     @Override
     public boolean action() throws InvalidEventHandlerException, InterruptedException {
@@ -80,9 +79,6 @@ public class NetworkStatsSummary implements EventHandler {
             return true;
         }
     }
-
-    @NotNull
-    private Stats stats0 = new Stats();
 
     private void updateMap(@NotNull NetworkStats ns, final long index) {
 

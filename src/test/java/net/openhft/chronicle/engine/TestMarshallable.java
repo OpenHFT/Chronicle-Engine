@@ -33,13 +33,13 @@ public class TestMarshallable implements Marshallable {
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         wire.read(() -> "name").textTo(name);
-        count = wire.read(()->"count").int32();
+        count = wire.read(() -> "count").int32();
     }
 
     @Override
     public void writeMarshallable(@NotNull WireOut wire) {
         wire.write(() -> "name").text(name);
-        wire.write(()->"count").int32(count);
+        wire.write(() -> "count").int32(count);
     }
 
     public StringBuilder getName() {

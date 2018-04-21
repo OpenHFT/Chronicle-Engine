@@ -17,5 +17,4 @@ public class ClosePriceEvent extends CloseKey {
         return close;
     }
 
-
 }

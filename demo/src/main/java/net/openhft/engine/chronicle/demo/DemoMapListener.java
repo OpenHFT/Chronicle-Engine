@@ -24,17 +24,17 @@ public class DemoMapListener {
         MapEventListener<String, String> mapEventListener = new MapEventListener<String, String>() {
             @Override
             public void update(String assetName, String key, String oldValue, String newValue) {
-                System.out.println("Update received for " + assetName +  " " + key + ":" + newValue);
+                System.out.println("Update received for " + assetName + " " + key + ":" + newValue);
             }
 
             @Override
             public void insert(String assetName, String key, String value) {
-                System.out.println("Insert received for " + assetName +  " "  + key + ":" + value);
+                System.out.println("Insert received for " + assetName + " " + key + ":" + value);
             }
 
             @Override
             public void remove(String assetName, String key, String value) {
-                System.out.println("Remove received for " + assetName +  " "  + key + ":" + value);
+                System.out.println("Remove received for " + assetName + " " + key + ":" + value);
             }
         };
 
@@ -65,25 +65,25 @@ public class DemoMapListener {
         clientAssetTree.registerSubscriber("/data", TopologicalEvent.class, topologicalSubscriber);
 
         Scanner scanner = new Scanner(System.in);
-        while(true){
+        while (true) {
             String line = scanner.nextLine();
-            if(line.equalsIgnoreCase("quit"))System.exit(0);
-            else if(line.equalsIgnoreCase("unregister subscriber")){
+            if (line.equalsIgnoreCase("quit")) System.exit(0);
+            else if (line.equalsIgnoreCase("unregister subscriber")) {
                 System.out.println("Unregistering subscriber");
                 clientAssetTree.unregisterSubscriber("/data/map", mapEventSubscriber);
-            }else if(line.equalsIgnoreCase("unregister keySubscriber")){
+            } else if (line.equalsIgnoreCase("unregister keySubscriber")) {
                 System.out.println("Unregistering key subscriber");
                 clientAssetTree.unregisterSubscriber("/data/map", keySubscriber);
-            }else if(line.equalsIgnoreCase("unregister topicSubscriber")){
+            } else if (line.equalsIgnoreCase("unregister topicSubscriber")) {
                 System.out.println("Unregistering topic subscriber");
                 clientAssetTree.unregisterTopicSubscriber("/data/map", topicSubscriber);
-            }else if(line.equalsIgnoreCase("register subscriber")){
+            } else if (line.equalsIgnoreCase("register subscriber")) {
                 System.out.println("Registering subscriber");
                 clientAssetTree.registerSubscriber("/data/map", MapEvent.class, mapEventSubscriber);
-            }else if(line.equalsIgnoreCase("register keySubscriber")){
+            } else if (line.equalsIgnoreCase("register keySubscriber")) {
                 System.out.println("Registering key subscriber");
                 clientAssetTree.registerSubscriber("/data/map", String.class, keySubscriber);
-            }else if(line.equalsIgnoreCase("register topicSubscriber")){
+            } else if (line.equalsIgnoreCase("register topicSubscriber")) {
                 System.out.println("Registering topic subscriber");
                 clientAssetTree.registerTopicSubscriber("/data/map", String.class, String.class, topicSubscriber);
             }

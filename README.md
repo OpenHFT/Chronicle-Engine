@@ -217,7 +217,6 @@ You should eject the mounted directory before killing the server.
 ####Or if you are on Windows:
 You will need to an nfs4 client or use Microsoft service for unix and use nfsv3
 
-
 the following example creates an entry containg key=hello value=world in the asset called /temp
 
 ```  
@@ -230,7 +229,6 @@ to unmount :
 ```  
 $sudo umount /engine
 ```  
-
 
 ### In chronicle-Engine - you can call an arbitrary lambda or predefined function
 
@@ -295,8 +293,7 @@ what kind of lambdas are possible, to run from the client onto the server ? �
 Any lambdas where the code exists both on the server and on the client. 
 What you can’t do is create a custom lambda that just exists on the client.   
 
-
-### Question   
+### Question  
 
 In your example I see a lambda operating on N keys of the same type and returning N 
 values of the same type.  What if I want to return a scalar or multiple scalars / keys or some other 
@@ -323,8 +320,6 @@ You would have to implement your own locking strategy as atomicity across multip
 
 More details to come.
 
-
- 
 
 
 [![Alt text](https://img.youtube.com/vi/VID/0.jpg)](https://vimeo.com/189273680)

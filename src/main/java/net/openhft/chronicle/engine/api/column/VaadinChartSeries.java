@@ -8,13 +8,20 @@ import org.jetbrains.annotations.NotNull;
  */
 public class VaadinChartSeries extends AbstractMarshallable {
 
+    public String field;
+    public Type type = Type.COLUMN;
+    String yAxisLabel = "";
+    private Integer width = 5;
+
+    public VaadinChartSeries(String field) {
+        this.field = field;
+    }
+
     @NotNull
     public VaadinChartSeries width(Integer width) {
         this.width = width;
         return this;
     }
-
-    private Integer width = 5;
 
     public String yAxisLabel() {
         return yAxisLabel;
@@ -26,26 +33,12 @@ public class VaadinChartSeries extends AbstractMarshallable {
         return this;
     }
 
-    String yAxisLabel = "";
-
     public Type type() {
         return type;
     }
 
     public Integer width() {
         return width;
-    }
-
-    public enum Type {SPLINE, COLUMN}
-
-    public String field;
-
-    public Type type = Type.COLUMN;
-
-
-
-    public VaadinChartSeries(String field) {
-        this.field = field;
     }
 
     public String field() {
@@ -63,4 +56,6 @@ public class VaadinChartSeries extends AbstractMarshallable {
         this.type = type;
         return this;
     }
+
+    public enum Type {SPLINE, COLUMN}
 }

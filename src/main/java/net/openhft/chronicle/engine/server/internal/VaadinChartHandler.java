@@ -20,22 +20,13 @@ import static net.openhft.chronicle.network.connection.CoreFields.reply;
  */
 public class VaadinChartHandler extends AbstractHandler {
     private final CspManager cspManager;
+    private final StringBuilder eventName = new StringBuilder();
     @NotNull
     AtomicLong nextToken = new AtomicLong();
-
-    VaadinChartHandler(CspManager cspManager) {
-        this.cspManager = cspManager;
-    }
-
-    private final StringBuilder eventName = new StringBuilder();
     private VaadinChart vaadinChart;
-
     @Nullable
     private WireIn inWire = null;
-
     private long tid;
-
-
     private final BiConsumer<WireIn, Long> dataConsumer = new BiConsumer<WireIn, Long>() {
 
         @SuppressWarnings("ConstantConditions")
@@ -49,7 +40,7 @@ public class VaadinChartHandler extends AbstractHandler {
 
                 outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
 
-                writeData(inWire , out -> {
+                writeData(inWire, out -> {
 
                     if (RemoteVaadinChart.EventId.chartProperties.contentEquals(eventName)) {
                         outWire.writeEventName(reply).typedMarshallable(vaadinChart.chartProperties());
@@ -71,7 +62,6 @@ public class VaadinChartHandler extends AbstractHandler {
                         return;
                     }
 
-
                     throw new IllegalStateException("unsupported event=" + eventName);
                 });
 
@@ -81,10 +71,12 @@ public class VaadinChartHandler extends AbstractHandler {
                 assert endEnforceInValueReadCheck(inWire);
             }
 
-
         }
     };
 
+    VaadinChartHandler(CspManager cspManager) {
+        this.cspManager = cspManager;
+    }
 
     public void process(WireIn in, @NotNull WireOut out, VaadinChart vaadinChart, long tid) {
 

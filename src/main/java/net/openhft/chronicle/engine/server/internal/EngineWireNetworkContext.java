@@ -60,10 +60,6 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
     private MapView<String, ConnectionStatus> connectivityHosts;
     private TcpHandler handler;
 
-    public TcpHandler handler() {
-        return handler;
-    }
-
     public EngineWireNetworkContext(@NotNull Asset asset, String clusterName) {
         this.rootAsset = (VanillaAsset) asset.root();
         // TODO make configurable
@@ -79,6 +75,10 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
                 CONNECTIVITY_HOSTS_URI,
                 String.class,
                 ConnectionStatus.class, clusterName);
+    }
+
+    public TcpHandler handler() {
+        return handler;
     }
 
     @NotNull
@@ -166,7 +166,6 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
                     return DISCONNECTED;
                 return connectionEvent.connectionStatus;
             }
-
 
         };
 

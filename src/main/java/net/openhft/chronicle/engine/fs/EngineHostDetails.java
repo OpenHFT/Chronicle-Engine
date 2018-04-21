@@ -48,7 +48,9 @@ public class EngineHostDetails extends HostDetails implements Marshallable, Clos
         this.connectUri(connectUri);
     }
 
-   /* *//**
+    /* */
+
+    /**
      * @param asset     a point in the asset tree, used to fine the ClientConnectionMonitor
      * @param eventLoop used to process events
      * @param wire      converts from bytes to wire for the type of the wire used

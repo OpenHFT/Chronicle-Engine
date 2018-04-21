@@ -17,10 +17,10 @@
 
 package net.openhft.chronicle.engine.cfg;
 
-import net.openhft.chronicle.engine.tree.VanillaAssetRuleProvider;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.tree.AssetRuleProvider;
+import net.openhft.chronicle.engine.tree.VanillaAssetRuleProvider;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.WireIn;
 import org.jetbrains.annotations.NotNull;
@@ -75,7 +75,7 @@ public class EngineCfg implements Installable {
             } else if (wire.getValueIn().isTyped()) {
                 wire.bytes().readPosition(pos);
                 @Nullable Object o = in.typedMarshallable();
-                    installableMap.put(path2, (Installable) o);
+                installableMap.put(path2, (Installable) o);
             } else {
                 in.marshallable(w -> this.readMarshallable(path2, w));
             }

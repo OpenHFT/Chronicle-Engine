@@ -33,21 +33,11 @@ import net.openhft.chronicle.engine.map.FilePerKeyValueStore;
 import net.openhft.chronicle.engine.tree.VanillaAsset;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.IntStream;
@@ -64,9 +54,9 @@ public class SubscriptionModelFilePerKeyPerformanceTest {
     private static Map<String, String> _testMap;
     @NotNull
     private static String _mapName = "PerfTestMap";
-    private ThreadDump threadDump;
     @Rule
     public ShutdownHooks hooks = new ShutdownHooks();
+    private ThreadDump threadDump;
 
     @BeforeClass
     public static void setUpBeforeClass() {

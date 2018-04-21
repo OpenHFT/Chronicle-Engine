@@ -29,11 +29,7 @@ import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.IOException;
 import java.util.Map;
@@ -104,9 +100,9 @@ public class MapBootstrapTest extends ThreadMonitoringTest {
 
     /**
      * simple test for bootstrap == FALSE
-     *
+     * <p>
      * this test was written due to :
-     *
+     * <p>
      * CE-156 Disable bootstrapping on topic subscriptions doesn’t work in Java (?bootstrap=false).
      */
     @Test

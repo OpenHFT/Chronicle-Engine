@@ -40,7 +40,6 @@ import net.openhft.chronicle.engine.pubsub.*;
 import net.openhft.chronicle.engine.queue.QueueWrappingColumnView;
 import net.openhft.chronicle.engine.set.RemoteKeySetView;
 import net.openhft.chronicle.engine.set.VanillaKeySetView;
-import net.openhft.chronicle.engine.tree.*;
 import org.jetbrains.annotations.NotNull;
 
 import static net.openhft.chronicle.engine.tree.VanillaAsset.LAST;
@@ -93,7 +92,6 @@ public class VanillaAssetRuleProvider implements AssetRuleProvider {
         asset.addLeafRule(ObjectSubscription.class, LAST + " Remote", RemoteKVSSubscription::new);
         asset.addLeafRule(VaadinChart.class, LAST + " VanillaKeyValueStore", RemoteVaadinChart::new);
     }
-
 
     public void configQueueCommon(@NotNull VanillaAsset asset) {
         asset.addWrappingRule(Reference.class, LAST + "QueueReference",

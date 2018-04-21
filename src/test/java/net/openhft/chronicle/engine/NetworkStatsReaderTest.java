@@ -27,16 +27,14 @@ import java.util.concurrent.TimeUnit;
 
 public class NetworkStatsReaderTest {
 
+    private static final String URI = "queue/networkStats";
     @NotNull
     @Rule
     public TestName name = new TestName();
     @Rule
     public ShutdownHooks hooks = new ShutdownHooks();
-
     private AssetTree assetTree;
-    private static final String URI = "queue/networkStats";
     private ServerEndpoint serverEndpoint;
-
 
     @Before
     public void before() throws IOException {
@@ -56,7 +54,6 @@ public class NetworkStatsReaderTest {
         try (@Nullable EventLoop eg = assetTree.root().findOrCreateView(EventLoop.class);) {
             eg.start();
             @NotNull MapView<String, NetworkStatsSummary.Stats> mapView = assetTree.acquireMap("myStats", String.class, NetworkStatsSummary.Stats.class);
-
 
             @NotNull ArrayBlockingQueue<String> queue = new ArrayBlockingQueue<>(10);
             mapView.registerSubscriber((e) -> queue.add(e.getValue().toString()));
@@ -88,7 +85,6 @@ public class NetworkStatsReaderTest {
 
         }
     }
-
 
     @After
     public void after() throws IOException {

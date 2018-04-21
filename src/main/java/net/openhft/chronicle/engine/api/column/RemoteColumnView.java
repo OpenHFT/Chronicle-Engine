@@ -135,5 +135,4 @@ public class RemoteColumnView extends AbstractStatelessClient implements ColumnV
         }
     }
 
-
 }

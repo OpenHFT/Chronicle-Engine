@@ -30,7 +30,6 @@ public final class ShutdownHooks implements TestRule {
         return executor;
     }
 
-
     public void close() {
         if (closed.compareAndSet(false, true)) {
             for (Closeable closeable : closeables) {

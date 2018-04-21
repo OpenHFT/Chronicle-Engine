@@ -24,11 +24,7 @@ import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import org.jetbrains.annotations.Nullable;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 
 import java.util.Map;
 
@@ -40,19 +36,16 @@ import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplicat
 
 public class CMap2EngineReplicatorMap2MapTest {
 
-    @Rule
-    public ShutdownHooks hooks = new ShutdownHooks();
-
     @Nullable
     private final CMap2EngineReplicator replicator1 = new CMap2EngineReplicator(null);
-    private final ChronicleMap<String, String> map1 = newMap(1, replicator1, String.class, String.class);
-
     @Nullable
     private final CMap2EngineReplicator replicator2 = new CMap2EngineReplicator(null);
-    private final ChronicleMap<String, String> map2 = newMap(2, replicator2, String.class, String.class);
-
     @Nullable
     private final CMap2EngineReplicator replicator3 = new CMap2EngineReplicator(null);
+    @Rule
+    public ShutdownHooks hooks = new ShutdownHooks();
+    private final ChronicleMap<String, String> map1 = newMap(1, replicator1, String.class, String.class);
+    private final ChronicleMap<String, String> map2 = newMap(2, replicator2, String.class, String.class);
     private final ChronicleMap<String, String> map3 = newMap(3, replicator3, String.class, String.class);
     private ThreadDump threadDump;
 

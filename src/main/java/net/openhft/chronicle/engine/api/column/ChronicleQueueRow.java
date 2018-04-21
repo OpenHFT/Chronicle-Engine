@@ -8,14 +8,15 @@ import java.util.List;
  * @author Rob Austin.
  */
 public class ChronicleQueueRow extends Row {
+    private long index;
+    private long seqNumber;
+
     /**
      * @param columns all the column names that make up this row
      */
     public ChronicleQueueRow(@NotNull List<Column> columns) {
         super(columns);
     }
-
-    private long index;
 
     public void index(long index) {
         this.index = index;
@@ -24,8 +25,6 @@ public class ChronicleQueueRow extends Row {
     public long index() {
         return index;
     }
-
-    private long seqNumber;
 
     public long seqNumber() {
         return seqNumber;

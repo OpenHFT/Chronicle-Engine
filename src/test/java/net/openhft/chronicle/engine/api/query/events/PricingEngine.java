@@ -21,7 +21,7 @@ public class PricingEngine implements EventProcessor {
     }
 
     @Override
-    public void onMarketDataChanged(@NotNull MarketDataEvent  marketData) {
+    public void onMarketDataChanged(@NotNull MarketDataEvent marketData) {
         LOG.info("onMarketDataChanged : " + marketData);
     }
 
@@ -39,7 +39,6 @@ public class PricingEngine implements EventProcessor {
     public void onSpreadChangeUserEvent(@NotNull SpreadChangeUserEvent userChange) {
         LOG.info("onSpreadChangeUserEvent : " + userChange);
     }
-
 
     @Override
     public void onClosePrice(@NotNull ClosePriceEvent closePriceEvent) {

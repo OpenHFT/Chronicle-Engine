@@ -187,7 +187,7 @@ public class RemoteMapView<K, MV, V> extends VanillaMapView<K, V> {
     @Override
     public <UA, RA, R> R syncUpdate(@NotNull SerializableUpdaterWithArg<MapView<K, V>, UA>
                                             updateFunction, UA ua, @NotNull
-                                    SerializableBiFunction<MapView<K, V>, RA, R> returnFunction, RA ra) {
+                                            SerializableBiFunction<MapView<K, V>, RA, R> returnFunction, RA ra) {
         @org.jetbrains.annotations.NotNull RemoteKeyValueStore<K, V> store = (RemoteKeyValueStore<K, V>) underlying();
         return store.syncUpdate((SerializableUpdaterWithArg) updateFunction, ua, (SerializableBiFunction) returnFunction, ra);
     }
@@ -209,7 +209,7 @@ public class RemoteMapView<K, MV, V> extends VanillaMapView<K, V> {
     @Nullable
     @Override
     public <R> R syncUpdate(@NotNull SerializableUpdater<MapView<K, V>> updateFunction, @NotNull
-    SerializableFunction<MapView<K, V>, R> returnFunction) {
+            SerializableFunction<MapView<K, V>, R> returnFunction) {
         // TODO CE-95 handle this natively.
         return syncUpdate((x, $) -> updateFunction.accept(x), null, (x, $) -> returnFunction.apply(x), null);
     }
@@ -250,7 +250,7 @@ public class RemoteMapView<K, MV, V> extends VanillaMapView<K, V> {
     @Nullable
     @Override
     public <R> R syncUpdateKey(K key, @NotNull
-    SerializableFunction<V, V> updateFunction, @NotNull SerializableFunction<V, R>
+            SerializableFunction<V, V> updateFunction, @NotNull SerializableFunction<V, R>
                                        returnFunction) {
         checkKey(key);
         // TODO CE-95 handle this natively.

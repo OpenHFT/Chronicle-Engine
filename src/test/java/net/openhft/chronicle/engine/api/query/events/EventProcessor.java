@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface EventProcessor {
 
-    void onMarketDataChanged(@NotNull MarketDataEvent  marketData);
+    void onMarketDataChanged(@NotNull MarketDataEvent marketData);
 
     void onUserPricingChanged(@NotNull UserPricingEvent userPricingEvent);
 

@@ -24,23 +24,16 @@ import static net.openhft.chronicle.network.connection.CoreFields.reply;
 class ColumnViewHandler extends AbstractHandler {
 
     private final CspManager cspManager;
+    private final StringBuilder eventName = new StringBuilder();
     @NotNull
     AtomicLong nextToken = new AtomicLong();
-
-    ColumnViewHandler(CspManager cspManager) {
-        this.cspManager = cspManager;
-    }
-
-    private final StringBuilder eventName = new StringBuilder();
     private ColumnViewInternal columnView;
-
     @Nullable
     private WireIn inWire = null;
     @Nullable
     private Map<String, Object> oldRow = new HashMap<>();
     @NotNull
     private Map<String, Object> newRow = new HashMap<>();
-
     private long tid;
     @NotNull
     private List<ColumnView.MarshableFilter> filtersList = new ArrayList<>();
@@ -48,8 +41,6 @@ class ColumnViewHandler extends AbstractHandler {
     private List<ColumnView.MarshableFilter> keysList = new ArrayList<>();
     @NotNull
     private ColumnView.SortedFilter sortedFilter = new ColumnView.SortedFilter();
-
-
     private final BiConsumer<WireIn, Long> dataConsumer = new BiConsumer<WireIn, Long>() {
 
         @SuppressWarnings("ConstantConditions")
@@ -125,6 +116,9 @@ class ColumnViewHandler extends AbstractHandler {
         }
     };
 
+    ColumnViewHandler(CspManager cspManager) {
+        this.cspManager = cspManager;
+    }
 
     public void process(WireIn in, @NotNull WireOut out, ColumnViewInternal view, long tid) {
 

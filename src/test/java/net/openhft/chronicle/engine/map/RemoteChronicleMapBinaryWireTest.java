@@ -87,7 +87,6 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
         };
     }
 
-
     @Override
     public void preAfter() {
         TCPRegistry.reset();

@@ -174,7 +174,6 @@ public class ReferenceHandler<E, T> extends AbstractHandler {
                         return;
                     }
 
-
                     valueIn.marshallable(wire -> {
                         @NotNull final Params[] params = applyTo2.params();
                         @Nullable final SerializableBiFunction function = (SerializableBiFunction) wire.read(params[0]).object(Object.class);

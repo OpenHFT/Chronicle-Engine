@@ -19,7 +19,6 @@ package net.openhft.engine.chronicle.demo;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.EngineInstance;
-import net.openhft.chronicle.engine.EngineMain;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.cfg.EngineClusterContext;
 import net.openhft.chronicle.network.cluster.handlers.UberHandler;
@@ -36,20 +35,19 @@ import java.io.IOException;
  * Created by Peter Lawrey on 26/08/15.
  */
 public class RunEngineMain {
+    static final int HOST_ID = Integer.getInteger("engine.hostId", 1);
+
     static {
         RequestContext.loadDefaultAliases();
         ClassAliasPool.CLASS_ALIASES.addAlias(UberHandler.Factory.class, "UberHandlerFactory");
         ClassAliasPool.CLASS_ALIASES.addAlias(EndOfDay.class, EndOfDayShort.class, EngineClusterContext.class);
     }
 
-    static final int HOST_ID = Integer.getInteger("engine.hostId", 1);
-
     public static void main(String[] args) throws IOException {
         YamlLogging.setAll(true);
         @NotNull String name = args.length > 0 ? args[0] : resolveConfigurationFile();
         EngineInstance.engineMain(HOST_ID, name, "cluster");
     }
-
 
     @NotNull
     private static String resolveConfigurationFile() {

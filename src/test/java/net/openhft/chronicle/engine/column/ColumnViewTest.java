@@ -32,36 +32,24 @@ import java.util.*;
 @RunWith(value = Parameterized.class)
 public class ColumnViewTest {
 
+    @NotNull
+    private final VanillaAssetTree assetTree;
+    @Nullable
+    private final ServerEndpoint serverEndpoint;
     @Rule
     public ShutdownHooks hooks = new ShutdownHooks();
-
     @Rule
     public Timeout globalTimeout = Timeout.seconds(10);
-
     @NotNull
     @Rule
     public TestName name = new TestName();
     @NotNull
     String methodName = "";
 
-    @NotNull
-    private final VanillaAssetTree assetTree;
-    @Nullable
-    private final ServerEndpoint serverEndpoint;
-
-
-    @Parameterized.Parameters
-    public static Collection<Object[]> data() {
-        return Arrays.asList(new Boolean[][]{
-                {false}, {true}
-        });
-    }
-
     public ColumnViewTest(Boolean isRemote) throws Exception {
 
         if (isRemote) {
             @NotNull VanillaAssetTree assetTree0 = hooks.addCloseable(new VanillaAssetTree().forTesting());
-
 
             @NotNull String hostPortDescription = "SimpleQueueViewTest-methodName" + methodName;
             TCPRegistry.createServerSocketChannelFor(hostPortDescription);
@@ -77,6 +65,12 @@ public class ColumnViewTest {
 
     }
 
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Boolean[][]{
+                {false}, {true}
+        });
+    }
 
     @Test
     public void test() {
@@ -92,7 +86,6 @@ public class ColumnViewTest {
         Assert.assertEquals(1, dataCollector.size());
     }
 
-
     @Test
     public void testColumnMapView2ChunksEachChunk300Entries() {
 
@@ -104,7 +97,6 @@ public class ColumnViewTest {
             map.put("hello" + i, "world");
         }
 
-
         @NotNull final Asset asset = assetTree.acquireAsset("/my/data");
         @NotNull final MapColumnView columnView = asset.acquireView(MapColumnView.class);
         @NotNull final Iterator<? extends Row> iterator = columnView.iterator(new SortedFilter());
@@ -113,7 +105,6 @@ public class ColumnViewTest {
         iterator.forEachRemaining(dataCollector::add);
         Assert.assertEquals(size, dataCollector.size());
     }
-
 
     @Test
     public void testFilteredRequestColumnView() {
@@ -156,7 +147,6 @@ public class ColumnViewTest {
 
         @NotNull final Iterator<? extends Row> iterator = columnView.iterator(sortedFilter);
 
-
         for (int i = 0; i < size; i++) {
             Assert.assertTrue(iterator.hasNext());
             Row row = iterator.next();
@@ -165,7 +155,6 @@ public class ColumnViewTest {
         }
 
     }
-
 
     @Test
     public void testSortByKeyForColumnMapViewWithAnotherIteratorSentFirst() {
@@ -202,7 +191,6 @@ public class ColumnViewTest {
         System.out.println("finished");
     }
 
-
     @Test
     public void testMapColumnViewRowCount() {
 
@@ -219,7 +207,6 @@ public class ColumnViewTest {
         Assert.assertEquals(size, columnView.rowCount(new SortedFilter()));
     }
 
-
     @Test
     public void testCanDeleteRows() {
 
@@ -235,7 +222,6 @@ public class ColumnViewTest {
         @NotNull final MapColumnView columnView = asset.acquireView(MapColumnView.class);
         Assert.assertEquals(true, columnView.canDeleteRows());
     }
-
 
     @Test
     public void testContainRowWithKey() {

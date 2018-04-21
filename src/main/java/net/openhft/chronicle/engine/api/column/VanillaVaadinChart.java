@@ -70,5 +70,4 @@ public class VanillaVaadinChart extends AbstractMarshallable implements VaadinCh
         return this;
     }
 
-
 }

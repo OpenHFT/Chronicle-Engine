@@ -22,46 +22,46 @@ public class UpdateMap {
         Scanner scanner = new Scanner(System.in);
         usage();
 
-        while(true){
+        while (true) {
             String input = scanner.nextLine();
             String[] parts = input.split(" ");
-            if(parts.length<1){
+            if (parts.length < 1) {
                 usage();
                 continue;
             }
-            if(parts[0].equalsIgnoreCase("size")){
-                if(parts.length != 1){
+            if (parts[0].equalsIgnoreCase("size")) {
+                if (parts.length != 1) {
                     usage();
                     continue;
                 }
                 System.out.println("Size of map:" + dataMap.size());
-            }else if(parts[0].equalsIgnoreCase("put")){
-                if(parts.length != 3){
+            } else if (parts[0].equalsIgnoreCase("put")) {
+                if (parts.length != 3) {
                     usage();
                     continue;
                 }
                 dataMap.put(parts[1], parts[2]);
                 System.out.println("Put: key-" + parts[1] + " value-" + parts[2]);
-            }else if(parts[0].equalsIgnoreCase("get")){
-                if(parts.length != 2){
+            } else if (parts[0].equalsIgnoreCase("get")) {
+                if (parts.length != 2) {
                     usage();
                     continue;
                 }
                 System.out.println("Get for key-" + parts[1] + " " + dataMap.get(parts[1]));
-            }else if(parts[0].equalsIgnoreCase("remove")){
-                if(parts.length != 2){
+            } else if (parts[0].equalsIgnoreCase("remove")) {
+                if (parts.length != 2) {
                     usage();
                     continue;
                 }
                 dataMap.remove(parts[1]);
-                System.out.println("Removed key-" + parts[1] );
-            }else{
+                System.out.println("Removed key-" + parts[1]);
+            } else {
                 usage();
             }
         }
     }
 
-    private static void usage(){
+    private static void usage() {
         System.out.println("Usage:");
         System.out.println("Size:");
         System.out.println("Put: key value");

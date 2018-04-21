@@ -54,5 +54,4 @@ public interface IndexQueueView<S extends Subscriber<IndexedValue<V>>, V extends
 
     void unregisterSubscriber(@NotNull S listener);
 
-
 }

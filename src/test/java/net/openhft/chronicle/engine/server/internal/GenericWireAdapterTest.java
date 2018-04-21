@@ -90,7 +90,7 @@ public class GenericWireAdapterTest {
 
             final Double actual = genericWireAdapter.wireToValue().apply(wire.getValueIn());
 
-          //  System.out.println(actual);
+            //  System.out.println(actual);
             Assert.assertEquals(EXPECTED, actual);
         });
 

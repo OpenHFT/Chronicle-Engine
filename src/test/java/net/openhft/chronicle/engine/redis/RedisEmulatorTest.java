@@ -44,20 +44,17 @@ import static org.junit.Assert.assertEquals;
  * Created by daniel on 31/07/2015.
  */
 public class RedisEmulatorTest {
+    private static final ShutdownHooks HOOKS = new ShutdownHooks();
     private static MapView myStringHash;
     private static MapView myLongHash;
     private static MapView myDoubleHash;
-
     private static ThreadDump threadDump;
     private static AssetTree serverAssetTree;
     private static AssetTree clientAssetTree;
-
-    private static final ShutdownHooks HOOKS = new ShutdownHooks();
-
     private Map<ExceptionKey, Integer> exceptions;
 
     @BeforeClass
-    public static void setup() throws IOException{
+    public static void setup() throws IOException {
         threadDump = new ThreadDump();
 //        YamlLogging.showServerReads(true);
         //For this test we can use a VanillaMapKeyValueStore
@@ -104,13 +101,13 @@ public class RedisEmulatorTest {
     }
 
     @Before
-    public void before(){
+    public void before() {
         assertEquals("OK", flushdb(myStringHash));
         assertEquals("OK", flushdb(myLongHash));
     }
 
     @Test
-    public void test_dbsize () throws IOException{
+    public void test_dbsize() throws IOException {
         assertEquals(0, dbsize(myStringHash));
         assertEquals(1, hset(myStringHash, "field1", "Hello"));
         assertEquals(1, hset(myStringHash, "field2", "World"));
@@ -192,7 +189,7 @@ public class RedisEmulatorTest {
 
     @Test
     @Ignore //WIRE-29 maps can't be serialised
-    public void test_hmget(){
+    public void test_hmget() {
         assertEquals(1, hset(myStringHash, "field1", "Hello"));
         assertEquals(1, hset(myStringHash, "field2", "World"));
         Map hmget = hmget(myStringHash, "field1", "field2", "nofield");
@@ -200,7 +197,7 @@ public class RedisEmulatorTest {
     }
 
     @Test
-     public void test_exists_single() {
+    public void test_exists_single() {
         assertEquals(1, hset(myStringHash, "key1", "Hello"));
         assertEquals(0, exists(myStringHash, "nosuchkey"));
         assertEquals(1, hset(myStringHash, "key2", "World"));
@@ -229,9 +226,9 @@ public class RedisEmulatorTest {
     public void test_incrbyfloat() {
         assertEquals(1, hset(myDoubleHash, "mykey", 10.5));
         assertEquals(10.5, hget(myDoubleHash, "mykey"));
-        assertEquals(10.6, incrbyfloat(myDoubleHash, "mykey", 0.1),0);
+        assertEquals(10.6, incrbyfloat(myDoubleHash, "mykey", 0.1), 0);
         assertEquals(0, hset(myDoubleHash, "mykey", 5.0e3));
-        assertEquals(5200, incrbyfloat(myDoubleHash, "mykey", 2.0e2),0);
+        assertEquals(5200, incrbyfloat(myDoubleHash, "mykey", 2.0e2), 0);
     }
 
     @Test
@@ -244,7 +241,7 @@ public class RedisEmulatorTest {
 
     @Test
     @Ignore //NPE
-    public void test_lpush(){
+    public void test_lpush() {
         assertEquals(1, lpush(myStringHash, "mylist", "world"));
         assertEquals(2, lpush(myStringHash, "mylist", "hello"));
         assertEquals(2, lrange(myStringHash, "mylist", 0, -1));

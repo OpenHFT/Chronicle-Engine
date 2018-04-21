@@ -14,7 +14,6 @@ import net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder;
 import net.openhft.chronicle.wire.DocumentContext;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireType;
-import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Rule;
@@ -46,6 +45,48 @@ public class TestIndexQueueView {
     @Rule
     public ShutdownHooks hooks = new ShutdownHooks();
 
+    /**
+     * adds some test data to a queue
+     *
+     * @return returns all the trade ID's that where used
+     */
+    private static Set<String> publishMockData() {
+        Set<String> tradeIds = new LinkedHashSet<>();
+
+        try (ChronicleQueue queue = SingleChronicleQueueBuilder.binary(TRADES_Q).build()) {
+
+            ExcerptAppender excerptAppender = queue.acquireAppender();
+            MockTradeGenerator mockTrade = new MockTradeGenerator();
+
+            for (int i = 0; i < COUNT; i++) {
+
+                try (DocumentContext dc = excerptAppender.writingDocument()) {
+                    Trade tradeId = mockTrade.apply(i);
+                    dc.wire().write(TRADES).marshallable(tradeId);
+                    tradeIds.add(tradeId.getTradeId());
+                }
+            }
+            return tradeIds;
+        }
+    }
+
+    static void deleteDir(@NotNull File dir) {
+        if (dir.isDirectory()) {
+            File[] files = dir.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isDirectory()) {
+                        deleteDir(file);
+                    } else if (!file.delete()) {
+                        System.out.println("... unable to delete {}" + file);
+                    }
+                }
+            }
+        }
+
+        dir.delete();
+    }
+
     @Before
     public void setUp() {
         deleteDir(new File("tradesQ"));
@@ -65,7 +106,6 @@ public class TestIndexQueueView {
 
         VanillaAssetTree assetTree = hooks.addCloseable((new VanillaAssetTree()).forRemoteAccess("host.port1", WireType.BINARY));
 
-
         VanillaAsset asset = (VanillaAsset) assetTree.acquireAsset(uri);
         assetTree.root().getRuleProvider().configQueueRemote(asset);
 
@@ -78,7 +118,6 @@ public class TestIndexQueueView {
 
         Subscriber s = subscribe(tradeIds, m);
         indexQueueView.registerSubscriber(s, indexQuery);
-
 
         // wait up to seconds for the expected result
         for (int i = 0; i < 10_000; i++) {
@@ -117,51 +156,6 @@ public class TestIndexQueueView {
         };
     }
 
-
-    private static class MockTradeGenerator implements Function<Integer, Marshallable> {
-
-        private Trade trade = new Trade();
-
-        @Override
-        public Trade apply(Integer i) {
-            trade.setTradeId("TRDID-" + i);
-            trade.isin = isins[random.nextInt(isins.length)];
-            trade.book = books[random.nextInt(books.length)];
-            trade.quantity = 100000.0 * (random.nextInt(cptys.length) + 1);
-            trade.price = 101.0;
-
-            return trade;
-        }
-
-    }
-
-
-    /**
-     * adds some test data to a queue
-     *
-     * @return returns all the trade ID's that where used
-     */
-    private static Set<String> publishMockData() {
-        Set<String> tradeIds = new LinkedHashSet<>();
-
-        try (ChronicleQueue queue = SingleChronicleQueueBuilder.binary(TRADES_Q).build()) {
-
-            ExcerptAppender excerptAppender = queue.acquireAppender();
-            MockTradeGenerator mockTrade = new MockTradeGenerator();
-
-            for (int i = 0; i < COUNT; i++) {
-
-                try (DocumentContext dc = excerptAppender.writingDocument()) {
-                    Trade tradeId = mockTrade.apply(i);
-                    dc.wire().write(TRADES).marshallable(tradeId);
-                    tradeIds.add(tradeId.getTradeId());
-                }
-            }
-            return tradeIds;
-        }
-    }
-
-
     private void startEngine() {
         VanillaAssetTree serverTree =
                 hooks.addCloseable(EngineInstance.engineMain(1, "indexView-engine.yaml"));
@@ -183,22 +177,21 @@ public class TestIndexQueueView {
         serverTree.root().addView(TypeToString.class, typesToString);
     }
 
+    private static class MockTradeGenerator implements Function<Integer, Marshallable> {
 
-    static void deleteDir(@NotNull File dir) {
-        if (dir.isDirectory()) {
-            File[] files = dir.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    if (file.isDirectory()) {
-                        deleteDir(file);
-                    } else if (!file.delete()) {
-                        System.out.println("... unable to delete {}" + file);
-                    }
-                }
-            }
+        private Trade trade = new Trade();
+
+        @Override
+        public Trade apply(Integer i) {
+            trade.setTradeId("TRDID-" + i);
+            trade.isin = isins[random.nextInt(isins.length)];
+            trade.book = books[random.nextInt(books.length)];
+            trade.quantity = 100000.0 * (random.nextInt(cptys.length) + 1);
+            trade.price = 101.0;
+
+            return trade;
         }
 
-        dir.delete();
     }
 
 }

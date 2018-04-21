@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  * Created by Peter Lawrey on 26/08/15.
  */
 public class ClustersCfg extends AbstractMarshallable implements Installable {
-   public final Clusters clusters = new Clusters();
+    public final Clusters clusters = new Clusters();
 
     @NotNull
     @Override

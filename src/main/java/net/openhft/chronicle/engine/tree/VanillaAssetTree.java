@@ -82,7 +82,6 @@ public class VanillaAssetTree implements AssetTree {
         this(name, new VanillaAssetRuleProvider());
     }
 
-
     public VanillaAssetTree(AssetRuleProvider ruleProvider) {
         this("", ruleProvider);
     }
@@ -269,6 +268,5 @@ public class VanillaAssetTree implements AssetTree {
     public void clusterName(String clusterName) {
         this.clusterName = clusterName;
     }
-
 
 }

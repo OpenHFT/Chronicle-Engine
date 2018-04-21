@@ -43,6 +43,7 @@ public class RequestContextTest {
     public void checkThreadDump() {
         threadDump.assertNoNewThreads();
     }
+
     @Test
     public void testParsing() {
         @NotNull String uri = "/chronicleMapString?" +

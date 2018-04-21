@@ -63,7 +63,6 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
         try {
             assert startEnforceInValueReadCheck(inWire);
 
-
             if (registerSubscriber.contentEquals(eventName)) {
                 if (tidToListener.containsKey(inputTid)) {
                     skipValue(valueIn);

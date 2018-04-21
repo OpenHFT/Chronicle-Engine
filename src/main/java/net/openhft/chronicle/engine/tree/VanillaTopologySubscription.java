@@ -59,7 +59,7 @@ public class VanillaTopologySubscription implements TopologySubscription {
                 // root node.
                 @Nullable Asset parent = asset.parent();
                 @Nullable String assetName = parent == null ? null : parent.fullName();
-                subscriber.onMessage(ExistingAssetEvent.of(assetName,  asset.name(),  asset.viewTypes()));
+                subscriber.onMessage(ExistingAssetEvent.of(assetName, asset.name(), asset.viewTypes()));
                 bootstrapTree(asset, subscriber);
             }
             subscribers.add(subscriber);

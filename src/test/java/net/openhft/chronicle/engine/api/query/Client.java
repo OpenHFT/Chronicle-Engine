@@ -40,12 +40,10 @@ public class Client implements Closeable {
         indexQueueView.registerSubscriber(accept, indexQuery);
     }
 
-
     public <T extends Marshallable> void remoteQueuePut(@NotNull final String uri, final @NotNull T value) {
         QueueView q = client.acquireQueue(uri, String.class, Marshallable.class, "clusterTwo");
         q.publishAndIndex(typeToString.typeToString(value.getClass()), value);
     }
-
 
     public Throwable throwable() {
         return t.get();
