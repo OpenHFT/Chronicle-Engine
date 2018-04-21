@@ -901,7 +901,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
 
         @Override
         public void set(K key, @NotNull V value) {
-            queueView.publishAndIndex((K) key, value);
+            queueView.publishAndIndex(key, value);
             super.put(key, value);
         }
 
@@ -937,7 +937,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
             checkValue(value);
             @Nullable V v = super.putIfAbsent(key, value);
             if (v != null)
-                queueView.publishAndIndex((K) key, value);
+                queueView.publishAndIndex(key, value);
             return v;
         }
 
@@ -956,7 +956,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
             if (!super.replace(key, oldValue, newValue))
                 return false;
 
-            queueView.publishAndIndex((K) key, newValue);
+            queueView.publishAndIndex(key, newValue);
             return true;
         }
 
@@ -965,7 +965,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         public V replace(@net.openhft.chronicle.core.annotation.NotNull K key,
                          @net.openhft.chronicle.core.annotation.NotNull V value) {
             @Nullable V replaced = super.replace(key, value);
-            queueView.publishAndIndex((K) key, value);
+            queueView.publishAndIndex(key, value);
             return replaced;
         }
 

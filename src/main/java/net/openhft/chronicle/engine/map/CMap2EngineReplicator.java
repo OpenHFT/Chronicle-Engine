@@ -436,13 +436,11 @@ public class CMap2EngineReplicator implements EngineReplication,
             final Thread currentThread = Thread.currentThread();
             if (consumerThread == null) {
                 consumerThread = currentThread;
+                return true;
             } else {
-                if (currentThread != consumerThread) {
-                    return false;
-                }
+                return currentThread == consumerThread;
             }
 
-            return true;
         }
 
         @NotNull

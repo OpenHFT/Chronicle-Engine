@@ -27,7 +27,6 @@ public interface LeafViewFactory<I> {
     /**
      * Create a view for this asset based on the requestContext
      *
-     * @param requestContext
      * @param asset          to associate this view with
      * @return the view
      * @throws AssetNotFoundException if the leaf node depends on something which could not be constructed.

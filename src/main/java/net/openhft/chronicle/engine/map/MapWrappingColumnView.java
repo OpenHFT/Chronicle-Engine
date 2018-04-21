@@ -178,7 +178,7 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
     @Override
     public boolean containsRowWithKey(@NotNull List keys) {
         assert keys.size() == 1;
-        return mapView.containsKey((K) keys.get(0));
+        return mapView.containsKey(keys.get(0));
     }
 
     @Nullable
@@ -276,7 +276,7 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
         final Object newKey = row.get("key");
 
         if (oldKey != null && !oldKey.equals(newKey))
-            mapView.remove((K) oldKey);
+            mapView.remove(oldKey);
 
         final Class<V> valueType = mapView.valueType();
         if (!Marshallable.class.isAssignableFrom(valueType)) {

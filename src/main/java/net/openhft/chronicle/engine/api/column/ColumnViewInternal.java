@@ -184,7 +184,6 @@ public interface ColumnViewInternal {
         }
 
         /**
-         * @param value
          * @param operationAtStart if true the first character is expected to be the operation,
          *                         otherwise the last character is ex
          * @return a  Predicate<Number>

@@ -22,9 +22,7 @@ package net.openhft.chronicle.engine.fs;
  */
 public class ClusterStarter {
 
-    private String[] connections;
-
     public void start(String[] connections) {
-        this.connections = connections;
+        String[] connections1 = connections;
     }
 }

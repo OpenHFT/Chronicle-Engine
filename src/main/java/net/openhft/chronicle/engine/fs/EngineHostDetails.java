@@ -48,34 +48,6 @@ public class EngineHostDetails extends HostDetails implements Marshallable, Clos
         this.connectUri(connectUri);
     }
 
-    /* */
-
-    /**
-     * @param asset     a point in the asset tree, used to fine the ClientConnectionMonitor
-     * @param eventLoop used to process events
-     * @param wire      converts from bytes to wire for the type of the wire used
-     * @return a new or existing instance of the TcpChannelHub
-     *//*
-    public TcpChannelHub acquireTcpChannelHub(@NotNull final Asset asset,
-                                              @NotNull final EventLoop eventLoop,
-                                              @NotNull final WireType wire) {
-        @Nullable
-        final SessionDetails sessionDetails = asset.findView(SessionDetails.class);
-        String connectUri = connectUri();
-        final InetSocketAddress addr = TCPRegistry.lookup(connectUri);
-        int hostId = hostId();
-
-        return tcpChannelHubs.computeIfAbsent(addr, hostPort -> {
-            @NotNull String[] connectURIs = new String[]{connectUri};
-
-            @NotNull final SocketAddressSupplier socketAddressSupplier = new SocketAddressSupplier
-                    (connectURIs, "hostId=" + hostId() + ",connectUri=" + connectUri);
-            @Nullable final ClientConnectionMonitor clientConnectionMonitor = asset.findView(ClientConnectionMonitor.class);
-            return new TcpChannelHub(new SimpleSessionProvider(sessionDetails), eventLoop, wire, "hostId=" + hostId + ",connectUri=" + connectUri,
-                    socketAddressSupplier, true, clientConnectionMonitor, HandlerPriority.TIMER, new FatalFailureConnectionStrategy(3));
-        });
-    }
-*/
     @Override
     public void close() {
         tcpChannelHubs.values().forEach(Closeable::closeQuietly);

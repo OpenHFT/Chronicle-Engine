@@ -17,16 +17,15 @@
 
 package net.openhft.chronicle.engine.query;
 
-/**
- * @author Rob Austin.
- */
-
 import net.openhft.chronicle.core.annotation.NotNull;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @author Rob Austin.
+ */
 public class Operation implements Marshallable {
 
     private OperationType type;

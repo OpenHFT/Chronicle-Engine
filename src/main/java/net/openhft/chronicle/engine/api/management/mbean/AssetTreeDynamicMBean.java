@@ -109,8 +109,7 @@ public class AssetTreeDynamicMBean implements DynamicMBean {
     @Override
     @Nullable
     public synchronized MBeanInfo getMBeanInfo() {
-        @NotNull SortedSet names = new TreeSet();
-        names.addAll(this.properties.keySet());
+        @NotNull SortedSet names = new TreeSet(this.properties.keySet());
 
         @NotNull MBeanAttributeInfo[] attrs = new MBeanAttributeInfo[names.size()];
         @NotNull Iterator it = names.iterator();

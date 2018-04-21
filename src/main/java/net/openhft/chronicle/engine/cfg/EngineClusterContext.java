@@ -50,7 +50,6 @@ import static net.openhft.chronicle.engine.server.BootstrapHandlerFactory.forEng
 public class EngineClusterContext extends ClusterContext {
     private static final Logger LOG = LoggerFactory.getLogger(EngineClusterContext.class);
     Asset assetRoot;
-    private byte localIdentifier;
     @NotNull
     private NetworkStatsListener defaultNetworkStatsListener = new NetworkStatsListener() {
 
@@ -119,7 +118,7 @@ public class EngineClusterContext extends ClusterContext {
     @NotNull
     public EngineClusterContext assetRoot(@NotNull Asset assetRoot) {
         this.assetRoot = assetRoot;
-        localIdentifier = HostIdentifier.localIdentifier(assetRoot);
+        byte localIdentifier = HostIdentifier.localIdentifier(assetRoot);
         localIdentifier(localIdentifier);
         eventLoop(assetRoot.findOrCreateView(EventLoop.class));
         return this;

@@ -44,14 +44,11 @@ import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
  * Created by Peter Lawrey on 22/05/15.
  */
 public class RemoteMapView<K, MV, V> extends VanillaMapView<K, V> {
-    @org.jetbrains.annotations.NotNull
-    private final RequestContext context;
 
     public RemoteMapView(@org.jetbrains.annotations.NotNull @NotNull RequestContext context,
                          @org.jetbrains.annotations.NotNull @NotNull Asset asset,
                          @org.jetbrains.annotations.NotNull @NotNull KeyValueStore<K, V> kvStore) {
         super(context, asset, kvStore);
-        this.context = context;
     }
 
     @Override
@@ -174,13 +171,13 @@ public class RemoteMapView<K, MV, V> extends VanillaMapView<K, V> {
     @Override
     public <A, R> R applyTo(@NotNull SerializableBiFunction<MapView<K, V>, A, R> function, A arg) {
         @Nullable RemoteKeyValueStore<K, V> store = (RemoteKeyValueStore<K, V>) underlying();
-        return store.applyTo((SerializableBiFunction<MapView<K, V>, A, R>) (SerializableBiFunction) function, arg);
+        return store.applyTo(function, arg);
     }
 
     @Override
     public <A> void asyncUpdate(@NotNull SerializableUpdaterWithArg<MapView<K, V>, A> updateFunction, A arg) {
         @org.jetbrains.annotations.NotNull RemoteKeyValueStore<K, V> store = (RemoteKeyValueStore<K, V>) underlying();
-        store.asyncUpdate((SerializableUpdaterWithArg) updateFunction, arg);
+        store.asyncUpdate(updateFunction, arg);
     }
 
     @Nullable
@@ -189,7 +186,7 @@ public class RemoteMapView<K, MV, V> extends VanillaMapView<K, V> {
                                             updateFunction, UA ua, @NotNull
                                             SerializableBiFunction<MapView<K, V>, RA, R> returnFunction, RA ra) {
         @org.jetbrains.annotations.NotNull RemoteKeyValueStore<K, V> store = (RemoteKeyValueStore<K, V>) underlying();
-        return store.syncUpdate((SerializableUpdaterWithArg) updateFunction, ua, (SerializableBiFunction) returnFunction, ra);
+        return store.syncUpdate(updateFunction, ua, returnFunction, ra);
     }
 
     // helper functions.

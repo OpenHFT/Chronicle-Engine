@@ -284,39 +284,39 @@ subscribing to the following URL's will give you some of this information,
 /proc/connections/cluster/connectivity          //  Map<ConnectionDetails,ConnectionStatus)
 /proc/connections/handlers                      //  Map<SocketChannel,TcpHandler)
 
-### Question  
+### Question
 
-what kind of lambdas are possible, to run from the client onto the server ?  
+what kind of lambdas are possible, to run from the client onto the server ?
 
-#### Answer  
+#### Answer
 
 Any lambdas where the code exists both on the server and on the client. 
-What you can’t do is create a custom lambda that just exists on the client.   
+What you can’t do is create a custom lambda that just exists on the client.
 
-### Question  
+### Question
 
 In your example I see a lambda operating on N keys of the same type and returning N 
-values of the same type.  What if I want to return a scalar or multiple scalars / keys or some other 
-custom type I want to define?  
+values of the same type.  What if I want to return a scalar or multiple scalars / keys or some other
+custom type I want to define?
 
-#### Answer  
+#### Answer
 
-This will work as long as the return result can be serialized, we support serialization  for all  
+This will work as long as the return result can be serialized, we support serialization  for all
 the primitive types, plus we also support the collections types such as Maps,Sets and Lists. 
- For custom types we recommend either extending the net.openhft.chronicle.wire.AbstractMarshallable 
-or implementing Marshallable, ( this is our custom serilization approach, the code has  
-been tuned to perform very well when using this, however if you wanted to consider using  
-java.io.Serializable this should also work ) 
+ For custom types we recommend either extending the net.openhft.chronicle.wire.AbstractMarshallable
+or implementing Marshallable, ( this is our custom serilization approach, the code has
+been tuned to perform very well when using this, however if you wanted to consider using
+java.io.Serializable this should also work )
  
-### Question 
+### Question
  
 What if I want to have a lambda [atomically] operate on multiple maps stored within 
-the same  server?   
+the same  server?
  
-#### Answer 
+#### Answer
 
 You would have to implement your own locking strategy as atomicity across multiple maps is not 
- currently implemented.  
+ currently implemented.
 
 More details to come.
 
