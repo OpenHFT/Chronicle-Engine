@@ -119,7 +119,8 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
             skipValue(valueIn);
             @NotNull Subscriber<Object> listener = (Subscriber) tidToListener.remove(tid);
             if (listener == null) {
-                Jvm.debug().on(getClass(), "No subscriber to present to unregisterSubscriber (" + tid + ")");
+                if (Jvm.isDebugEnabled(getClass()))
+                    Jvm.debug().on(getClass(), "No subscriber to present to unregisterSubscriber (" + tid + ")");
                 return true;
             }
 

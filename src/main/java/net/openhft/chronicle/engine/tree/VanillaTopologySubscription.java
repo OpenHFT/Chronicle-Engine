@@ -64,7 +64,8 @@ public class VanillaTopologySubscription implements TopologySubscription {
             }
             subscribers.add(subscriber);
         } catch (InvalidSubscriberException e) {
-            Jvm.debug().on(getClass(), "discarding " + subscriber, e);
+            if (Jvm.isDebugEnabled(getClass()))
+                Jvm.debug().on(getClass(), "discarding " + subscriber, e);
         }
     }
 

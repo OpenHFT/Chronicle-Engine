@@ -161,7 +161,8 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
                 ConsumingSubscriber<IndexedValue<V>> listener = tidToListener.remove(inputTid);
 
                 if (listener == null) {
-                    Jvm.debug().on(getClass(), "No subscriber to present to unsubscribe (" + inputTid + ")");
+                    if (Jvm.isDebugEnabled(getClass()))
+                        Jvm.debug().on(getClass(), "No subscriber to present to unsubscribe (" + inputTid + ")");
                     return;
                 }
 

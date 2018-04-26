@@ -228,7 +228,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
             Files.deleteIfExists(element.toPath());
 
         } catch (IOException e) {
-            Jvm.debug().on(ChronicleQueueView.class, "Unable to delete " + element, e);
+            if (Jvm.isDebugEnabled(ChronicleQueueView.class))
+                Jvm.debug().on(ChronicleQueueView.class, "Unable to delete " + element, e);
         }
     }
 
@@ -284,7 +285,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
 
         if (clusters == null) {
             LOG.warn("no cluster found name=" + context.cluster());
-            Jvm.debug().on(getClass(), "no cluster found name=" + context.cluster());
+            if (Jvm.isDebugEnabled(getClass()))
+                Jvm.debug().on(getClass(), "no cluster found name=" + context.cluster());
             return;
         }
 
@@ -292,7 +294,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         @NotNull final String csp = context.fullName();
 
         if (engineCluster == null) {
-            Jvm.debug().on(getClass(), "no cluster found name=" + context.cluster());
+            if (Jvm.isDebugEnabled(getClass()))
+                Jvm.debug().on(getClass(), "no cluster found name=" + context.cluster());
             LOG.warn("no cluster found name=" + context.cluster());
             return;
         }
@@ -695,7 +698,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
                 deleteFiles(file);
 
             } catch (Exception e) {
-                Jvm.debug().on(getClass(), "Unable to delete " + file, e);
+                if (Jvm.isDebugEnabled(getClass()))
+                    Jvm.debug().on(getClass(), "Unable to delete " + file, e);
             }
         }
     }

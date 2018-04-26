@@ -128,7 +128,8 @@ public class ReferenceHandler<E, T> extends AbstractHandler {
                     long subscriberTid = valueIn.int64();
                     @NotNull Subscriber<E> listener = (Subscriber) tidToListener.remove(subscriberTid);
                     if (listener == null) {
-                        Jvm.debug().on(getClass(), "No subscriber to present to unregisterSubscriber (" + subscriberTid + ")");
+                        if (Jvm.isDebugEnabled(getClass()))
+                            Jvm.debug().on(getClass(), "No subscriber to present to unregisterSubscriber (" + subscriberTid + ")");
                         return;
                     }
                     view.unregisterSubscriber(listener);

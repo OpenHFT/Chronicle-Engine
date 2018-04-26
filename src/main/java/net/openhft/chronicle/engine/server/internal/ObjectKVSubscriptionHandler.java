@@ -113,7 +113,8 @@ public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subsc
                 skipValue(valueIn);
                 @NotNull TopicSubscriber listener = (TopicSubscriber) tidToListener.remove(inputTid);
                 if (listener == null) {
-                    Jvm.debug().on(getClass(), "No subscriber to present to unsubscribe (" + inputTid + ")");
+                    if (Jvm.isDebugEnabled(getClass()))
+                        Jvm.debug().on(getClass(), "No subscriber to present to unsubscribe (" + inputTid + ")");
                     return;
                 }
                 asset.unregisterTopicSubscriber(requestContext, listener);
