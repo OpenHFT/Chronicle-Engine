@@ -30,7 +30,7 @@
     <groupId>net.openhft</groupId>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>chronicle-engine</artifactId>
-    <version>1.14.27-SNAPSHOT</version>
+    <version>1.15.0-SNAPSHOT</version>
     <name>OpenHFT/Chronicle-Engine</name>
     <description>Chronicle Engine Framework</description>
     <packaging>bundle</packaging>
@@ -49,7 +49,7 @@
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>chronicle-bom</artifactId>
-                <version>1.15.253</version>
+                <version>1.15.325-SNAPSHOT</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
