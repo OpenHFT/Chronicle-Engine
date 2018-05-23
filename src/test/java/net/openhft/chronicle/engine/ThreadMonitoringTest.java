@@ -101,7 +101,7 @@ public class ThreadMonitoringTest {
         threadDump.ignore("tree-3/closer");
         threadDump.ignore("tree-3/closer");
         threadDump.ignore("/disk-spaceManyMapsTest-checker");
-
+        threadDump.ignore("main/disk-space-checker");
         threadDump.assertNoNewThreads();
         YamlLogging.setAll(false);
         resetProperties();
