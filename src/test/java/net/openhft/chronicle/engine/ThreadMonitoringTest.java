@@ -26,7 +26,9 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 
 /*
@@ -94,10 +96,25 @@ public class ThreadMonitoringTest {
     }
 
     protected void preAfter() {
+
+        Iterator<Map.Entry<ExceptionKey, Integer>> iterator = exceptions.entrySet().iterator();
+
+        // remove - AsynchronousCloseException
+        while (iterator.hasNext()) {
+            Entry<ExceptionKey, Integer> next = iterator.next();
+            if (next.getKey().toString().contains("AsynchronousCloseException"))
+                iterator.remove();
+            else if (next.getKey().toString().contains("Using Pauser.sleepy() as not enough " +
+                    "processors"))
+                iterator.remove();
+            else if (next.getKey().toString().contains("level=DEBUG"))
+                iterator.remove();
+        }
+
         if (Jvm.hasException(exceptions)) {
             Jvm.dumpException(exceptions);
             Jvm.resetExceptionHandlers();
             Assert.fail();
         }
-    }
+    }               
 }
