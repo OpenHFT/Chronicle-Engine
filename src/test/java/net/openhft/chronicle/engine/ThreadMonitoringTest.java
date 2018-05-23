@@ -83,10 +83,13 @@ public class ThreadMonitoringTest {
         threadDump.ignore("tree-1/closer");
         threadDump.ignore("tree-2/closer");
         threadDump.ignore("tree-3/closer");
+        threadDump.ignore("tree-3/closer");
+        threadDump.ignore("/disk-space-checker");
+
         threadDump.assertNoNewThreads();
         YamlLogging.setAll(false);
         resetProperties();
-
+        filterExceptions();
         if (Jvm.hasException(exceptions)) {
             Jvm.dumpException(exceptions);
             Jvm.resetExceptionHandlers();
@@ -97,7 +100,17 @@ public class ThreadMonitoringTest {
 
     protected void preAfter() {
 
-        Iterator<Map.Entry<ExceptionKey, Integer>> iterator = exceptions.entrySet().iterator();
+        filterExceptions();
+
+        if (Jvm.hasException(exceptions)) {
+            Jvm.dumpException(exceptions);
+            Jvm.resetExceptionHandlers();
+            Assert.fail();
+        }
+    }
+
+    private void filterExceptions() {
+        Iterator<Entry<ExceptionKey, Integer>> iterator = exceptions.entrySet().iterator();
 
         // remove - AsynchronousCloseException
         while (iterator.hasNext()) {
@@ -110,11 +123,5 @@ public class ThreadMonitoringTest {
             else if (next.getKey().toString().contains("level=DEBUG"))
                 iterator.remove();
         }
-
-        if (Jvm.hasException(exceptions)) {
-            Jvm.dumpException(exceptions);
-            Jvm.resetExceptionHandlers();
-            Assert.fail();
-        }
-    }               
+    }
 }
