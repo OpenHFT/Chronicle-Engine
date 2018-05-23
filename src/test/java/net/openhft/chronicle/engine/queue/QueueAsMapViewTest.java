@@ -33,6 +33,7 @@ import static net.openhft.chronicle.engine.Utils.methodName;
 /**
  * @author Rob Austin.
  */
+@Ignore("see https://github.com/OpenHFT/Chronicle-Engine/issues/32")
 @RunWith(value = Parameterized.class)
 public class QueueAsMapViewTest extends ThreadMonitoringTest {
 
