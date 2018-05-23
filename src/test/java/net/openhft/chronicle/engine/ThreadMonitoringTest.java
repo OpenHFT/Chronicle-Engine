@@ -70,6 +70,22 @@ public class ThreadMonitoringTest {
         System.getProperties().putAll(prop0);
     }
 
+    public static void filterExceptions(final Map<ExceptionKey, Integer> exceptions) {
+        Iterator<Entry<ExceptionKey, Integer>> iterator = exceptions.entrySet().iterator();
+
+        // remove - AsynchronousCloseException
+        while (iterator.hasNext()) {
+            Entry<ExceptionKey, Integer> next = iterator.next();
+            if (next.getKey().toString().contains("AsynchronousCloseException"))
+                iterator.remove();
+            else if (next.getKey().toString().contains("Using Pauser.sleepy() as not enough " +
+                    "processors"))
+                iterator.remove();
+            else if (next.getKey().toString().contains("level=DEBUG"))
+                iterator.remove();
+        }
+    }
+
     @After
     public final void after() {
         preAfter();
@@ -89,7 +105,7 @@ public class ThreadMonitoringTest {
         threadDump.assertNoNewThreads();
         YamlLogging.setAll(false);
         resetProperties();
-        filterExceptions();
+        filterExceptions(exceptions);
         if (Jvm.hasException(exceptions)) {
             Jvm.dumpException(exceptions);
             Jvm.resetExceptionHandlers();
@@ -100,28 +116,12 @@ public class ThreadMonitoringTest {
 
     protected void preAfter() {
 
-        filterExceptions();
+        filterExceptions(exceptions);
 
         if (Jvm.hasException(exceptions)) {
             Jvm.dumpException(exceptions);
             Jvm.resetExceptionHandlers();
             Assert.fail();
-        }
-    }
-
-    private void filterExceptions() {
-        Iterator<Entry<ExceptionKey, Integer>> iterator = exceptions.entrySet().iterator();
-
-        // remove - AsynchronousCloseException
-        while (iterator.hasNext()) {
-            Entry<ExceptionKey, Integer> next = iterator.next();
-            if (next.getKey().toString().contains("AsynchronousCloseException"))
-                iterator.remove();
-            else if (next.getKey().toString().contains("Using Pauser.sleepy() as not enough " +
-                    "processors"))
-                iterator.remove();
-            else if (next.getKey().toString().contains("level=DEBUG"))
-                iterator.remove();
         }
     }
 }
