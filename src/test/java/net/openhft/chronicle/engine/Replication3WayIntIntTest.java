@@ -128,6 +128,7 @@ public class Replication3WayIntIntTest extends ThreadMonitoringTest {
         Closeable.closeQuietly(tree1);
         Closeable.closeQuietly(tree2);
         Closeable.closeQuietly(tree3);
+        ThreadMonitoringTest.filterExceptions(exceptions);
         if (Jvm.hasException(exceptions)) {
             Jvm.dumpException(exceptions);
             // TODO FIX

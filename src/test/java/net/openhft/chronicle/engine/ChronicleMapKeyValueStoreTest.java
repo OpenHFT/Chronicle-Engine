@@ -81,7 +81,7 @@ public class ChronicleMapKeyValueStoreTest {
         tree1.close();
         tree2.close();
         tree3.close();
-
+        ThreadMonitoringTest.filterExceptions(exceptions);
         if (Jvm.hasException(exceptions)) {
             Jvm.dumpException(exceptions);
             Assert.fail();

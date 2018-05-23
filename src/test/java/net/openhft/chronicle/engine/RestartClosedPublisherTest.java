@@ -59,6 +59,7 @@ public class RestartClosedPublisherTest {
     }
 
     public void afterMethod() {
+        ThreadMonitoringTest.filterExceptions(exceptions);
         if (Jvm.hasException(exceptions)) {
             Jvm.dumpException(exceptions);
             Assert.fail();
@@ -84,7 +85,7 @@ public class RestartClosedPublisherTest {
         TCPRegistry.reset();
 
         threadDump.assertNoNewThreads();
-
+        ThreadMonitoringTest.filterExceptions(exceptions);
         if (Jvm.hasException(exceptions)) {
             Jvm.dumpException(exceptions);
             Assert.fail();

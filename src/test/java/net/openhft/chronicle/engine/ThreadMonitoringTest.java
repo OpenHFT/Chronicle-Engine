@@ -100,7 +100,7 @@ public class ThreadMonitoringTest {
         threadDump.ignore("tree-2/closer");
         threadDump.ignore("tree-3/closer");
         threadDump.ignore("tree-3/closer");
-        threadDump.ignore("/disk-space-checker");
+        threadDump.ignore("/disk-spaceManyMapsTest-checker");
 
         threadDump.assertNoNewThreads();
         YamlLogging.setAll(false);

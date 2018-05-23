@@ -114,6 +114,7 @@ public class MaunualReplication2WayTest {
 
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
+        ThreadMonitoringTest.filterExceptions(exceptions);
         if (Jvm.hasException(exceptions)) {
             Jvm.dumpException(exceptions);
             Jvm.resetExceptionHandlers();

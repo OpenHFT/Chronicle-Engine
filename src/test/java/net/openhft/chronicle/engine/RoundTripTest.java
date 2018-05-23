@@ -135,6 +135,7 @@ public class RoundTripTest {
     }
 
     private void checkForThrowablesInOtherThreads() {
+        ThreadMonitoringTest.filterExceptions(exceptions);
         if (Jvm.hasException(exceptions)) {
             Jvm.dumpException(exceptions);
             Jvm.resetExceptionHandlers();
