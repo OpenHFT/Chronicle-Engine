@@ -116,7 +116,9 @@ public class ReplicationTestBootstrappingAfterLostConnection {
         exceptions.clear();
         threadDump = new ThreadDump();
         threadDump.ignore("tree-1/Heartbeat");
+        threadDump.ignore("tree-1/disk-space-checker");
         threadDump.ignore("tree-2/Heartbeat");
+        threadDump.ignore("tree-2/disk-space-checker");
         threadDump.ignore("process reaper");
         threadDump.ignore("tree-1/closer");
         threadDump.ignore("main/ChronicleMapKeyValueStore Closer");

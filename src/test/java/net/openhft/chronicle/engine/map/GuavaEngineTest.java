@@ -67,8 +67,9 @@ public class GuavaEngineTest {
     @NotNull
     public static Test suite() throws IOException {
 
-        MapTestSuiteBuilder using = MapTestSuiteBuilder.using(new RemoteTestGenerator(
-                HOOKS.addCloseable(new VanillaAssetTree().forTesting())));
+        MapTestSuiteBuilder using = MapTestSuiteBuilder.using(
+                HOOKS.addCloseable(new RemoteTestGenerator(
+                        HOOKS.addCloseable(new VanillaAssetTree().forTesting()))));
 
         TestSuite remoteMapTests = using.named("Chronicle RemoteEngine Guava tests")
                 .withFeatures(GENERAL_PURPOSE)
@@ -208,11 +209,13 @@ public class GuavaEngineTest {
         private final AssetTree remoteAssetTree;
         @NotNull
         private final AssetTree assetTree;
+        private @NotNull
+        final ServerEndpoint serverEndpoint;
 
         public RemoteTestGenerator(@NotNull AssetTree assetTree) throws IOException {
             this.assetTree = assetTree;
             TCPRegistry.createServerSocketChannelFor("guava.test.host.port");
-            @NotNull final ServerEndpoint serverEndpoint = new ServerEndpoint("guava.test.host.port", assetTree, "cluster");
+            serverEndpoint = new ServerEndpoint("guava.test.host.port", assetTree, "cluster");
 
             @NotNull final String hostname = "localhost";
             this.remoteAssetTree = new VanillaAssetTree().forRemoteAccess("guava.test" +
@@ -227,10 +230,11 @@ public class GuavaEngineTest {
 
         @Override
         public void close() throws IOException {
+            serverEndpoint.close();
             assetTree.close();
             remoteAssetTree.close();
-            TcpChannelHub.closeAllHubs();
-            TCPRegistry.reset();
+//            TcpChannelHub.closeAllHubs();
+//            TCPRegistry.reset();
         }
     }
 
