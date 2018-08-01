@@ -46,10 +46,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.engine.Utils.methodName;
 
 /**
- * @author Rob Austin.
- */
-
-/**
  * test using the listener both remotely or locally via the engine
  *
  * @author Rob Austin.

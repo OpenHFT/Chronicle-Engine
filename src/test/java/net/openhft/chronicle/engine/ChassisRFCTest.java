@@ -110,22 +110,19 @@ public class ChassisRFCTest {
         assertEquals("[!InsertedEvent {\n" +
                 "  assetName: /group-A,\n" +
                 "  key: Key-1,\n" +
-                "  value: Value-1,\n" +
-                "  isReplicationEvent: false\n" +
+                "  value: Value-1\n" +
                 "}\n" +
                 ", !UpdatedEvent {\n" +
                 "  assetName: /group-A,\n" +
                 "  key: Key-1,\n" +
                 "  oldValue: Value-1,\n" +
                 "  value: Value-2,\n" +
-                "  isReplicationEvent: false,\n" +
                 "  hasValueChanged: true\n" +
                 "}\n" +
                 ", !RemovedEvent {\n" +
                 "  assetName: /group-A,\n" +
                 "  key: Key-1,\n" +
-                "  oldValue: Value-2,\n" +
-                "  isReplicationEvent: false\n" +
+                "  oldValue: Value-2\n" +
                 "}\n" +
                 "]", values.toString());
     }

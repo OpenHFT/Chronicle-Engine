@@ -48,9 +48,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-/*
- * Created by daniel on 16/07/2015. Tests the combination of Reference and Chronicle
- */
 public class ReferenceChronicleTest {
 
     @Rule
@@ -94,7 +91,6 @@ public class ReferenceChronicleTest {
         threadDump.assertNoNewThreads();
     }
 
-    @Ignore("test keeps failing on TC")
     @Test(timeout = 5000)
     public void testRemoteSubscriptionMUFGChronicle() throws IOException {
 
@@ -117,7 +113,7 @@ public class ReferenceChronicleTest {
     }
 
     @Test(timeout = 5000)
-    public void testLocalSubscriptionMUFGChronicle() throws IOException {
+    public void testLocalSubscriptionMUFGChronicle() {
 
         @NotNull AssetTree serverAssetTree = hooks.addCloseable(new VanillaAssetTree().forTesting());
         serverAssetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore", VanillaMapView::new, KeyValueStore.class);

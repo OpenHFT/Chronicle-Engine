@@ -31,21 +31,18 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-/*
- * Created by daniel on 26/08/15.
- */
 public class ChronicleMapCfg implements Installable {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ChronicleMapCfg.class);
     private Class keyType, valueType;
     private boolean putReturnsNull, removeReturnsNull;
     private String compression;
     private String diskPath;
     private long entries = -1;
-    private double averageSize = -1;
+    private double averageKeySize = -1;
+    private double averageValueSize = -1;
 
     @Nullable
     @Override
-    public Void install(@NotNull String path, @NotNull AssetTree assetTree) throws IOException {
+    public Void install(@NotNull String path, @NotNull AssetTree assetTree) {
         @NotNull Asset asset = assetTree.acquireAsset(path);
         ((VanillaAsset) asset).enableTranslatingValuesToBytesStore();
         @NotNull RequestContext rc = RequestContext.requestContext(path);
@@ -54,7 +51,8 @@ public class ChronicleMapCfg implements Installable {
                 .removeReturnsNull(removeReturnsNull);
 
         if (entries != -1) rc.entries(entries);
-        if (averageSize != -1) rc.averageValueSize(averageSize);
+        if (averageKeySize != -1) rc.averageKeySize(averageKeySize);
+        if (averageValueSize != -1) rc.averageValueSize(averageValueSize);
 
         @NotNull ChronicleMapKeyValueStore chronicleMapKeyValueStore = new ChronicleMapKeyValueStore(rc, asset);
         asset.addView(ObjectKeyValueStore.class, chronicleMapKeyValueStore);
@@ -71,7 +69,8 @@ public class ChronicleMapCfg implements Installable {
                 .read(() -> "putReturnsNull").bool(this, (o, e) -> o.putReturnsNull = e)
                 .read(() -> "removeReturnsNull").bool(this, (o, e) -> o.removeReturnsNull = e)
                 .read(() -> "entries").int64(this, (o, e) -> o.entries = e)
-                .read(() -> "averageSize").float64(this, (o, e) -> o.averageSize = e);
+                .read(() -> "averageKeySize").float64(this, (o, e) -> o.averageKeySize = e)
+                .read(() -> "averageValueSize").float64(this, (o, e) -> o.averageValueSize = e);
     }
 
     @NotNull

@@ -73,6 +73,7 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
         keyType = context.keyType();
         valueType = context.valueType();
         double averageValueSize = context.getAverageValueSize();
+        double averageKeySize = context.getAverageKeySize();
         long maxEntries = context.getEntries();
         this.asset = asset;
         this.assetFullName = asset.fullName();
@@ -94,6 +95,18 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
             builder.removeReturnsNull(true);
         if (averageValueSize > 0)
             builder.averageValueSize(averageValueSize);
+        else {
+            LOG.warn("Using failsafe value size of 8. Most likely it's not the best fit for your use case, consider setting averageValueSize for this map: " + assetFullName);
+            builder.averageValueSize(8);
+        }
+        if (averageKeySize > 0)
+            builder.averageKeySize(averageKeySize);
+        else {
+            LOG.warn("Using failsafe key size of 8. Most likely it's not the best fit for your use case, consider setting averageKeySize for this map: " + assetFullName);
+            builder.averageKeySize(8);
+        }
+
+
         if (maxEntries > 0) builder.entries(maxEntries + 1); // we have to add a head room of 1
 
         if (basePath == null) {

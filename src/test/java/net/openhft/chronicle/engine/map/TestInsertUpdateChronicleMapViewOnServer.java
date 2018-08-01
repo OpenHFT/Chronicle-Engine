@@ -46,9 +46,6 @@ import java.util.concurrent.BlockingQueue;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-/**
- * @author Rob Austin.
- */
 @RunWith(value = Parameterized.class)
 public class TestInsertUpdateChronicleMapViewOnServer extends ThreadMonitoringTest {
 
@@ -59,9 +56,10 @@ public class TestInsertUpdateChronicleMapViewOnServer extends ThreadMonitoringTe
     private AssetTree clientAssetTree;
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
+    private WireType wireType;
 
     public TestInsertUpdateChronicleMapViewOnServer(WireType wireType) {
-
+        this.wireType = wireType;
     }
 
     @NotNull
@@ -90,7 +88,7 @@ public class TestInsertUpdateChronicleMapViewOnServer extends ThreadMonitoringTe
                 new ChronicleMapKeyValueStore(context.basePath(null).entries(100)
                         .putReturnsNull(false), asset));
 
-        clientAssetTree = serverAssetTree;
+        clientAssetTree = hooks.addCloseable(new VanillaAssetTree().forRemoteAccess(connection, wireType));
 
     }
 

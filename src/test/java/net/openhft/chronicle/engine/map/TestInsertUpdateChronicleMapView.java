@@ -54,10 +54,7 @@ public class TestInsertUpdateChronicleMapView extends ThreadMonitoringTest {
     private final WireType wireType;
     @Rule
     public ShutdownHooks hooks = new ShutdownHooks();
-    @NotNull
-    public String connection = "RemoteSubscriptionTest.host.port";
-    @NotNull
-    private AssetTree clientAssetTree = hooks.addCloseable(new VanillaAssetTree().forTesting());
+    private AssetTree clientAssetTree;
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
@@ -70,7 +67,7 @@ public class TestInsertUpdateChronicleMapView extends ThreadMonitoringTest {
     public static Collection<Object[]> data() {
         @NotNull final List<Object[]> list = new ArrayList<>();
         list.add(new Object[]{WireType.BINARY});
-        //  list.add(new Object[]{WireType.TEXT});
+        list.add(new Object[]{WireType.TEXT});
         return list;
     }
 
@@ -79,7 +76,7 @@ public class TestInsertUpdateChronicleMapView extends ThreadMonitoringTest {
         serverAssetTree = hooks.addCloseable(new VanillaAssetTree().forTesting());
         YamlLogging.setAll(false);
 
-        connection = "TestInsertUpdateChronicleMapView.host.port";
+        String connection = "TestInsertUpdateChronicleMapView.host.port";
         TCPRegistry.createServerSocketChannelFor(connection);
         serverEndpoint = hooks.addCloseable(new ServerEndpoint(connection, serverAssetTree, "cluster"));
 

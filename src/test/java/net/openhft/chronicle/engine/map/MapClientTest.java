@@ -370,13 +370,13 @@ public class MapClientTest extends ThreadMonitoringTest {
 
             map = clientAssetTree.acquireMap(name, kClass, vClass);
 
-            if (!(((Assetted) map).underlying() instanceof RemoteKeyValueStore)) {
+            if (!(map.underlying() instanceof RemoteKeyValueStore)) {
                 throw new IllegalStateException();
             }
         }
 
         @Override
-        public void close() throws IOException {
+        public void close() {
             closeQuietly(map);
 
             clientAssetTree.close();

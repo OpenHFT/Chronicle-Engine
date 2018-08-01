@@ -56,7 +56,7 @@ public class BootStrapTest {
     private static final String CONNECTION_1 = "BootStrapTests.host.port";
     private static ConcurrentMap<String, String> map1, map2;
     @NotNull
-    private static AtomicReference<Throwable> t = new AtomicReference();
+    private static AtomicReference<Throwable> t = new AtomicReference<>();
     @Rule
     public ShutdownHooks hooks = new ShutdownHooks();
     private AssetTree client1;
@@ -123,11 +123,9 @@ public class BootStrapTest {
      * the fail over client connects to  server1 ( server1 is the primary) , server1 is then shut
      * down and the client connects to the secondary
      *
-     * @throws IOException
-     * @throws InterruptedException
      */
     @Test(timeout = 2_000)
-    public void nonBootstrappingTest() throws IOException, InterruptedException {
+    public void nonBootstrappingTest() {
 
         try {
 
@@ -141,8 +139,7 @@ public class BootStrapTest {
                 Assert.assertEquals("!InsertedEvent {\n" +
                                 "  assetName: /test,\n" +
                                 "  key: hello,\n" +
-                                "  value: world1,\n" +
-                                "  isReplicationEvent: false\n" +
+                                "  value: world1\n" +
                                 "}\n",
                         poll);
             }
@@ -162,7 +159,6 @@ public class BootStrapTest {
                         "  key: hello,\n" +
                         "  oldValue: world1,\n" +
                         "  value: world2,\n" +
-                        "  isReplicationEvent: false,\n" +
                         "  hasValueChanged: true\n" +
                         "}\n", poll);
             }
@@ -196,8 +192,7 @@ public class BootStrapTest {
                 Assert.assertEquals("!InsertedEvent {\n" +
                                 "  assetName: /test,\n" +
                                 "  key: hello,\n" +
-                                "  value: world1,\n" +
-                                "  isReplicationEvent: false\n" +
+                                "  value: world1\n" +
                                 "}\n",
                         poll);
             }
@@ -218,7 +213,6 @@ public class BootStrapTest {
                         "  key: hello,\n" +
                         "  oldValue: world1,\n" +
                         "  value: world2,\n" +
-                        "  isReplicationEvent: false,\n" +
                         "  hasValueChanged: true\n" +
                         "}\n", poll);
             }
