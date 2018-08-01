@@ -18,14 +18,12 @@
 package net.openhft.chronicle.engine.tree;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.core.pool.StringBuilderPool;
 import net.openhft.chronicle.core.threads.EventHandler;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.core.threads.HandlerPriority;
-import net.openhft.chronicle.core.threads.InvalidEventHandlerException;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.Publisher;
@@ -37,15 +35,10 @@ import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
-import net.openhft.chronicle.engine.fs.Clusters;
-import net.openhft.chronicle.engine.fs.EngineCluster;
-import net.openhft.chronicle.engine.fs.EngineHostDetails;
 import net.openhft.chronicle.engine.map.VanillaKeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.query.Filter;
 import net.openhft.chronicle.engine.query.QueueConfig;
-import net.openhft.chronicle.network.cluster.ConnectionManager;
-import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ExcerptAppender;
 import net.openhft.chronicle.queue.ExcerptTailer;
@@ -59,20 +52,19 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.BiConsumer;
 
+import static net.openhft.chronicle.core.Jvm.rethrow;
 import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
 import static net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder.binary;
 import static net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder.defaultZeroBinary;
 import static net.openhft.chronicle.wire.WireType.*;
 
-/**
- * @author Rob Austin.
- */
-@SuppressWarnings("unchecked")
 public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>, SubAssetFactory,
         Closeable {
 
@@ -91,11 +83,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
     private final RequestContext context;
     @NotNull
     private final Asset asset;
-    private boolean isSource;
-    private boolean isReplicating;
     private boolean dontPersist;
-    @NotNull
-    private QueueConfig queueConfig;
 
     private volatile MapView<T, M> mapView;
 
@@ -112,10 +100,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         @NotNull String s = asset.fullName();
         if (s.startsWith("/")) s = s.substring(1);
         defaultPath = s;
-        @Nullable final HostIdentifier hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
-        @Nullable final Byte hostId = hostIdentifier == null ? null : hostIdentifier.hostId();
 
-        queueConfig = asset.findView(QueueConfig.class);
+        QueueConfig queueConfig = asset.findView(QueueConfig.class);
         if (queueConfig == null)
             throw new AssetNotFoundException("QueueConfig not found at " + asset);
 
@@ -125,14 +111,11 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         threadLocal = ThreadLocal.withInitial(() -> new ThreadLocalData(chronicleQueue));
         dontPersist = context.dontPersist();
 
-        if (hostId != null)
-            replication(context, asset);
-
         EventLoop eventLoop = asset.findOrCreateView(EventLoop.class);
         assert eventLoop != null;
         eventLoop.addHandler(new EventHandler() {
             @Override
-            public boolean action() throws InvalidEventHandlerException, InterruptedException {
+            public boolean action() {
                 chronicleQueue.acquireAppender().pretouch();
                 return false;
             }
@@ -145,77 +128,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         });
     }
 
-    @NotNull
-    @SuppressWarnings("WeakerAccess")
-    public static WriteMarshallable newSource(
-            @NotNull Class topicType,
-            @NotNull Class elementType,
-            boolean acknowledgement,
-            @Nullable MessageAdaptor syncMessageAdaptor,
-            @Nullable MessageAdaptor sourceMessageAdaptor,
-            long nextIndexRequired) {
-        Objects.requireNonNull(topicType);
-        Objects.requireNonNull(elementType);
-        try {
-            Class<?> aClass = Class.forName("software.chronicle.enterprise.queue.QueueSourceReplicationHandler");
-            Constructor<?> declaredConstructor = aClass.getDeclaredConstructor(Class.class,
-                    Class.class, boolean.class, MessageAdaptor.class, MessageAdaptor.class, long.class);
-            return (WriteMarshallable) declaredConstructor.newInstance(
-                    topicType, elementType, acknowledgement, syncMessageAdaptor, sourceMessageAdaptor, nextIndexRequired);
-
-        } catch (Exception e) {
-            @NotNull IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
-                    " required to run chronicle-queue replication. Please contact sales@chronicle" +
-                    ".software");
-            Jvm.warn().on(ChronicleQueueView.class, licence.getMessage());
-            throw licence;
-        }
-    }
-
-    /**
-     * @param topicType          the type of the topic
-     * @param elementType        the type of the element
-     * @param acknowledgement    {@code true} if message acknowledgement to the source is required
-     * @param syncMessageAdaptor used to apply processing in the bytes before they are written to the
-     *                           queue
-     * @return and instance of QueueSyncReplicationHandler
-     */
-    @NotNull
-    @SuppressWarnings("WeakerAccess")
-    public static WriteMarshallable newSync(
-            @NotNull Class topicType,
-            @NotNull Class elementType,
-            boolean acknowledgement,
-            @Nullable MessageAdaptor syncMessageAdaptor,
-            @NotNull WireType wireType,
-            @Nullable MessageAdaptor sourceMessageAdaptor, long nextIndexRequired) {
-        try {
-
-            Class<?> aClass = Class.forName("software.chronicle.enterprise.queue.QueueSyncReplicationHandler");
-            Constructor<?> declaredConstructor = aClass.getConstructor(Class.class, Class.class,
-                    boolean.class, MessageAdaptor.class, WireType.class, MessageAdaptor.class, long.class);
-            return (WriteMarshallable) declaredConstructor.newInstance(topicType, elementType,
-                    acknowledgement, syncMessageAdaptor, wireType, sourceMessageAdaptor, nextIndexRequired);
-
-        } catch (Exception e) {
-            @NotNull IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
-                    " required to do chronicle-queue replication. " +
-                    "Please contact sales@chronicle.software");
-            Jvm.warn().on(ChronicleQueueView.class, licence.getMessage());
-            throw licence;
-        }
-    }
-
-    public static boolean isQueueReplicationAvailable() {
-        try {
-            Class.forName("software.chronicle.enterprise.queue.QueueSyncReplicationHandler");
-            return true;
-        } catch (ClassNotFoundException e) {
-            return false;
-        }
-    }
-
-    private static void deleteFiles(@NotNull File element) throws IOException {
+    private static void deleteFiles(@NotNull File element) {
         if (element.isDirectory()) {
             @Nullable File[] files = element.listFiles();
             if (files == null)
@@ -228,8 +141,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
             Files.deleteIfExists(element.toPath());
 
         } catch (IOException e) {
-            if (Jvm.isDebugEnabled(ChronicleQueueView.class))
-                Jvm.debug().on(ChronicleQueueView.class, "Unable to delete " + element, e);
+            if (LOG.isDebugEnabled())
+                LOG.debug("Unable to delete " + element, e);
         }
     }
 
@@ -238,7 +151,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         try {
             return new ChronicleQueueView<>(context, asset);
         } catch (IOException e) {
-            throw Jvm.rethrow(e);
+            throw rethrow(e);
         }
     }
 
@@ -263,94 +176,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
     @NotNull
     public RollingChronicleQueue chronicleQueue() {
         return chronicleQueue;
-    }
-
-    public void replication(@NotNull RequestContext context, @NotNull Asset asset) {
-        final HostIdentifier hostIdentifier;
-
-        try {
-            hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
-        } catch (AssetNotFoundException anfe) {
-            if (LOG.isDebugEnabled())
-                Jvm.debug().on(getClass(), "replication not enabled " + anfe.getMessage());
-            return;
-        }
-        assert hostIdentifier != null;
-
-        final int remoteSourceIdentifier = queueConfig.sourceHostId(context.fullName());
-        isSource = hostIdentifier.hostId() == remoteSourceIdentifier;
-        isReplicating = true;
-
-        @Nullable final Clusters clusters = asset.findView(Clusters.class);
-
-        if (clusters == null) {
-            LOG.warn("no cluster found name=" + context.cluster());
-            if (Jvm.isDebugEnabled(getClass()))
-                Jvm.debug().on(getClass(), "no cluster found name=" + context.cluster());
-            return;
-        }
-
-        final EngineCluster engineCluster = clusters.get(context.cluster());
-        @NotNull final String csp = context.fullName();
-
-        if (engineCluster == null) {
-            if (Jvm.isDebugEnabled(getClass()))
-                Jvm.debug().on(getClass(), "no cluster found name=" + context.cluster());
-            LOG.warn("no cluster found name=" + context.cluster());
-            return;
-        }
-
-        byte localIdentifier = hostIdentifier.hostId();
-
-        if (LOG.isDebugEnabled())
-            Jvm.debug().on(getClass(), "hostDetails : localIdentifier=" + localIdentifier + ",cluster=" + engineCluster.hostDetails());
-
-        // if true - each replication event sends back an enableAcknowledgment
-        final boolean acknowledgement = queueConfig.acknowledgment();
-        final MessageAdaptor messageAdaptor = queueConfig.syncMessageAdaptor();
-        final MessageAdaptor sourceMessageAdaptor = queueConfig.sourceMessageAdaptor();
-
-        if (isSource) {
-            for (@NotNull EngineHostDetails hostDetails : engineCluster.hostDetails()) {
-
-                // its the identifier with the larger values that will establish the connection
-                byte remoteIdentifier = (byte) hostDetails.hostId();
-
-                if (remoteIdentifier == localIdentifier)
-                    continue;
-
-                ConnectionManager connectionManager = engineCluster.findConnectionManager(remoteIdentifier);
-                if (connectionManager == null) {
-                    engineCluster.findConnectionManager(remoteIdentifier);
-                    Jvm.warn().on(getClass(), "NOT FOUND -> remoteIdentifier=" + remoteIdentifier);
-                    return;
-                }
-
-                connectionManager.addListener((nc, isConnected) -> {
-
-                    if (!isConnected)
-                        return;
-
-                    long index = chronicleQueue.createTailer().toEnd().index();
-                    @NotNull WriteMarshallable h = newSync(
-                            context.topicType(),
-                            context.elementType(),
-                            acknowledgement,
-                            messageAdaptor,
-                            chronicleQueue.wireType(),
-                            sourceMessageAdaptor,
-                            index);
-
-                    long cid = nc.newCid();
-                    nc.wireOutPublisher().publish(w -> w.writeDocument(true, d ->
-                            d.writeEventName(CoreFields.csp).text(csp)
-                                    .writeEventName(CoreFields.cid).int64(cid)
-                                    .writeEventName(CoreFields.handler).typedMarshallable(h)));
-
-                });
-            }
-        }
-
     }
 
     @NotNull
@@ -616,10 +441,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
     @Override
     public long publishAndIndex(@NotNull T topic, @NotNull M message) {
 
-        if (isReplicating && !isSource)
-            throw new IllegalStateException("You can not publish to a sink used in replication, " +
-                    "you have to publish to the source");
-
         @NotNull final ExcerptAppender excerptAppender = this.chronicleQueue.acquireAppender();
 
         try (final DocumentContext dc = excerptAppender.writingDocument()) {
@@ -629,9 +450,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
     }
 
     public long set(@NotNull M event) {
-        if (isReplicating && !isSource)
-            throw new IllegalStateException("You can not publish to a sink used in replication, " +
-                    "you have to publish to the source");
         @NotNull final ExcerptAppender excerptAppender = this.chronicleQueue.acquireAppender();
         excerptAppender.writeDocument(w -> w.writeEventName(() -> "").object(event));
         return excerptAppender.lastIndexAppended();
@@ -698,8 +516,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
                 deleteFiles(file);
 
             } catch (Exception e) {
-                if (Jvm.isDebugEnabled(getClass()))
-                    Jvm.debug().on(getClass(), "Unable to delete " + file, e);
+                if (LOG.isDebugEnabled())
+                    LOG.debug("Unable to delete " + file, e);
             }
         }
     }

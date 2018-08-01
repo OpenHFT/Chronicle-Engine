@@ -26,10 +26,7 @@ import net.openhft.chronicle.engine.api.column.VanillaVaadinChart;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.cfg.EngineClusterContext;
-import net.openhft.chronicle.engine.fs.Clusters;
-import net.openhft.chronicle.engine.fs.EngineCluster;
 import net.openhft.chronicle.engine.query.QueueConfig;
-import net.openhft.chronicle.engine.tree.ChronicleQueueView;
 import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.network.MarshallableFunction;
 import net.openhft.chronicle.network.NetworkStats;
@@ -92,9 +89,6 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
         @NotNull RequestContext requestContext = requestContext(path)
                 .elementType(NetworkStats.class);
 
-        if (ChronicleQueueView.isQueueReplicationAvailable())
-            requestContext.cluster(clusterName());
-
         Asset asset = this.asset.root().acquireAsset(requestContext
                 .fullName());
 
@@ -104,17 +98,6 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
 
         qv = asset.acquireView(QueueView.class, requestContext);
         return qv;
-    }
-
-    private String clusterName() {
-        @Nullable final Clusters view = asset.getView(Clusters.class);
-
-        if (view == null)
-            return "";
-        final EngineCluster engineCluster = view.firstCluster();
-        if (engineCluster == null)
-            return "";
-        return engineCluster.clusterName();
     }
 
     @Override
