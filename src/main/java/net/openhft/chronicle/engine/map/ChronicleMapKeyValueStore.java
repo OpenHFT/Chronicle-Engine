@@ -108,6 +108,10 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
 
 
         if (maxEntries > 0) builder.entries(maxEntries + 1); // we have to add a head room of 1
+        else {
+            LOG.warn("Using failsafe entries' number of 64k. Most likely it's not the best fit for your use case, and you might get runtime errors if you insert more than this number of entries. Consider setting maxEntries for this map: " + assetFullName);
+            builder.entries(2 << 15);
+        }
 
         if (basePath == null) {
             chronicleMap = builder.create();
