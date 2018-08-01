@@ -19,7 +19,6 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
-import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
@@ -168,10 +167,5 @@ public class ObjectObjectKeyValueStore<K, V> implements KeyValueStore<K, V> {
     @Override
     public void close() {
         kvStore.close();
-    }
-
-    @Override
-    public void accept(final ReplicationEntry replicationEntry) {
-        throw new UnsupportedOperationException("todo");
     }
 }

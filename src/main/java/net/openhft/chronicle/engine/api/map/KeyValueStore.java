@@ -19,19 +19,17 @@ package net.openhft.chronicle.engine.api.map;
 
 import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.core.io.Closeable;
-import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.tree.Assetted;
 import net.openhft.chronicle.engine.api.tree.KeyedView;
-import net.openhft.lang.model.constraints.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 /**
  * Internal API for creating new data stores.
@@ -40,8 +38,7 @@ import java.util.function.Consumer;
  * @param <V> immutable value type
  */
 
-public interface KeyValueStore<K, V> extends Assetted<KeyValueStore<K, V>>, Closeable,
-        Consumer<ReplicationEntry>, KeyedView {
+public interface KeyValueStore<K, V> extends Assetted<KeyValueStore<K, V>>, Closeable, KeyedView {
 
     /**
      * put an entry
@@ -52,7 +49,7 @@ public interface KeyValueStore<K, V> extends Assetted<KeyValueStore<K, V>>, Clos
      */
     boolean put(K key, V value);
 
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     V getAndPut(K key, V value);
 
     /**
@@ -63,16 +60,14 @@ public interface KeyValueStore<K, V> extends Assetted<KeyValueStore<K, V>>, Clos
      */
     boolean remove(K key);
 
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     V getAndRemove(K key);
 
-    @org.jetbrains.annotations.Nullable
     @Nullable
     default V get(K key) {
         return getUsing(key, null);
     }
 
-    @org.jetbrains.annotations.Nullable
     @Nullable
     V getUsing(K key, Object value);
 
@@ -126,7 +121,6 @@ public interface KeyValueStore<K, V> extends Assetted<KeyValueStore<K, V>>, Clos
 
     void clear();
 
-    @org.jetbrains.annotations.Nullable
     @Nullable
     default V replace(K key, V value) {
         if (containsKey(key)) {
@@ -160,9 +154,9 @@ public interface KeyValueStore<K, V> extends Assetted<KeyValueStore<K, V>>, Clos
         return true;
     }
 
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     default V putIfAbsent(K key, V value) {
-        @org.jetbrains.annotations.Nullable V value2 = get(key);
+        @Nullable V value2 = get(key);
         return value2 == null ? getAndPut(key, value) : value2;
     }
 
@@ -183,10 +177,10 @@ public interface KeyValueStore<K, V> extends Assetted<KeyValueStore<K, V>>, Clos
     boolean containsValue(V value);
 
     interface Entry<K, V> {
-        @org.jetbrains.annotations.Nullable
+        @Nullable
         K key();
 
-        @org.jetbrains.annotations.Nullable
+        @Nullable
         V value();
     }
 }

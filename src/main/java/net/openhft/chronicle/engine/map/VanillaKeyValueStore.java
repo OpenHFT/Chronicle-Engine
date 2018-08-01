@@ -17,7 +17,6 @@
 
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
@@ -61,11 +60,10 @@ public class VanillaKeyValueStore<K, V> implements AuthenticatedKeyValueStore<K,
 
     @Override
     public V getAndPut(K key, V value) {
-        V oldValue = map.put(key, value);
-//        subscriptions.notifyEvent(oldValue == null
+        //        subscriptions.notifyEvent(oldValue == null
 //                ? InsertedEvent.of(asset.fullName(), key, value)
 //                : UpdatedEvent.of(asset.fullName(), key, oldValue, value));
-        return oldValue;
+        return map.put(key, value);
     }
 
     @Override
@@ -75,10 +73,9 @@ public class VanillaKeyValueStore<K, V> implements AuthenticatedKeyValueStore<K,
 
     @Override
     public V getAndRemove(K key) {
-        V oldValue = map.remove(key);
-//        if (oldValue != null)
+        //        if (oldValue != null)
 //            subscriptions.notifyEvent(RemovedEvent.of(asset.fullName(), key, oldValue));
-        return oldValue;
+        return map.remove(key);
     }
 
     @Override
@@ -98,7 +95,7 @@ public class VanillaKeyValueStore<K, V> implements AuthenticatedKeyValueStore<K,
 
     @Override
     public void entriesFor(int segment, @NotNull SubscriptionConsumer<MapEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
-        SubscriptionConsumer.notifyEachEvent(map.entrySet(), e -> kvConsumer.accept(InsertedEvent.of(asset.fullName(), e.getKey(), e.getValue(), false)));
+        SubscriptionConsumer.notifyEachEvent(map.entrySet(), e -> kvConsumer.accept(InsertedEvent.of(asset.fullName(), e.getKey(), e.getValue())));
     }
 
     @NotNull
@@ -150,11 +147,6 @@ public class VanillaKeyValueStore<K, V> implements AuthenticatedKeyValueStore<K,
     public KVSSubscription<K, V> subscription(boolean createIfAbsent) {
 
         //return subscriptions;
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
-    public void accept(final ReplicationEntry replicationEntry) {
         throw new UnsupportedOperationException("todo");
     }
 }

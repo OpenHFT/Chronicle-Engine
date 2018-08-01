@@ -24,7 +24,6 @@ import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
 import net.openhft.chronicle.engine.api.pubsub.Publisher;
 import net.openhft.chronicle.engine.api.pubsub.Reference;
-import net.openhft.chronicle.engine.api.pubsub.Replication;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import net.openhft.chronicle.engine.api.query.IndexQueueView;
 import net.openhft.chronicle.engine.api.query.VanillaIndexQueueView;
@@ -56,7 +55,6 @@ public class VanillaAssetRuleProvider implements AssetRuleProvider {
         asset.addWrappingRule(EntrySetView.class, LAST + " VanillaEntrySetView", VanillaEntrySetView::new, MapView.class);
         asset.addWrappingRule(KeySetView.class, LAST + " VanillaKeySetView", VanillaKeySetView::new, MapView.class);
         asset.addWrappingRule(Reference.class, LAST + "reference", MapReference::new, MapView.class);
-        asset.addWrappingRule(Replication.class, LAST + "replication", VanillaReplication::new, MapView.class);
         asset.addWrappingRule(Publisher.class, LAST + " MapReference", MapReference::new, MapView.class);
         asset.addWrappingRule(TopicPublisher.class, LAST + " MapTopicPublisher", MapTopicPublisher::new, MapView.class);
         asset.addWrappingRule(MapView.class, LAST + " VanillaMapView", VanillaMapView::new, ObjectKeyValueStore.class);

@@ -18,7 +18,6 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.bytes.BytesStore;
-import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
@@ -129,7 +128,7 @@ public class FilePerKeyBasedKeyMarshallableValueStore<K, V extends Marshallable>
             throws InvalidSubscriberException {
         @NotNull String assetName = asset().fullName();
         kvStore.entriesFor(segment, event -> kvConsumer.accept(InsertedEvent.of(assetName,
-                stringToKey.apply(event.getKey()), bytesToValue(event.getValue()), false)));
+                stringToKey.apply(event.getKey()), bytesToValue(event.getValue()))));
     }
 
     @Override
@@ -157,10 +156,5 @@ public class FilePerKeyBasedKeyMarshallableValueStore<K, V extends Marshallable>
     @Override
     public void close() {
         kvStore.close();
-    }
-
-    @Override
-    public void accept(EngineReplication.ReplicationEntry replicationEntry) {
-        throw new UnsupportedOperationException();
     }
 }

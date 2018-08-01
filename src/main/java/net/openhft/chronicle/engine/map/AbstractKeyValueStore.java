@@ -17,7 +17,6 @@
 
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
@@ -193,10 +192,5 @@ public class AbstractKeyValueStore<K, V> implements KeyValueStore<K, V> {
 
     public Class<V> valueType() {
         return valueType;
-    }
-
-    @Override
-    public void accept(final ReplicationEntry replicationEntry) {
-        throw new UnsupportedOperationException("todo");
     }
 }

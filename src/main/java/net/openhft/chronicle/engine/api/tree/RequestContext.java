@@ -41,7 +41,6 @@ import net.openhft.chronicle.engine.query.Filter;
 import net.openhft.chronicle.engine.query.Operation.OperationType;
 import net.openhft.chronicle.engine.server.internal.EngineNetworkStatsListener;
 import net.openhft.chronicle.engine.server.internal.EngineWireNetworkContext;
-import net.openhft.chronicle.engine.server.internal.MapReplicationHandler;
 import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.engine.tree.TopologySubscription;
@@ -79,7 +78,6 @@ public class RequestContext implements Cloneable {
         addAliasLocal(EntrySetView.class, "EntrySet");
         addAliasLocal(KeySetView.class, "KeySet");
         addAliasLocal(ValuesCollection.class, "Values");
-        addAlias(Replication.class, "Replication");
         addAlias(Publisher.class, "Publisher, Pub");
         addAlias(TopicPublisher.class, "TopicPublisher, TopicPub");
         addAlias(ObjectSubscription.class, "Subscription");
@@ -101,7 +99,6 @@ public class RequestContext implements Cloneable {
         addAlias(TcpEventHandler.Factory.class, "TcpEventHandlerFactory");
         addAlias(EngineClusterContext.class, "EngineClusterContext");
         addAlias(UberHandler.class, "UberHandler");
-        addAlias(MapReplicationHandler.class, "MapReplicationHandler");
         addAlias(HeartbeatHandler.class, "HeartbeatHandler");
         addAlias("software.chronicle.enterprise.queue.QueueSourceReplicationHandler");
         addAlias("software.chronicle.ente§rprise.queue.QueueSyncReplicationHandler");

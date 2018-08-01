@@ -32,7 +32,6 @@ import java.util.function.Function;
  * Created by Peter Lawrey on 22/05/15.
  */
 public class InsertedEvent<K, V> extends AbstractMarshallable implements MapEvent<K, V> {
-    private boolean isReplicationEvent;
     @Nullable
     private String assetName;
     @NotNull
@@ -40,16 +39,15 @@ public class InsertedEvent<K, V> extends AbstractMarshallable implements MapEven
     @Nullable
     private V value;
 
-    private InsertedEvent(String assetName, @NotNull K key, @Nullable V value, boolean isReplicationEvent) {
+    private InsertedEvent(String assetName, @NotNull K key, @Nullable V value) {
         this.assetName = assetName;
         this.key = key;
         this.value = value;
-        this.isReplicationEvent = isReplicationEvent;
     }
 
     @NotNull
-    public static <K, V> InsertedEvent<K, V> of(String assetName, @NotNull K key, V value, boolean isReplicationEvent) {
-        return new InsertedEvent<>(assetName, key, value, isReplicationEvent);
+    public static <K, V> InsertedEvent<K, V> of(String assetName, @NotNull K key, V value) {
+        return new InsertedEvent<>(assetName, key, value);
     }
 
     @Nullable
@@ -61,13 +59,13 @@ public class InsertedEvent<K, V> extends AbstractMarshallable implements MapEven
     @NotNull
     @Override
     public <K2, V2> MapEvent<K2, V2> translate(@NotNull Function<K, K2> keyFunction, @NotNull Function<V, V2> valueFunction) {
-        return new InsertedEvent<>(assetName, keyFunction.apply(key), valueFunction.apply(value), isReplicationEvent);
+        return new InsertedEvent<>(assetName, keyFunction.apply(key), valueFunction.apply(value));
     }
 
     @NotNull
     @Override
     public <K2, V2> MapEvent<K2, V2> translate(@NotNull BiFunction<K, K2, K2> keyFunction, @NotNull BiFunction<V, V2, V2> valueFunction) {
-        return new InsertedEvent<>(assetName, keyFunction.apply(key, null), valueFunction.apply(value, null), isReplicationEvent);
+        return new InsertedEvent<>(assetName, keyFunction.apply(key, null), valueFunction.apply(value, null));
     }
 
     @Override
@@ -104,7 +102,6 @@ public class InsertedEvent<K, V> extends AbstractMarshallable implements MapEven
         assetName = wire.read(MapEventFields.assetName).text();
         key = wire.read(MapEventFields.key).object((Class<K>) Object.class);
         value = wire.read(MapEventFields.value).object((Class<V>) Object.class);
-        isReplicationEvent = wire.read(MapEventFields.isReplicationEvent).bool();
     }
 
     @Override
@@ -112,6 +109,5 @@ public class InsertedEvent<K, V> extends AbstractMarshallable implements MapEven
         wire.write(MapEventFields.assetName).text(assetName);
         wire.write(MapEventFields.key).object(key);
         wire.write(MapEventFields.value).object(value);
-        wire.write(MapEventFields.isReplicationEvent).bool(isReplicationEvent);
     }
 }

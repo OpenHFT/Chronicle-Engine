@@ -20,7 +20,6 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.util.ObjectUtils;
-import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.map.*;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
@@ -170,7 +169,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     @Override
     public void entriesFor(int segment, @NotNull SubscriptionConsumer<MapEvent<String, V>> kvConsumer) throws InvalidSubscriberException {
         kvStore.entriesFor(segment, e -> kvConsumer.accept(
-                InsertedEvent.of(asset.fullName(), e.getKey(), bytesToValue.apply(e.getValue(), null), false)));
+                InsertedEvent.of(asset.fullName(), e.getKey(), bytesToValue.apply(e.getValue(), null))));
     }
 
     @NotNull
@@ -237,10 +236,5 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     @Override
     public Class<V> valueType() {
         return valueType;
-    }
-
-    @Override
-    public void accept(final ReplicationEntry replicationEntry) {
-        throw new UnsupportedOperationException("todo");
     }
 }

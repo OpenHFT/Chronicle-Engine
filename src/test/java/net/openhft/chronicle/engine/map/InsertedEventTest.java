@@ -35,9 +35,6 @@ import org.junit.Test;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static org.junit.Assert.assertEquals;
 
-/*
- * Created by Peter Lawrey on 12/06/15.
- */
 public class InsertedEventTest {
     static {
         ClassAliasPool.CLASS_ALIASES.addAlias(InsertedEvent.class, Factor.class);
@@ -59,7 +56,7 @@ public class InsertedEventTest {
     public void testMarshalling() {
         YamlLogging.setAll(false);
         Bytes bytes = Bytes.elasticByteBuffer();
-        @NotNull InsertedEvent<String, String> insertedEvent = InsertedEvent.of("asset", "key", "name", false);
+        @NotNull InsertedEvent<String, String> insertedEvent = InsertedEvent.of("asset", "key", "name");
         @NotNull TextWire textWire = new TextWire(bytes);
         textWire.write(() -> "reply")
                 .typedMarshallable(insertedEvent);
@@ -72,7 +69,7 @@ public class InsertedEventTest {
     public void testMarshalling2() {
         YamlLogging.setAll(false);
         Bytes bytes = Bytes.elasticByteBuffer();
-        @NotNull InsertedEvent<String, Factor> insertedEvent = InsertedEvent.of("asset", "key", new Factor(), false);
+        @NotNull InsertedEvent<String, Factor> insertedEvent = InsertedEvent.of("asset", "key", new Factor());
         @NotNull TextWire textWire = new TextWire(bytes);
         textWire.write(() -> "reply")
                 .typedMarshallable(insertedEvent);
@@ -82,11 +79,10 @@ public class InsertedEventTest {
     }
 
     @Test
-    @Ignore("TODO Fix")
     public void testMarshalling3a() {
         YamlLogging.setAll(false);
         Bytes bytes = Bytes.elasticByteBuffer();
-        @NotNull InsertedEvent<String, BytesStore> insertedEvent = InsertedEvent.of("asset", "key", BytesStore.wrap("£Hello World".getBytes(ISO_8859_1)), false);
+        @NotNull InsertedEvent<String, BytesStore> insertedEvent = InsertedEvent.of("asset", "key", BytesStore.wrap("£Hello World".getBytes(ISO_8859_1)));
         @NotNull TextWire textWire = new TextWire(bytes);
         textWire.write(() -> "reply")
                 .typedMarshallable(insertedEvent);
@@ -99,7 +95,7 @@ public class InsertedEventTest {
     public void testMarshalling3() {
         YamlLogging.setAll(false);
         Bytes bytes = Bytes.elasticByteBuffer();
-        @NotNull InsertedEvent<String, BytesStore> insertedEvent = InsertedEvent.of("asset", "key", BytesStore.wrap("Hello World".getBytes(ISO_8859_1)), false);
+        @NotNull InsertedEvent<String, BytesStore> insertedEvent = InsertedEvent.of("asset", "key", BytesStore.wrap("Hello World".getBytes(ISO_8859_1)));
         @NotNull TextWire textWire = new TextWire(bytes);
         textWire.write(() -> "reply")
                 .typedMarshallable(insertedEvent);
@@ -112,7 +108,7 @@ public class InsertedEventTest {
     @Test
     public void testMarshallingB() {
         Bytes bytes = Bytes.elasticByteBuffer();
-        @NotNull InsertedEvent<String, String> insertedEvent = InsertedEvent.of("asset", "key", "name", false);
+        @NotNull InsertedEvent<String, String> insertedEvent = InsertedEvent.of("asset", "key", "name");
         @NotNull BinaryWire binaryWire = new BinaryWire(bytes);
         binaryWire.write(() -> "reply").typedMarshallable(insertedEvent);
         System.out.println("text: " + bytes);
@@ -123,7 +119,7 @@ public class InsertedEventTest {
     @Test
     public void testMarshalling2B() {
         Bytes bytes = Bytes.elasticByteBuffer();
-        @NotNull InsertedEvent<String, Factor> insertedEvent = InsertedEvent.of("asset", "key", new Factor(), false);
+        @NotNull InsertedEvent<String, Factor> insertedEvent = InsertedEvent.of("asset", "key", new Factor());
         @NotNull BinaryWire binaryWire = new BinaryWire(bytes);
         binaryWire.write(() -> "reply")
                 .typedMarshallable(insertedEvent);
@@ -135,7 +131,7 @@ public class InsertedEventTest {
     @Test
     public void testMarshalling3B() {
         Bytes bytes = Bytes.elasticByteBuffer();
-        @NotNull InsertedEvent<String, BytesStore> insertedEvent = InsertedEvent.of("asset", "key", BytesStore.wrap("Hello World".getBytes(ISO_8859_1)), false);
+        @NotNull InsertedEvent<String, BytesStore> insertedEvent = InsertedEvent.of("asset", "key", BytesStore.wrap("Hello World".getBytes(ISO_8859_1)));
         @NotNull BinaryWire binaryWire = new BinaryWire(bytes);
         binaryWire.write(() -> "reply")
                 .typedMarshallable(insertedEvent);

@@ -25,7 +25,7 @@ import net.openhft.chronicle.engine.map.ObjectKeyValueStore;
 import net.openhft.chronicle.engine.map.ObjectSubscription;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
-import net.openhft.lang.thread.NamedThreadFactory;
+import net.openhft.chronicle.threads.NamedThreadFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -52,19 +52,6 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-
-            <!-- forces engine to use an older version of map, until it has been updated -->
-            <dependency>
-                <groupId>net.openhft</groupId>
-                <artifactId>chronicle-map</artifactId>
-                <version>2.4.17</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>net.openhft</groupId>
-                        <artifactId>chronicle-network</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -96,11 +83,6 @@
             <groupId>net.openhft</groupId>
             <artifactId>chronicle-wire</artifactId>
         </dependency>
-        <!--     <dependency>
-                 <groupId>software.chronicle</groupId>
-                 <artifactId>chronicle-wire-enterprise</artifactId>
-             </dependency>
-     -->
 
         <dependency>
             <groupId>net.openhft</groupId>
@@ -110,18 +92,6 @@
         <dependency>
             <groupId>net.openhft</groupId>
             <artifactId>chronicle-map</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.codehaus.jettison</groupId>
-                    <artifactId>jettison</artifactId>
-                </exclusion>
-
-                <exclusion>
-                    <groupId>org.ops4j.pax.url</groupId>
-                    <artifactId>pax-url-aether</artifactId>
-                </exclusion>
-            </exclusions>
-
         </dependency>
 
         <dependency>

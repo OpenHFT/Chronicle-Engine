@@ -98,8 +98,6 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
     @NotNull
     private final ReferenceHandler referenceHandler;
     @NotNull
-    private final ReplicationHandler replicationHandler;
-    @NotNull
     private final VaadinChartHandler barChatHandler;
     @NotNull
     private final ReadMarshallable metaDataConsumer;
@@ -125,7 +123,6 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
             , Publisher.class
             , Reference.class
             , TopologySubscription.class
-            , Replication.class
             , QueueView.class
             , Heartbeat.class
             , IndexQueueView.class
@@ -165,7 +162,6 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
         this.topicPublisherHandler = new TopicPublisherHandler();
         this.publisherHandler = new PublisherHandler();
         this.referenceHandler = new ReferenceHandler();
-        this.replicationHandler = new ReplicationHandler();
         this.systemHandler = new SystemHandler();
         this.indexQueueViewHandler = new IndexQueueViewHandler<>();
         this.columnViewHandler = new ColumnViewHandler(this);
@@ -202,7 +198,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
     public void onEndOfConnection(boolean heartbeatTimeOut) {
         for (@NotNull final AbstractHandler abstractHandler : new AbstractHandler[]{mapWireHandler,
                 subscriptionHandler, topologySubscriptionHandler,
-                publisherHandler, replicationHandler}) {
+                publisherHandler}) {
             try {
                 abstractHandler.onEndOfConnection();
             } catch (Exception e) {
@@ -460,15 +456,6 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                         publisherHandler.process(in, requestContext,
                                 publisher(), tid,
                                 (Publisher) view, outWire, wireAdapter);
-                        return;
-                    }
-
-                    if (Replication.class.isAssignableFrom(viewType)) {
-                        replicationHandler.process(in,
-                                publisher(), tid, outWire,
-                                hostIdentifier,
-                                (Replication) view,
-                                eventLoop);
                         return;
                     }
 

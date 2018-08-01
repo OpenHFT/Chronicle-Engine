@@ -53,6 +53,6 @@ public interface MapEvent<K, V> extends Map.Entry<K, V>, ChangeEvent {
     }
 
     enum MapEventFields implements WireKey {
-        assetName, key, oldValue, value, hasValueChanged, isReplicationEvent
+        assetName, key, oldValue, value, hasValueChanged
     }
 }

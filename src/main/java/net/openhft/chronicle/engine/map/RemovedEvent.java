@@ -28,27 +28,22 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-/*
- * Created by Peter Lawrey on 22/05/15.
- */
 public class RemovedEvent<K, V> extends AbstractMarshallable implements MapEvent<K, V> {
     private String assetName;
     @Nullable
     private K key;
     @Nullable
     private V oldValue;
-    private boolean isReplicationEvent;
 
-    private RemovedEvent(String assetName, @NotNull K key, @Nullable V oldValue, boolean isReplicationEvent) {
+    private RemovedEvent(String assetName, @NotNull K key, @Nullable V oldValue) {
         this.assetName = assetName;
         this.key = key;
         this.oldValue = oldValue;
-        this.isReplicationEvent = isReplicationEvent;
     }
 
     @NotNull
-    public static <K, V> RemovedEvent<K, V> of(String assetName, @NotNull K key, V value, boolean isReplicationEvent) {
-        return new RemovedEvent<>(assetName, key, value, isReplicationEvent);
+    public static <K, V> RemovedEvent<K, V> of(String assetName, @NotNull K key, V value) {
+        return new RemovedEvent<>(assetName, key, value);
     }
 
     @Override
@@ -59,13 +54,13 @@ public class RemovedEvent<K, V> extends AbstractMarshallable implements MapEvent
     @NotNull
     @Override
     public <K2, V2> MapEvent<K2, V2> translate(@NotNull Function<K, K2> keyFunction, @NotNull Function<V, V2> valueFunction) {
-        return new RemovedEvent<>(assetName, keyFunction.apply(key), valueFunction.apply(oldValue), isReplicationEvent);
+        return new RemovedEvent<>(assetName, keyFunction.apply(key), valueFunction.apply(oldValue));
     }
 
     @NotNull
     @Override
     public <K2, V2> MapEvent<K2, V2> translate(@NotNull BiFunction<K, K2, K2> keyFunction, @NotNull BiFunction<V, V2, V2> valueFunction) {
-        return new RemovedEvent<>(assetName, keyFunction.apply(key, null), valueFunction.apply(oldValue, null), isReplicationEvent);
+        return new RemovedEvent<>(assetName, keyFunction.apply(key, null), valueFunction.apply(oldValue, null));
     }
 
     @Override
@@ -96,7 +91,6 @@ public class RemovedEvent<K, V> extends AbstractMarshallable implements MapEvent
         wire.read(MapEventFields.assetName).text(this, (o, s) -> assetName = s);
         wire.read(MapEventFields.key).object(Object.class, this, (o, x) -> o.key = (K) x);
         wire.read(MapEventFields.oldValue).object(Object.class, this, (o, x) -> o.oldValue = (V) x);
-        wire.read(MapEventFields.isReplicationEvent).bool(this, (o, x) -> o.isReplicationEvent = x);
     }
 
     @Override
@@ -104,6 +98,5 @@ public class RemovedEvent<K, V> extends AbstractMarshallable implements MapEvent
         wire.write(MapEventFields.assetName).text(assetName);
         wire.write(MapEventFields.key).object(key);
         wire.write(MapEventFields.oldValue).object(oldValue);
-        wire.write(MapEventFields.isReplicationEvent).object(isReplicationEvent);
     }
 }

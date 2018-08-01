@@ -31,7 +31,6 @@ import net.openhft.chronicle.engine.map.UpdatedEvent;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 
-import java.io.IOException;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
@@ -40,9 +39,6 @@ import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContex
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
 
-/*
- * Created by Peter Lawrey on 22/05/15.
- */
 public class ChassisTest {
 
     @Rule
@@ -255,8 +251,8 @@ public class ChassisTest {
 
         // test the bootstrap finds old keys
         Subscriber<MapEvent<String, String>> subscriber = createMock(Subscriber.class);
-        subscriber.onMessage(InsertedEvent.of("/map-name", "Key-1", "Value-1", false));
-        subscriber.onMessage(InsertedEvent.of("/map-name", "Key-2", "Value-2", false));
+        subscriber.onMessage(InsertedEvent.of("/map-name", "Key-1", "Value-1"));
+        subscriber.onMessage(InsertedEvent.of("/map-name", "Key-2", "Value-2"));
         replay(subscriber);
         registerSubscriber("map-name?bootstrap=true", MapEvent.class, (Subscriber) subscriber);
         verify(subscriber);
@@ -265,9 +261,8 @@ public class ChassisTest {
         assertEquals(2, map.size());
 
         // test the topic publish triggers events
-        subscriber.onMessage(UpdatedEvent.of("/map-name", "Key-1", "Value-1", "Message-1", false,
-                true));
-        subscriber.onMessage(InsertedEvent.of("/map-name", "Topic-1", "Message-1", false));
+        subscriber.onMessage(UpdatedEvent.of("/map-name", "Key-1", "Value-1", "Message-1", true));
+        subscriber.onMessage(InsertedEvent.of("/map-name", "Topic-1", "Message-1"));
         replay(subscriber);
 
         @NotNull TopicPublisher<String, String> publisher = acquireTopicPublisher("map-name", String.class, String.class);
@@ -277,9 +272,9 @@ public class ChassisTest {
         reset(subscriber);
         assertEquals(3, map.size());
 
-        subscriber.onMessage(InsertedEvent.of("/map-name", "Hello", "World", false));
-        subscriber.onMessage(InsertedEvent.of("/map-name", "Bye", "soon", false));
-        subscriber.onMessage(RemovedEvent.of("/map-name", "Key-1", "Message-1", false));
+        subscriber.onMessage(InsertedEvent.of("/map-name", "Hello", "World"));
+        subscriber.onMessage(InsertedEvent.of("/map-name", "Bye", "soon"));
+        subscriber.onMessage(RemovedEvent.of("/map-name", "Key-1", "Message-1"));
         replay(subscriber);
 
         // test plain puts trigger events
@@ -292,7 +287,7 @@ public class ChassisTest {
     }
 
     @Test
-    public void testStringString() throws IOException, InterruptedException {
+    public void testStringString() {
         @NotNull final ConcurrentMap<String, String> mapProxy = Chassis.acquireMap("testStringString", String.class, String.class);
         mapProxy.put("hello", "world");
         Assert.assertEquals("world", mapProxy.get("hello"));

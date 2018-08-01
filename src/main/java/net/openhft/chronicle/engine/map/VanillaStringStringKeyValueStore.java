@@ -19,7 +19,6 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
-import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.map.*;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
@@ -184,11 +183,6 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     @Override
     public void close() {
         kvStore.close();
-    }
-
-    @Override
-    public void accept(final ReplicationEntry replicationEntry) {
-        throw new UnsupportedOperationException("todo");
     }
 
     enum BytesStoreToString implements Function<BytesStore, String> {

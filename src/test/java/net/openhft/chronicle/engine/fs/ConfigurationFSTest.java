@@ -28,7 +28,7 @@ import net.openhft.chronicle.engine.VanillaAssetTreeEgMain;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
-import net.openhft.lang.thread.NamedThreadFactory;
+import net.openhft.chronicle.threads.NamedThreadFactory;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 

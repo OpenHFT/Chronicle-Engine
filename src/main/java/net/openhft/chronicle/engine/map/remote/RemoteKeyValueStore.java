@@ -22,7 +22,6 @@ import net.openhft.chronicle.core.util.SerializableBiFunction;
 import net.openhft.chronicle.core.util.SerializableUpdaterWithArg;
 import net.openhft.chronicle.core.util.ThrowingConsumer;
 import net.openhft.chronicle.core.util.Time;
-import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -161,15 +160,15 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     }
 
     @Override
-    public void keysFor(final int segment, @NotNull final SubscriptionConsumer<K> kConsumer) throws InvalidSubscriberException {
+    public void keysFor(final int segment, @NotNull final SubscriptionConsumer<K> kConsumer) {
         keySet().forEach(ThrowingConsumer.asConsumer(kConsumer::accept));
     }
 
     @Override
-    public void entriesFor(final int segment, @NotNull final SubscriptionConsumer<MapEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
+    public void entriesFor(final int segment, @NotNull final SubscriptionConsumer<MapEvent<K, V>> kvConsumer) {
         @NotNull String assetName = asset.fullName();
         entrySet().forEach(ThrowingConsumer.asConsumer(entry ->
-                kvConsumer.accept(InsertedEvent.of(assetName, entry.getKey(), entry.getValue(), false))));
+                kvConsumer.accept(InsertedEvent.of(assetName, entry.getKey(), entry.getValue()))));
     }
 
     /**
@@ -427,11 +426,6 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     @Override
     public Class<V> valueType() {
         return vClass;
-    }
-
-    @Override
-    public void accept(final ReplicationEntry replicationEntry) {
-        throw new UnsupportedOperationException("");
     }
 
     class Entry implements Map.Entry<K, V> {

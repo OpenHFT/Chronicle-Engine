@@ -17,11 +17,12 @@
 
 package net.openhft.chronicle.engine;
 
+import net.openhft.chronicle.bytes.BytesIn;
+import net.openhft.chronicle.bytes.BytesMarshallable;
+import net.openhft.chronicle.bytes.BytesOut;
 import net.openhft.chronicle.wire.AbstractMarshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
-import net.openhft.lang.io.Bytes;
-import net.openhft.lang.io.serialization.BytesMarshallable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -134,7 +135,7 @@ public class Factor extends AbstractMarshallable implements BytesMarshallable {
     }
 
     @Override
-    public void readMarshallable(@NotNull Bytes in) throws IllegalStateException {
+    public void readMarshallable(@NotNull BytesIn in) throws IllegalStateException {
         openPDFlag = in.readByte();
         openUCFlag = in.readByte();
         openActiveEMFlag = in.readByte();
@@ -165,7 +166,7 @@ public class Factor extends AbstractMarshallable implements BytesMarshallable {
     }
 
     @Override
-    public void writeMarshallable(@NotNull Bytes out) {
+    public void writeMarshallable(@NotNull BytesOut out) {
         out.writeByte(openPDFlag);
         out.writeByte(openUCFlag);
         out.writeByte(openActiveEMFlag);

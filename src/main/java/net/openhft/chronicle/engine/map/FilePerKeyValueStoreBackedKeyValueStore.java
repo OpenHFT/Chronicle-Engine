@@ -19,7 +19,6 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.bytes.BytesStore;
-import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
@@ -126,10 +125,5 @@ public class FilePerKeyValueStoreBackedKeyValueStore<K, V> implements KeyValueSt
     @Override
     public void close() {
         filePerKeyValueStore.close();
-    }
-
-    @Override
-    public void accept(EngineReplication.ReplicationEntry replicationEntry) {
-        throw new UnsupportedOperationException();
     }
 }
