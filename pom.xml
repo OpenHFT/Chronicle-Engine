@@ -110,6 +110,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.xerial.snappy</groupId>
+            <artifactId>snappy-java</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>net.openhft</groupId>
             <artifactId>chronicle-threads</artifactId>
         </dependency>

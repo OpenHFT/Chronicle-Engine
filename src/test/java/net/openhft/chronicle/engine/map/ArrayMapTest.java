@@ -73,8 +73,7 @@ public class ArrayMapTest extends ThreadMonitoringTest {
         return Arrays.asList(
                 new Object[]{false, null}
                 , new Object[]{true, WireType.BINARY}
-                // TODO FIX for some reason TEXT wire just hangs
-                // , new Object[]{true, WireType.TEXT}
+                , new Object[]{true, WireType.TEXT}
         );
     }
 
