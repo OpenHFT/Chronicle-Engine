@@ -95,13 +95,13 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
             builder.removeReturnsNull(true);
         if (averageValueSize > 0)
             builder.averageValueSize(averageValueSize);
-        else {
+        else if (!builder.constantlySizedValues()) {
             LOG.warn("Using failsafe value size of 8. Most likely it's not the best fit for your use case, consider setting averageValueSize for this map: " + assetFullName);
             builder.averageValueSize(8);
         }
         if (averageKeySize > 0)
             builder.averageKeySize(averageKeySize);
-        else {
+        else if (!builder.constantlySizedKeys()) {
             LOG.warn("Using failsafe key size of 8. Most likely it's not the best fit for your use case, consider setting averageKeySize for this map: " + assetFullName);
             builder.averageKeySize(8);
         }
@@ -121,6 +121,7 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
             new File(basePath).mkdirs();
             try {
                 chronicleMap = builder.createPersistedTo(new File(pathname));
+               
 
             } catch (IOException e) {
                 throw new IORuntimeException("Could not access " + pathname, e);
