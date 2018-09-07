@@ -26,7 +26,10 @@ import net.openhft.chronicle.engine.api.column.ColumnView;
 import net.openhft.chronicle.engine.api.column.VaadinChart;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
-import net.openhft.chronicle.engine.api.pubsub.*;
+import net.openhft.chronicle.engine.api.pubsub.Publisher;
+import net.openhft.chronicle.engine.api.pubsub.Reference;
+import net.openhft.chronicle.engine.api.pubsub.SubscriptionCollection;
+import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import net.openhft.chronicle.engine.api.session.Heartbeat;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
@@ -275,6 +278,7 @@ public class RequestContext implements Cloneable {
         parser.register(() -> "throttlePeriodMs", (s, v) -> v.int32(this, (o, x) -> o.throttlePeriodMs = x));
         parser.register(() -> "entries", (s, v) -> v.int64(this, (o, x) -> o.entries = x));
         parser.register(() -> "averageValueSize", (s, v) -> v.int64(this, (o, x) -> o.averageValueSize = x));
+        parser.register(() -> "averageKeySize", (s, v) -> v.int64(this, (o, x) -> o.averageKeySize = x));
         parser.register(() -> "dontPersist", (s, v) -> v.bool(this, (o, x) -> o.dontPersist = x));
         parser.register(() -> "token", (s, v) -> v.int64(this, (o, x) -> o.token =
                 x));
