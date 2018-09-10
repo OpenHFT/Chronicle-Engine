@@ -47,7 +47,7 @@ public class EngineInstance {
         }
     }
 
-    public static VanillaAssetTree engineMain(final int hostId, final String yamlConfigFile, String cluster) throws IOException {
+    public static VanillaAssetTree engineMain(final int hostId, final String yamlConfigFile, String cluster) {
         return engineMain(hostId, yamlConfigFile, cluster, "");
     }
 

@@ -127,7 +127,6 @@ public class RequestContext implements Cloneable {
     @Nullable
     private Boolean putReturnsNull = null,
             removeReturnsNull = null,
-            nullOldValueOnUpdateEvent = null,
             endSubscriptionAfterBootstrap = null,
             bootstrap = null;
     private double averageValueSize;
@@ -264,8 +263,6 @@ public class RequestContext implements Cloneable {
         parser.register(() -> "bootstrap", (s, v) -> v.bool(this, (o, x) -> o.bootstrap = x));
         parser.register(() -> "putReturnsNull", (s, v) -> v.bool(this, (o, x) -> o.putReturnsNull = x));
         parser.register(() -> "removeReturnsNull", (s, v) -> v.bool(this, (o, x) -> o.removeReturnsNull = x));
-        parser.register(() -> "nullOldValueOnUpdateEvent",
-                (s, v) -> v.bool(this, (o, x) -> o.nullOldValueOnUpdateEvent = x));
         // removed for security reasons, as this could allow remotely anyone to access files on the server
         //  parser.register(() -> "basePath", (s, v) -> v.text(this, (o, x) -> o.basePath = x));
         parser.register(() -> "viewType", (s, v) -> v.typeLiteral(this, (o, x) -> o.viewType = x));
@@ -485,15 +482,10 @@ public class RequestContext implements Cloneable {
         return removeReturnsNull;
     }
 
-    @Nullable
+    @NotNull
     public RequestContext removeReturnsNull(Boolean removeReturnsNull) {
         this.removeReturnsNull = removeReturnsNull;
         return this;
-    }
-
-    @Nullable
-    public Boolean nullOldValueOnUpdateEvent() {
-        return nullOldValueOnUpdateEvent;
     }
 
     @Nullable

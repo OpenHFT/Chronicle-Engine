@@ -71,8 +71,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     }
 
     @NotNull
-    private ClosableMapSupplier<CharSequence, CharSequence> newStrStrMap() throws
-            IOException {
+    private ClosableMapSupplier<CharSequence, CharSequence> newStrStrMap() {
 
         @NotNull final LocalMapSupplier supplier = new LocalMapSupplier<>(CharSequence.class, CharSequence.class, new VanillaAssetTree().forTesting());
 

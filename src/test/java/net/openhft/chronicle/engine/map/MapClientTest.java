@@ -21,7 +21,6 @@ import net.openhft.chronicle.engine.ShutdownHooks;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
-import net.openhft.chronicle.engine.api.tree.Assetted;
 import net.openhft.chronicle.engine.map.remote.RemoteKeyValueStore;
 import net.openhft.chronicle.engine.map.remote.RemoteMapView;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
@@ -31,7 +30,6 @@ import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -65,10 +63,10 @@ public class MapClientTest extends ThreadMonitoringTest {
     // server has it's own asset tree, to the client.
     @NotNull
     private final VanillaAssetTree assetTree = hooks.addCloseable(new VanillaAssetTree());
-    @Nullable
-    private Class<? extends CloseableSupplier> supplier = null;
+    @NotNull
+    private Class<? extends CloseableSupplier> supplier;
 
-    public MapClientTest(Class<? extends CloseableSupplier> supplier) {
+    public MapClientTest(@NotNull Class<? extends CloseableSupplier> supplier) {
         this.supplier = supplier;
     }
 
@@ -92,7 +90,7 @@ public class MapClientTest extends ThreadMonitoringTest {
     }
 
     @Test(timeout = 50000)
-    public void testPutAndGet() throws IOException, InterruptedException {
+    public void testPutAndGet() {
         yamlLoggger(() -> {
             try {
                 supplyMap(Integer.class, String.class, mapProxy -> {
@@ -134,7 +132,7 @@ public class MapClientTest extends ThreadMonitoringTest {
             });
         }*/
     @Test(timeout = 50000)
-    public void testEntrySetIsEmpty() throws IOException, InterruptedException {
+    public void testEntrySetIsEmpty() throws IOException {
 
         supplyMap(Integer.class, String.class, mapProxy -> {
             long size = mapProxy.longSize();
@@ -145,13 +143,12 @@ public class MapClientTest extends ThreadMonitoringTest {
     }
 
     @Test
-    public void testPutAll() throws IOException, InterruptedException {
+    public void testPutAll() throws IOException {
 
         supplyMap(Integer.class, String.class, mapProxy -> yamlLoggger(() -> {
             @NotNull final Set<Entry<Integer, String>> entries = mapProxy.entrySet();
 
-            assertEquals(0, entries.size());
-            assertEquals(true, entries.isEmpty());
+            assertTrue(entries.isEmpty());
 
             @NotNull Map<Integer, String> data = new HashMap<>();
             data.put(1, "hello");
@@ -178,12 +175,12 @@ public class MapClientTest extends ThreadMonitoringTest {
     }
 
     @Test
-    public void testMapsAsValues() throws IOException, InterruptedException {
+    public void testMapsAsValues() throws IOException {
 
         supplyMap(Integer.class, Map.class, map -> {
 
             {
-                @NotNull final Map value = new HashMap<String, String>();
+                @NotNull final Map<String, String> value = new HashMap<>();
                 value.put("k1", "v1");
                 value.put("k2", "v2");
 
@@ -191,7 +188,7 @@ public class MapClientTest extends ThreadMonitoringTest {
             }
 
             {
-                @NotNull final Map value = new HashMap<String, String>();
+                @NotNull final Map<String, String> value = new HashMap<>();
                 value.put("k3", "v3");
                 value.put("k4", "v4");
 
@@ -201,8 +198,8 @@ public class MapClientTest extends ThreadMonitoringTest {
             assertEquals("v1", map.get(1).get("k1"));
             assertEquals("v2", map.get(1).get("k2"));
 
-            assertEquals(null, map.get(1).get("k3"));
-            assertEquals(null, map.get(1).get("k4"));
+            assertNull(map.get(1).get("k3"));
+            assertNull(map.get(1).get("k4"));
 
             assertEquals("v3", map.get(2).get("k3"));
             assertEquals("v4", map.get(2).get("k4"));
@@ -212,7 +209,7 @@ public class MapClientTest extends ThreadMonitoringTest {
     }
 
     @Test
-    public void testValuesCollection() throws IOException, InterruptedException {
+    public void testValuesCollection() throws IOException {
         @NotNull HashMap<String, String> data = new HashMap<>();
         data.put("test1", "value1");
         data.put("test1", "value1");
@@ -234,7 +231,7 @@ public class MapClientTest extends ThreadMonitoringTest {
     }
 
     @Test
-    public void testDoubleValues() throws IOException, InterruptedException {
+    public void testDoubleValues() throws IOException {
 
         supplyMap(Double.class, Double.class, mapProxy -> {
 
@@ -250,7 +247,7 @@ public class MapClientTest extends ThreadMonitoringTest {
     }
 
     @Test
-    public void testFloatValues() throws IOException, InterruptedException {
+    public void testFloatValues() throws IOException {
 
         supplyMap(Float.class, Float.class, mapProxy -> {
 
@@ -267,7 +264,7 @@ public class MapClientTest extends ThreadMonitoringTest {
 
     @org.junit.Ignore("Will be very slow, of course")
     @Test
-    public void testLargeUpdates() throws IOException, InterruptedException {
+    public void testLargeUpdates() throws IOException {
         String val = new String(new char[1024 * 1024]).replace("\0", "X");
         supplyMap(String.class, String.class, mapProxy -> {
             for (int j = 0; j < 30 * 1000; j++) {
@@ -277,7 +274,7 @@ public class MapClientTest extends ThreadMonitoringTest {
     }
 
     @Test
-    public void testStringString() throws IOException, InterruptedException {
+    public void testStringString() throws IOException {
 
         supplyMap(String.class, String.class, mapProxy -> {
             mapProxy.put("hello", "world");
@@ -287,7 +284,7 @@ public class MapClientTest extends ThreadMonitoringTest {
     }
 
     @Test
-    public void testApplyTo() throws IOException, InterruptedException {
+    public void testApplyTo() throws IOException {
 
         supplyMap(String.class, String.class, mapProxy -> {
             mapProxy.asyncUpdate(m -> m.put("hello", "world"));
@@ -298,7 +295,7 @@ public class MapClientTest extends ThreadMonitoringTest {
     }
 
     @Test
-    public void testToString() throws IOException, InterruptedException {
+    public void testToString() throws IOException {
 
         supplyMap(Integer.class, String.class, mapProxy -> {
 

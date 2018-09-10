@@ -48,7 +48,9 @@ public class ChronicleMapCfg implements Installable {
         @NotNull RequestContext rc = RequestContext.requestContext(path);
         rc.basePath(diskPath)
                 .putReturnsNull(putReturnsNull)
-                .removeReturnsNull(removeReturnsNull);
+                .removeReturnsNull(removeReturnsNull)
+                .keyType(keyType)
+                .valueType(valueType);
 
         if (entries != -1) rc.entries(entries);
         if (averageKeySize != -1) rc.averageKeySize(averageKeySize);
