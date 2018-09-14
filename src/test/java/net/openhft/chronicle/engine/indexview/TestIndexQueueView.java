@@ -53,7 +53,7 @@ public class TestIndexQueueView {
     private static Set<String> publishMockData() {
         Set<String> tradeIds = new LinkedHashSet<>();
 
-        try (ChronicleQueue queue = SingleChronicleQueueBuilder.binary(TRADES_Q).build()) {
+        try (ChronicleQueue queue = ChronicleQueue.singleBuilder(TRADES_Q).build()) {
 
             ExcerptAppender excerptAppender = queue.acquireAppender();
             MockTradeGenerator mockTrade = new MockTradeGenerator();
