@@ -21,6 +21,7 @@ import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.core.threads.EventLoop;
+import net.openhft.chronicle.core.util.ObjectUtils;
 import net.openhft.chronicle.core.util.ThrowingConsumer;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
@@ -28,18 +29,30 @@ import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.cfg.ChronicleMapCfg;
+import net.openhft.chronicle.engine.cfg.EngineClusterContext;
+import net.openhft.chronicle.engine.fs.Clusters;
+import net.openhft.chronicle.engine.fs.EngineCluster;
+import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.map.*;
+import net.openhft.chronicle.network.cluster.HostDetails;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.chronicle.enterprise.map.ReplicatedMap;
+import software.chronicle.enterprise.map.ReplicationEventListener;
+import software.chronicle.enterprise.map.cluster.MapCluster;
+import software.chronicle.enterprise.map.cluster.MapClusterContext;
+import software.chronicle.enterprise.map.config.MapReplicationCfg;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -68,65 +81,109 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
     private Class<K> keyType;
     private Class<V> valueType;
 
-    public ChronicleMapKeyValueStore(@NotNull RequestContext context, @NotNull Asset asset) {
-        String basePath = context.basePath();
-        keyType = context.keyType();
-        valueType = context.valueType();
-        double averageValueSize = context.getAverageValueSize();
-        double averageKeySize = context.getAverageKeySize();
-        long maxEntries = context.getEntries();
+    public ChronicleMapKeyValueStore(@NotNull ChronicleMapCfg<K, V> config, @NotNull Asset asset) {
         this.asset = asset;
         this.assetFullName = asset.fullName();
-        this.subscriptions = asset.acquireView(ObjectSubscription.class, context);
+        this.subscriptions = asset.acquireView(ObjectSubscription.class, RequestContext.requestContext(assetFullName));
         this.subscriptions.setKvStore(this);
         this.eventLoop = asset.findOrCreateView(EventLoop.class);
+
+
+        Asset root = asset.root();
+        byte localHostId = HostIdentifier.localIdentifier(root);
+        String name = config.name();
+        if (localHostId > 0) {
+            // we run replicated!
+            // try to locate existing cluster
+            ReplicatedMap replicatedMap;
+
+            replicatedMap = root.getView(ReplicatedMap.class);
+            if (replicatedMap == null) {
+                Clusters clusters = root.acquireView(Clusters.class);
+                EngineCluster engineCluster = clusters.firstCluster();
+                Map<String, HostDetails> origHostDetails = engineCluster.hostDetails;
+
+                // need to validate cluster first
+                Map<String, String> replicationMapping = config.replicationHostMapping();
+                if (replicationMapping == null || replicationMapping.isEmpty())
+                    throw new IllegalStateException("Replicated map is not configured correctly, replication host mapping is missing: " + assetFullName);
+                if (!origHostDetails.keySet().containsAll(replicationMapping.keySet()))
+                    throw new IllegalStateException("Replicated map is not configured correctly, replication host mapping is invalid: " + assetFullName);
+
+                replicatedMap = createReplicatedMap(engineCluster, localHostId, replicationMapping);
+                root.addView(ReplicatedMap.class, replicatedMap);
+            }
+
+            replicatedMap.addReplicatedMap(config, localHostId);
+
+            chronicleMap = replicatedMap.getReplicatedMap(name);
+            replicatedMap.addReplicationListener(name, new ReplicationEventListener<K, V>() {
+                @Override
+                public void removed(Data<K> key, Data<V> value) {
+                    subscriptions.notifyEvent(RemovedEvent.of(assetFullName, key.get(), value.get()));
+                }
+
+                @Override
+                public void updated(Data<K> key, Data<V> oldValue, Data<V> newValue) {
+                    if (oldValue == null)
+                        subscriptions.notifyEvent(InsertedEvent.of(assetFullName, key.get(), newValue.get()));
+                    else
+                        subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key.get(), oldValue.get(), newValue.get()));
+                }
+            });
+        } else {
+            // local
+            ChronicleMapBuilder<K, V> builder;
+            try {
+                builder = config.mapBuilder(localHostId);
+            } catch (IllegalStateException e) {
+                throw new IllegalArgumentException("Invalid map config for " + assetFullName, e);
+            }
+
+            if (config.mapFileDataDirectory() == null) {
+                chronicleMap = builder.create();
+            } else {
+                @NotNull String pathname = config.mapFileDataDirectory() + "/" + name;
+                //noinspection ResultOfMethodCallIgnored
+                new File(config.mapFileDataDirectory()).mkdirs();
+                try {
+                    chronicleMap = builder.createOrRecoverPersistedTo(new File(pathname), false);
+
+
+                } catch (IOException e) {
+                    throw new IORuntimeException("Could not access " + pathname, e);
+                }
+            }
+            ((VanillaChronicleMap) chronicleMap).entryOperations = new EntryOps();
+        }
+
+        this.keyType = chronicleMap.keyClass();
+        this.valueType = chronicleMap.valueClass();
+
         assert eventLoop != null;
         eventLoop.start();
+    }
 
-        ChronicleMapBuilder<K, V> builder = ChronicleMapBuilder.of(context.keyType(), context.valueType());
-        builder.putReturnsNull(context.putReturnsNull() != Boolean.FALSE)
-                .removeReturnsNull(context.removeReturnsNull() != Boolean.FALSE);
+    @NotNull
+    private ReplicatedMap createReplicatedMap(EngineCluster engineCluster, byte localHostId, Map<String, String> replicationMapping) {
+        MapCluster cluster = new MapCluster(ObjectUtils.newInstance(MapClusterContext.class));
 
-        builder.entryOperations(new EntryOps());
+        // HACKERY POCKERY
+        engineCluster.hostDetails.forEach((name, hd) -> {
+            HostDetails hd0 = new HostDetails();
+            hd0.hostId(hd.hostId());
+            hd0.tcpBufferSize(hd.tcpBufferSize());
+            hd0.connectUri(replicationMapping.get(name));
+            cluster.hostDetails.put(name, hd0);
+        });
 
-        if (context.putReturnsNull() != Boolean.FALSE)
-            builder.putReturnsNull(true);
-        if (context.removeReturnsNull() != Boolean.FALSE)
-            builder.removeReturnsNull(true);
-        if (averageValueSize > 0)
-            builder.averageValueSize(averageValueSize);
-        else if (!builder.constantlySizedValues()) {
-            LOG.warn("Using failsafe value size of 8. Most likely it's not the best fit for your use case, consider setting averageValueSize for this map: " + assetFullName);
-            builder.averageValueSize(8);
-        }
-        if (averageKeySize > 0)
-            builder.averageKeySize(averageKeySize);
-        else if (!builder.constantlySizedKeys()) {
-            LOG.warn("Using failsafe key size of 8. Most likely it's not the best fit for your use case, consider setting averageKeySize for this map: " + assetFullName);
-            builder.averageKeySize(8);
-        }
+        EngineClusterContext engineCtx = engineCluster.clusterContext();
+        assert engineCtx != null;
+        cluster.context().heartbeatIntervalMs(engineCtx.heartbeatIntervalMs());
+        cluster.context().heartbeatTimeoutMs(engineCtx.heartbeatTimeoutMs());
 
-
-        if (maxEntries > 0) builder.entries(maxEntries + 1); // we have to add a head room of 1
-        else {
-            LOG.warn("Using failsafe entries' number of 64k. Most likely it's not the best fit for your use case, and you might get runtime errors if you insert more than this number of entries. Consider setting maxEntries for this map: " + assetFullName);
-            builder.entries(2 << 15);
-        }
-
-        if (basePath == null) {
-            chronicleMap = builder.create();
-        } else {
-            @NotNull String pathname = basePath + "/" + context.name();
-            //noinspection ResultOfMethodCallIgnored
-            new File(basePath).mkdirs();
-            try {
-                chronicleMap = builder.createPersistedTo(new File(pathname));
-               
-
-            } catch (IOException e) {
-                throw new IORuntimeException("Could not access " + pathname, e);
-            }
-        }
+        MapReplicationCfg config = new MapReplicationCfg(cluster, new LinkedHashMap<>());
+        return new ReplicatedMap(config, localHostId);
     }
 
     @NotNull
@@ -261,8 +318,7 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
 
         @Override
         public Void replaceValue(@NotNull MapEntry<K, V> entry, Data<V> newValue) {
-            subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, entry.key().get(), entry.value().get(),
-                    newValue.get(), true));
+            subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, entry.key().get(), entry.value().get(), newValue.get()));
             return MapEntryOperations.super.replaceValue(entry, newValue);
         }
 

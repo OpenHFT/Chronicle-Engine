@@ -34,7 +34,6 @@ import net.openhft.chronicle.engine.api.session.Heartbeat;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.cfg.*;
-import net.openhft.chronicle.engine.fs.ChronicleMapGroupFS;
 import net.openhft.chronicle.engine.fs.EngineConnectionManager;
 import net.openhft.chronicle.engine.map.AuthenticatedKeyValueStore;
 import net.openhft.chronicle.engine.map.ObjectKeyValueStore;
@@ -148,11 +147,11 @@ public class RequestContext implements Cloneable {
 
     public static boolean loadDefaultAliases() {
 
-        ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class,
-                EngineCfg.class,
+        ClassAliasPool.CLASS_ALIASES.addAlias(EngineCfg.class,
                 JmxCfg.class,
                 ServerCfg.class,
                 ClustersCfg.class,
+                EngineClusterContext.class,
                 InMemoryMapCfg.class,
                 FilePerKeyMapCfg.class,
                 ChronicleMapCfg.class,

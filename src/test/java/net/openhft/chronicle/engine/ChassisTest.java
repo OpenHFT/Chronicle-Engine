@@ -261,7 +261,7 @@ public class ChassisTest {
         assertEquals(2, map.size());
 
         // test the topic publish triggers events
-        subscriber.onMessage(UpdatedEvent.of("/map-name", "Key-1", "Value-1", "Message-1", true));
+        subscriber.onMessage(UpdatedEvent.of("/map-name", "Key-1", "Value-1", "Message-1"));
         subscriber.onMessage(InsertedEvent.of("/map-name", "Topic-1", "Message-1"));
         replay(subscriber);
 

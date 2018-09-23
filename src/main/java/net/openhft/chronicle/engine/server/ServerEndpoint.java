@@ -119,9 +119,6 @@ public class ServerEndpoint implements Closeable {
         if (LOG.isInfoEnabled())
             LOG.info("starting server=" + hostPortDescription);
 
-        @Nullable final EventLoop eventLoop = assetTree.root().findOrCreateView(EventLoop.class);
-        assert eventLoop != null;
-
         @NotNull Function<NetworkContext, TcpEventHandler> networkContextTcpEventHandlerFunction =
                 BootstrapHandlerFactory.forServerEndpoint()::bootstrapHandlerFactory;
         @NotNull final AcceptorEventHandler eah = new AcceptorEventHandler(

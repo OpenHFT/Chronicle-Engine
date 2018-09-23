@@ -8,8 +8,7 @@ import net.openhft.chronicle.engine.cfg.ClustersCfg;
 import net.openhft.chronicle.engine.cfg.EngineCfg;
 import net.openhft.chronicle.engine.fs.Clusters;
 import net.openhft.chronicle.engine.fs.EngineCluster;
-import net.openhft.chronicle.engine.fs.EngineHostDetails;
-import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
+import net.openhft.chronicle.engine.map.VanillaKeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.query.QueueConfig;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
@@ -24,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.chronicle.enterprise.map.ReplicatedMap;
 
 import java.io.IOException;
 
@@ -89,15 +89,15 @@ public class EngineInstance {
         connectivityMap.addWrappingRule(MapView.class, "map directly to KeyValueStore",
                 VanillaMapView::new,
                 KeyValueStore.class);
-        connectivityMap.addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
-                new ChronicleMapKeyValueStore(context.cluster(engineCluster.clusterName()), asset));
+        connectivityMap.addLeafRule(KeyValueStore.class, "KVS is Vanilla Map", (context, asset) ->
+                new VanillaKeyValueStore(context.cluster(engineCluster.clusterName()), asset));
 
         try {
             installable.install("/", tree);
             // the reason that we have to do this is to ensure that the network stats are
             // replicated between all hosts, if you don't acquire a queue it wont exist and so
             // will not act as a slave in replication
-            for (@NotNull EngineHostDetails engineHostDetails : engineCluster.hostDetails()) {
+            for (@NotNull HostDetails engineHostDetails : engineCluster.hostDetails()) {
 
                 final int id = engineHostDetails
                         .hostId();
@@ -163,6 +163,11 @@ public class EngineInstance {
 
         // we add this as close will get called when the asset tree is closed
         tree.root().addView(ServerEndpoint.class, serverEndpoint);
+        // map hack
+        ReplicatedMap repl = tree.root().getView(ReplicatedMap.class);
+        if (repl != null)
+            repl.startReplication();
+
         tree.registerSubscriber("", TopologicalEvent.class, e -> LOGGER.info("Tree change " + e));
         return tree;
 

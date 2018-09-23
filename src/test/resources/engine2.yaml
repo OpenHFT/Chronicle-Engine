@@ -7,8 +7,6 @@
 
     #
     # Configure a group of node which form a local cluster.
-    #
-    # Configure a cluster of one for now.
     clusters: !ClustersCfg {
       clusterTwo: {
         context: !EngineClusterContext {

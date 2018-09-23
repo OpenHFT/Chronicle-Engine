@@ -25,6 +25,7 @@ import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -53,8 +54,8 @@ public class UpdatedEvent<K, V> extends AbstractMarshallable implements MapEvent
     }
 
     @NotNull
-    public static <K, V> UpdatedEvent<K, V> of(String assetName, @NotNull K key, V oldValue, V value, boolean hasValueChanged) {
-        return new UpdatedEvent<>(assetName, key, oldValue, value, hasValueChanged);
+    public static <K, V> UpdatedEvent<K, V> of(String assetName, @NotNull K key, V oldValue, V value) {
+        return new UpdatedEvent<>(assetName, key, oldValue, value, Objects.equals(value, oldValue));
     }
 
     @Override

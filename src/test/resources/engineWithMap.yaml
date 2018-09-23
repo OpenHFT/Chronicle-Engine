@@ -1,0 +1,49 @@
+--- !EngineCfg {
+  #
+  # Configure a group of node which form a local cluster.
+  etc: {
+    clusters: !ClustersCfg {
+      cluster: {
+        context: !EngineClusterContext {
+          wireType: BINARY,
+          heartbeatTimeoutMs: 500_000L,
+          heartbeatIntervalMs: 300_000L,
+          serverThreadingStrategy: CONCURRENT,
+        },
+
+        host1: {
+          hostId: 1,
+          tcpBufferSize: 65536,
+          connectUri: localhost9090,
+          timeoutMs: 5000,
+        },
+        host2: {
+          hostId: 2,
+          tcpBufferSize: 65536,
+          connectUri: localhost9091,
+          timeoutMs: 5000
+        }
+      }
+    }
+  },
+  data: {
+    map: !ChronicleMapCfg {
+      mapFileDataDirectory: "data",
+      keyClass: !type String,
+      valueClass: !type String,
+      putReturnsNull: false,
+      removeReturnsNull: false,
+      entries: 2000,
+      exampleKey: "test",
+      averageValueSize: 1000,
+      replicationHostMapping: {
+        host1: localhost90901,
+        host2: localhost90911,
+      }
+    },
+    queue: !QueueCfg {
+      masterId: 1,
+      basePath: "data/queue-test",
+    }
+  }
+}

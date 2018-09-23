@@ -63,8 +63,6 @@ public class Clusters extends AbstractMarshallable implements Marshallable, Clos
         @NotNull final Asset root = assetTree.root();
         root.addView(Clusters.class, this);
 
-        if (clusterMap == null)
-            return;
         clusterMap.values().forEach(v -> {
             v.assetRoot(root);
             v.install();

@@ -96,6 +96,17 @@
 
         <dependency>
             <groupId>net.openhft</groupId>
+            <artifactId>compiler</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>software.chronicle</groupId>
+            <artifactId>chronicle-map-enterprise</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>net.openhft</groupId>
             <artifactId>chronicle-network</artifactId>
         </dependency>
 
