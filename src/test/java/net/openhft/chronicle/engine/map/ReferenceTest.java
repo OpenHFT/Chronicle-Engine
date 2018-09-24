@@ -130,7 +130,7 @@ public class ReferenceTest {
     }
 
     @Test
-    public void testRemoteReference() throws IOException {
+    public void testRemoteReference() {
         @NotNull Map map = assetTree.acquireMap("group", String.class, String.class);
 
         map.put("subject", "cs");
@@ -156,16 +156,16 @@ public class ReferenceTest {
         ref.set("chemistry");
         assertEquals("chemistry", ref.get());
 
-        s = ref.applyTo(o -> "applied_" + o.toString());
+        s = ref.applyTo(o -> "applied_" + o);
         assertEquals("applied_chemistry", s);
 
-        ref.asyncUpdate(o -> "**" + o.toString());
+        ref.asyncUpdate(o -> "**" + o);
         assertEquals("**chemistry", ref.get());
 
         ref.set("maths");
         assertEquals("maths", ref.get());
 
-        s = ref.syncUpdate(o -> "**" + o.toString(), o -> "**" + o.toString());
+        s = ref.syncUpdate(o -> "**" + o, o -> "**" + o);
         assertEquals("****maths", s);
         assertEquals("**maths", ref.get());
     }
@@ -292,7 +292,7 @@ public class ReferenceTest {
     }
 
     @Test
-    public void testSubscriptionMUFG() {
+    public void testSubscription() {
         @NotNull String key = "subject";
         @NotNull String _mapName = "group";
         @NotNull Map map = assetTree.acquireMap(_mapName, String.class, String.class);

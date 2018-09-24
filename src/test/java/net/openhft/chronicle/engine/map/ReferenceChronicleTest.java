@@ -18,7 +18,6 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.Jvm;
-import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.onoes.ExceptionKey;
 import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.ShutdownHooks;
@@ -92,7 +91,7 @@ public class ReferenceChronicleTest {
     }
 
     @Test(timeout = 5000)
-    public void testRemoteSubscriptionMUFGChronicle() throws IOException {
+    public void testRemoteSubscriptionChronicle() throws IOException {
 
         @NotNull AssetTree serverAssetTree = hooks.addCloseable(new VanillaAssetTree().forTesting());
         serverAssetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore", VanillaMapView::new, KeyValueStore.class);
@@ -115,7 +114,7 @@ public class ReferenceChronicleTest {
     }
 
     @Test(timeout = 5000)
-    public void testLocalSubscriptionMUFGChronicle() {
+    public void testLocalSubscriptionChronicle() {
 
         @NotNull AssetTree serverAssetTree = hooks.addCloseable(new VanillaAssetTree().forTesting());
         serverAssetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore", VanillaMapView::new, KeyValueStore.class);
