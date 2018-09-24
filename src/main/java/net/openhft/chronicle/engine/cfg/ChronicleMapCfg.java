@@ -44,7 +44,7 @@ public class ChronicleMapCfg<K, V> extends ReplicatedMapCfg<K, V> implements Ins
     public Void install(@NotNull String path, @NotNull AssetTree assetTree) {
         @NotNull Asset asset = assetTree.acquireAsset(path);
         ((VanillaAsset) asset).enableTranslatingValuesToBytesStore();
-        name(asset.name());
+        name(asset.fullName());
 
         @NotNull ChronicleMapKeyValueStore<K, V> chronicleMapKeyValueStore = new ChronicleMapKeyValueStore<>(this, asset);
         asset.addView(ObjectKeyValueStore.class, chronicleMapKeyValueStore);

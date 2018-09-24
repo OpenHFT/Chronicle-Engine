@@ -19,6 +19,12 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.EngineInstance;
+import net.openhft.chronicle.engine.api.map.KeyValueStore;
+import net.openhft.chronicle.engine.api.map.MapView;
+import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
+import net.openhft.chronicle.engine.api.tree.Asset;
+import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.cfg.ChronicleMapCfg;
 import net.openhft.chronicle.engine.cfg.EngineCfg;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.map.ChronicleMap;
@@ -33,6 +39,7 @@ import software.chronicle.enterprise.map.config.ReplicatedMapCfg;
 import java.io.File;
 import java.io.IOException;
 
+import static net.openhft.chronicle.engine.tree.VanillaAsset.LAST;
 import static org.junit.Assert.assertEquals;
 
 public class MapReplicationTest {
@@ -74,5 +81,51 @@ public class MapReplicationTest {
 
         assertEquals("anotherValue", map1.get("anotherTest"));
         assertEquals("anotherValue", map2.get("anotherTest"));
+    }
+
+    @Test
+    public void endpointTest() throws IOException {
+        @NotNull String name = "engineWithMap.yaml";
+        VanillaAssetTree host1 = EngineInstance.engineMain(1, name, "cluster");
+        VanillaAssetTree host2 = EngineInstance.engineMain(2, name, "cluster");
+
+        Asset asset = host1.acquireAsset("/manyMaps");
+        asset.addLeafRule(AuthenticatedKeyValueStore.class, LAST + " VanillaKeyValueStore", this::createMap);
+        asset.addLeafRule(SubscriptionKeyValueStore.class, LAST + " VanillaKeyValueStore", this::createMap);
+        asset.addLeafRule(KeyValueStore.class, LAST + " VanillaKeyValueStore", this::createMap);
+
+        asset = host2.acquireAsset("/manyMaps");
+        asset.addLeafRule(AuthenticatedKeyValueStore.class, LAST + " VanillaKeyValueStore", this::createMap);
+        asset.addLeafRule(SubscriptionKeyValueStore.class, LAST + " VanillaKeyValueStore", this::createMap);
+        asset.addLeafRule(KeyValueStore.class, LAST + " VanillaKeyValueStore", this::createMap);
+
+        VanillaAssetTree clientTree = new VanillaAssetTree().forRemoteAccess("localhost9090");
+        MapView<String, String> map1 = clientTree.acquireMap("/manyMaps/testMap1", String.class, String.class);
+
+        map1.put("key1", "value1");
+
+        VanillaAssetTree clientTree2 = new VanillaAssetTree().forRemoteAccess("localhost9091");
+        MapView<String, String> map2 = clientTree2.acquireMap("/manyMaps/testMap1", String.class, String.class);
+
+        Jvm.pause(500);
+        assertEquals("value1", map2.get("key1"));
+    }
+
+    private <K, V> AuthenticatedKeyValueStore<K, V> createMap(RequestContext requestContext, Asset asset) {
+        return new ChronicleMapKeyValueStore<>(createConfig(requestContext), asset);
+    }
+
+    private ChronicleMapCfg createConfig(RequestContext requestContext) {
+        ChronicleMapCfg cfg = (ChronicleMapCfg) TextWire.from("!ChronicleMapCfg {\n" +
+                "      entries: 10000,\n" +
+                "      keyClass: !type String,\n" +
+                "      valueClass: !type String,\n" +
+                "      exampleKey: \"some_key\",\n" +
+                "      exampleValue: \"some_value\",\n" +
+                "      mapFileDataDirectory: data/map" + requestContext.basePath() + "Data$hostId,\n" +
+                "    }").readObject();
+
+        cfg.name(requestContext.fullName());
+        return cfg;
     }
 }

@@ -43,7 +43,15 @@ public final class BootstrapHandlerFactory {
 
         @NotNull final Function<Object, TcpHandler> consumer = o -> {
 
-            if (o instanceof TcpHandler) {
+            if (o instanceof SessionDetailsProvider) {
+                @NotNull final SessionDetailsProvider sessionDetails = (SessionDetailsProvider) o;
+                nc.sessionDetails(sessionDetails);
+                nc.wireType(sessionDetails.wireType());
+                @Nullable final WireType wireType = nc.sessionDetails().wireType();
+                if (wireType != null)
+                    nc.wireOutPublisher().wireType(wireType);
+                return new EngineWireHandler();
+            } else if (o instanceof TcpHandler) {
                 return (TcpHandler) o;
             }
 
