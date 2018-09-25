@@ -18,6 +18,7 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.io.IOTools;
 import net.openhft.chronicle.engine.EngineInstance;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
@@ -27,7 +28,6 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.cfg.ChronicleMapCfg;
 import net.openhft.chronicle.engine.cfg.EngineCfg;
-import net.openhft.chronicle.engine.mit.TestUtils;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.network.TCPRegistry;
@@ -45,23 +45,30 @@ import static net.openhft.chronicle.engine.tree.VanillaAsset.LAST;
 import static org.junit.Assert.assertEquals;
 
 public class MapReplicationTest {
+    @NotNull
+    private static final String config = "engineWithMap.yaml";
+    VanillaAssetTree host1;
+    VanillaAssetTree host2;
 
     @Before
     public void setup() throws IOException {
         IOTools.deleteDirWithFiles("data");
         TCPRegistry.createServerSocketChannelFor("localhost9090", "localhost9091", "localhost90901", "localhost90911");
+
+        host1 = EngineInstance.engineMain(1, config, "cluster");
+        host2 = EngineInstance.engineMain(2, config, "cluster");
     }
 
     @After
     public void tearDown() {
+        Closeable.closeQuietly(host1, host2);
         TCPRegistry.reset();
+        IOTools.deleteDirWithFiles("data");
     }
 
     @Test
     public void shouldReplicate() throws IOException {
-        @NotNull String name = "engineWithMap.yaml";
-        VanillaAssetTree host1 = EngineInstance.engineMain(1, name, "cluster");
-        VanillaAssetTree host2 = EngineInstance.engineMain(2, name, "cluster");
+
 
         ObjectKeyValueStore<String, String> map1 = host1.acquireAsset("/data/map").getView(ObjectKeyValueStore.class);
         map1.put("test", "value");
@@ -73,25 +80,24 @@ public class MapReplicationTest {
         assertEquals("value", map2.get("test"));
         assertEquals("value2", map1.get("test2"));
 
-        EngineCfg cfg = (EngineCfg) TextWire.fromFile(name).readObject();
+        EngineCfg cfg = (EngineCfg) TextWire.fromFile(config).readObject();
         ReplicatedMapCfg mapCfg = (ReplicatedMapCfg) cfg.installableMap.get("/data/map");
-        ChronicleMap<String, String> localMap = mapCfg.mapBuilder((byte) 1).createOrRecoverPersistedTo(new File(mapCfg.mapFileDataDirectory() + "/map"));
+        ChronicleMap<String, String> localMap = mapCfg.mapBuilder((byte) 1).createOrRecoverPersistedTo(new File(mapCfg.mapFileDataDirectory() + "/data/map"));
 
         localMap.put("anotherTest", "anotherValue");
-        System.out.println(localMap.file());
 
         Jvm.pause(500);
 
-        assertEquals("anotherValue", map1.get("anotherTest"));
-        assertEquals("anotherValue", map2.get("anotherTest"));
+        try {
+            assertEquals("anotherValue", map1.get("anotherTest"));
+            assertEquals("anotherValue", map2.get("anotherTest"));
+        } finally {
+            localMap.close();
+        }
     }
 
     @Test
     public void endpointTest() {
-        @NotNull String name = "engineWithMap.yaml";
-        VanillaAssetTree host1 = EngineInstance.engineMain(1, name, "cluster");
-        VanillaAssetTree host2 = EngineInstance.engineMain(2, name, "cluster");
-
         Asset asset = host1.acquireAsset("/manyMaps");
         asset.addLeafRule(AuthenticatedKeyValueStore.class, LAST + " VanillaKeyValueStore", this::createMap);
         asset.addLeafRule(SubscriptionKeyValueStore.class, LAST + " VanillaKeyValueStore", this::createMap);

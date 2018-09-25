@@ -55,7 +55,7 @@ public class UpdatedEvent<K, V> extends AbstractMarshallable implements MapEvent
 
     @NotNull
     public static <K, V> UpdatedEvent<K, V> of(String assetName, @NotNull K key, V oldValue, V value) {
-        return new UpdatedEvent<>(assetName, key, oldValue, value, Objects.equals(value, oldValue));
+        return new UpdatedEvent<>(assetName, key, oldValue, value, !Objects.equals(value, oldValue));
     }
 
     @Override

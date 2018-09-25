@@ -18,12 +18,16 @@
 package net.openhft.chronicle.engine.redis;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.onoes.ExceptionKey;
 import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.ShutdownHooks;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
+import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
+import net.openhft.chronicle.engine.map.VanillaKeyValueStore;
+import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
@@ -41,9 +45,6 @@ import java.util.function.Consumer;
 import static net.openhft.chronicle.engine.redis.RedisEmulator.*;
 import static org.junit.Assert.assertEquals;
 
-/*
- * Created by daniel on 31/07/2015.
- */
 public class RedisEmulatorTest {
     private static final ShutdownHooks HOOKS = new ShutdownHooks();
     private static MapView myStringHash;
@@ -61,10 +62,10 @@ public class RedisEmulatorTest {
         //For this test we can use a VanillaMapKeyValueStore
         //To test with a ChronicleMapKeyValueStore uncomment lines below
         serverAssetTree = HOOKS.addCloseable(new VanillaAssetTree().forTesting());
-//        serverAssetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
-//                VanillaMapView::new, KeyValueStore.class);
-//        serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
-//                new ChronicleMapKeyValueStore(context.basePath(OS.TARGET), asset));
+        serverAssetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
+                VanillaMapView::new, KeyValueStore.class);
+        serverAssetTree.root().addLeafRule(KeyValueStore.class, "use vanilla Map", (context, asset) ->
+                new VanillaKeyValueStore(context.basePath(OS.TARGET), asset));
         TCPRegistry.createServerSocketChannelFor("RemoteSubscriptionModelPerformanceTest.port");
 
         @NotNull ServerEndpoint serverEndpoint = new ServerEndpoint("RemoteSubscriptionModelPerformanceTest.port",

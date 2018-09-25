@@ -18,15 +18,20 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.io.IOTools;
 import net.openhft.chronicle.engine.ShutdownHooks;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
+import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
+import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.cfg.ChronicleMapCfg;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
+import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
@@ -46,9 +51,6 @@ import java.util.concurrent.BlockingQueue;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-/**
- * @author Rob Austin.
- */
 @RunWith(value = Parameterized.class)
 public class TestInsertUpdateChronicleMapView extends ThreadMonitoringTest {
     private final WireType wireType;
@@ -73,6 +75,7 @@ public class TestInsertUpdateChronicleMapView extends ThreadMonitoringTest {
 
     @Before
     public void before() throws IOException {
+        IOTools.deleteDirWithFiles("data");
         serverAssetTree = hooks.addCloseable(new VanillaAssetTree().forTesting());
         YamlLogging.setAll(false);
 
@@ -83,12 +86,27 @@ public class TestInsertUpdateChronicleMapView extends ThreadMonitoringTest {
         serverAssetTree.root().addWrappingRule(MapView.class, "map directly to " + "KeyValueStore",
                 VanillaMapView::new, KeyValueStore.class);
 
-        // TODO fix
-        /*serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
-                new ChronicleMapKeyValueStore(context.basePath(null).entries(100)
-                        .putReturnsNull(false), asset));*/
+        serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", this::createMap);
 
         clientAssetTree = hooks.addCloseable(new VanillaAssetTree().forRemoteAccess(connection, wireType));
+    }
+
+    private <K, V> AuthenticatedKeyValueStore<K, V> createMap(RequestContext requestContext, Asset asset) {
+        return new ChronicleMapKeyValueStore<>(createConfig(requestContext), asset);
+    }
+
+    private ChronicleMapCfg createConfig(RequestContext requestContext) {
+        ChronicleMapCfg cfg = (ChronicleMapCfg) TextWire.from("!ChronicleMapCfg {\n" +
+                "      entries: 10000,\n" +
+                "      keyClass: !type String,\n" +
+                "      valueClass: !type String,\n" +
+                "      exampleKey: \"some_key\",\n" +
+                "      exampleValue: \"some_value\",\n" +
+                "      mapFileDataDirectory: data/mapData,\n" +
+                "    }").readObject();
+
+        cfg.name(requestContext.fullName());
+        return cfg;
     }
 
     @Override
@@ -105,17 +123,18 @@ public class TestInsertUpdateChronicleMapView extends ThreadMonitoringTest {
         //Note you have to set the bootstrap to false in order for this test to work.
         //Otherwise it is possible that that you can get 2 insert events.
         @NotNull final MapView<String, String> serverMap = serverAssetTree.acquireMap
-                ("name?putReturnsNull=false",
+                ("testInsertFollowedByUpdate?putReturnsNull=false",
                         String.class, String
                                 .class);
 
         @NotNull final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(1);
-        clientAssetTree.registerSubscriber("name?putReturnsNull=false&bootstrap=false", MapEvent.class,
+        clientAssetTree.registerSubscriber("testInsertFollowedByUpdate?putReturnsNull=false&bootstrap=false", MapEvent.class,
                 events::add);
         Jvm.pause(500);
         {
             serverMap.put("hello", "world");
             final MapEvent event = events.poll(10, SECONDS);
+            System.err.println(event);
             Assert.assertTrue(event instanceof InsertedEvent);
         }
         {
@@ -129,12 +148,12 @@ public class TestInsertUpdateChronicleMapView extends ThreadMonitoringTest {
     public void testInsertFollowedByUpdateWhenPutReturnsNullTrue() throws InterruptedException {
 
         @NotNull final MapView<String, String> serverMap = serverAssetTree.acquireMap
-                ("name?putReturnsNull=true",
+                ("testInsertFollowedByUpdateWhenPutReturnsNullTrue?putReturnsNull=true",
                         String.class, String
                                 .class);
 
         @NotNull final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(1);
-        clientAssetTree.registerSubscriber("name?putReturnsNull=true", MapEvent.class,
+        clientAssetTree.registerSubscriber("testInsertFollowedByUpdateWhenPutReturnsNullTrue?putReturnsNull=true", MapEvent.class,
                 events::add);
         Jvm.pause(500);
         {
