@@ -18,6 +18,7 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.io.IOTools;
 import net.openhft.chronicle.engine.EngineInstance;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -26,6 +27,7 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.cfg.ChronicleMapCfg;
 import net.openhft.chronicle.engine.cfg.EngineCfg;
+import net.openhft.chronicle.engine.mit.TestUtils;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.network.TCPRegistry;
@@ -46,6 +48,7 @@ public class MapReplicationTest {
 
     @Before
     public void setup() throws IOException {
+        IOTools.deleteDirWithFiles("data");
         TCPRegistry.createServerSocketChannelFor("localhost9090", "localhost9091", "localhost90901", "localhost90911");
     }
 
@@ -84,7 +87,7 @@ public class MapReplicationTest {
     }
 
     @Test
-    public void endpointTest() throws IOException {
+    public void endpointTest() {
         @NotNull String name = "engineWithMap.yaml";
         VanillaAssetTree host1 = EngineInstance.engineMain(1, name, "cluster");
         VanillaAssetTree host2 = EngineInstance.engineMain(2, name, "cluster");
@@ -99,16 +102,20 @@ public class MapReplicationTest {
         asset.addLeafRule(SubscriptionKeyValueStore.class, LAST + " VanillaKeyValueStore", this::createMap);
         asset.addLeafRule(KeyValueStore.class, LAST + " VanillaKeyValueStore", this::createMap);
 
-        VanillaAssetTree clientTree = new VanillaAssetTree().forRemoteAccess("localhost9090");
+        VanillaAssetTree clientTree = new VanillaAssetTree().forRemoteAccess("localhost9091");
         MapView<String, String> map1 = clientTree.acquireMap("/manyMaps/testMap1", String.class, String.class);
 
         map1.put("key1", "value1");
 
-        VanillaAssetTree clientTree2 = new VanillaAssetTree().forRemoteAccess("localhost9091");
+        VanillaAssetTree clientTree2 = new VanillaAssetTree().forRemoteAccess("localhost9090");
         MapView<String, String> map2 = clientTree2.acquireMap("/manyMaps/testMap1", String.class, String.class);
+
 
         Jvm.pause(500);
         assertEquals("value1", map2.get("key1"));
+//        map2.put("key2", "value2");
+//        Jvm.pause(500);
+//        assertEquals("value2", map1.get("key2"));
     }
 
     private <K, V> AuthenticatedKeyValueStore<K, V> createMap(RequestContext requestContext, Asset asset) {
