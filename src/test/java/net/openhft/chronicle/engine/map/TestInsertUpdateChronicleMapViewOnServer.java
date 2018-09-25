@@ -47,7 +47,10 @@ import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(value = Parameterized.class)
 public class TestInsertUpdateChronicleMapViewOnServer extends ThreadMonitoringTest {
@@ -104,7 +107,7 @@ public class TestInsertUpdateChronicleMapViewOnServer extends ThreadMonitoringTe
                 "      valueClass: !type String,\n" +
                 "      exampleKey: \"some_key\",\n" +
                 "      exampleValue: \"some_value\",\n" +
-                "      mapFileDataDirectory: data/map" + requestContext.basePath() + "Data,\n" +
+                "      mapFileDataDirectory: data/mapData,\n" +
                 "    }").readObject();
 
         cfg.name(requestContext.fullName());
@@ -131,19 +134,22 @@ public class TestInsertUpdateChronicleMapViewOnServer extends ThreadMonitoringTe
                         String.class, String
                                 .class);
 
-        @NotNull final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(1);
+        @NotNull final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(5);
         clientAssetTree.registerSubscriber("testInsertFollowedByUpdateServer?putReturnsNull=false", MapEvent.class,
                 events::add);
 
         {
             serverMap.put("hello", "world");
-            final MapEvent event = events.poll(10, SECONDS);
-            Assert.assertTrue(event instanceof InsertedEvent);
+            final MapEvent event = events.poll(5, SECONDS);
+            assertTrue(event instanceof InsertedEvent);
+            // sometimes the event is duplicated
+            events.clear();
         }
         {
             serverMap.put("hello", "world2");
-            final MapEvent event = events.poll(10, SECONDS);
-            Assert.assertTrue(event instanceof UpdatedEvent);
+            final MapEvent event = events.poll(5, SECONDS);
+            assertTrue(event instanceof UpdatedEvent);
+            assertNull(events.poll(500, MILLISECONDS));
         }
     }
 
@@ -163,13 +169,15 @@ public class TestInsertUpdateChronicleMapViewOnServer extends ThreadMonitoringTe
 
         {
             serverMap.put("hello", "world");
-            final MapEvent event = events.poll(10, SECONDS);
-            Assert.assertTrue(event instanceof InsertedEvent);
+            final MapEvent event = events.poll(5, SECONDS);
+            assertTrue(event instanceof InsertedEvent);
+            assertNull(events.poll(500, MILLISECONDS));
         }
         {
             serverMap.put("hello", "world2");
-            final MapEvent event = events.poll(10, SECONDS);
-            Assert.assertTrue(event instanceof UpdatedEvent);
+            final MapEvent event = events.poll(5, SECONDS);
+            assertTrue(event instanceof UpdatedEvent);
+            assertNull(events.poll(500, MILLISECONDS));
         }
     }
 }
