@@ -23,7 +23,6 @@ import net.openhft.chronicle.engine.api.management.mbean.ChronicleConfig;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.cfg.*;
 import net.openhft.chronicle.engine.tree.AssetRuleProvider;
-import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.engine.tree.VanillaAssetRuleProvider;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.TextWire;
@@ -61,7 +60,8 @@ public class EngineMain {
         @NotNull Installable installable = (Installable) yaml.readObject();
         @NotNull AssetRuleProvider ruleProvider = getRuleProvider(installable);
         @NotNull AssetTree assetTree = new VanillaAssetTree(HOST_ID, ruleProvider).forServer(false);
-        assetTree.registerSubscriber("", TopologicalEvent.class, e -> LOGGER.info("Tree change " + e));
+      //  assetTree.registerSubscriber("", TopologicalEvent.class, e -> LOGGER.info("Tree change "
+        //        + e));
         try {
             installable.install("/", assetTree);
             LOGGER.info("Engine started");

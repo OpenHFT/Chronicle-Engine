@@ -12,7 +12,6 @@ import net.openhft.chronicle.engine.map.VanillaKeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.query.QueueConfig;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
-import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.NetworkStats;
 import net.openhft.chronicle.network.NetworkStatsListener;
@@ -168,7 +167,7 @@ public class EngineInstance {
         if (repl != null)
             repl.startReplication();
 
-        tree.registerSubscriber("", TopologicalEvent.class, e -> LOGGER.info("Tree change " + e));
+      //  tree.registerSubscriber("", TopologicalEvent.class, e -> LOGGER.info("Tree change " + e));
         return tree;
 
     }
