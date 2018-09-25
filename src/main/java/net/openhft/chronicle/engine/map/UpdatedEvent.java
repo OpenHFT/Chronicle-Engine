@@ -115,4 +115,8 @@ public class UpdatedEvent<K, V> extends AbstractMarshallable implements MapEvent
         wire.write(MapEventFields.value).object(value);
         wire.write(MapEventFields.hasValueChanged).object(hasValueChanged);
     }
+
+    public boolean hasValueChanged() {
+        return hasValueChanged;
+    }
 }
