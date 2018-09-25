@@ -313,8 +313,7 @@ public class MapClientTest extends ThreadMonitoringTest {
     /**
      * supplies a listener and closes it once the tests are finished
      */
-    private <K, V>
-    void supplyMap(@NotNull Class<K> kClass, @NotNull Class<V> vClass, @NotNull Consumer<MapView<K, V>> c)
+    private <K, V> void supplyMap(@NotNull Class<K> kClass, @NotNull Class<V> vClass, @NotNull Consumer<MapView<K, V>> c)
             throws IOException {
 
         CloseableSupplier<MapView<K, V>> result;
