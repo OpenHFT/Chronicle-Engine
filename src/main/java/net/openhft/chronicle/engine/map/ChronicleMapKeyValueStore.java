@@ -116,7 +116,7 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
 
             replicatedMap.addReplicatedMap(config, localHostId);
 
-            chronicleMap = replicatedMap.getReplicatedMap(name);
+            chronicleMap = replicatedMap.getMap(name);
             replicatedMap.addReplicationListener(name, new ReplicationEventListener<K, V>() {
                 @Override
                 public void removed(Data<K> key, Data<V> value) {
