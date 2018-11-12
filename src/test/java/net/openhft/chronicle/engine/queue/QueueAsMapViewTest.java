@@ -33,7 +33,6 @@ import static net.openhft.chronicle.engine.Utils.methodName;
 /**
  * @author Rob Austin.
  */
-@Ignore("see https://github.com/OpenHFT/Chronicle-Engine/issues/32")
 @RunWith(value = Parameterized.class)
 public class QueueAsMapViewTest extends ThreadMonitoringTest {
 
@@ -147,7 +146,7 @@ public class QueueAsMapViewTest extends ThreadMonitoringTest {
     }
 
     @Test
-    public void testSimpleMap() throws InterruptedException {
+    public void testSimpleMap() {
         //YamlLogging.setAll(true);
 
         @NotNull MapView<String, String> map = assetTree.acquireMap(uri, String.class, String.class);
