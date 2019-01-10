@@ -74,6 +74,7 @@ public class ServerEndpoint implements Closeable {
 
         this(hostPortDescription, assetTree, new NetworkStatsListener() {
 
+            private String procPrefix;
             private String host;
             private long port;
 
@@ -91,7 +92,7 @@ public class ServerEndpoint implements Closeable {
             public void onNetworkStats(long writeBps, long readBps, long socketPollCountPerSecond) {
                 LOG.info("writeKBps=" + writeBps / 1000 + ", readKBps=" + readBps / 1000 +
                         ", socketPollCountPerSecond=" + socketPollCountPerSecond / 1000 + "K, " +
-                        "host=" + host + ", port=" + port + ", isConnected=true");
+                        "host=" + host + ", port=" + port + ", isConnected=true" + ", procPrefix=" + procPrefix);
             }
 
             @Override
@@ -103,6 +104,11 @@ public class ServerEndpoint implements Closeable {
             @Override
             public void onRoundTripLatency(long nanosecondLatency) {
 
+            }
+
+            @Override
+            public void procPrefix(final String procPrefix) {
+                this.procPrefix = procPrefix;
             }
         }, clusterName);
 

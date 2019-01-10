@@ -82,6 +82,9 @@ public class EngineInstance {
                 .filter(i -> i instanceof ClustersCfg).findFirst()
                 .orElseThrow(() -> new IllegalStateException("no clusters were found"));
 
+        if (procPrefix != null)
+            clusters.procPrefix(procPrefix);
+
         final EngineCluster engineCluster = clusterName != null ? clusters.clusters.get(clusterName) : clusters.clusters.firstCluster();
 
         @NotNull final Asset connectivityMap = tree.acquireAsset("/proc/connections/cluster/connectivity");

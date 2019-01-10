@@ -49,10 +49,13 @@ import static net.openhft.chronicle.engine.server.BootstrapHandlerFactory.forEng
  */
 public class EngineClusterContext extends ClusterContext {
     private static final Logger LOG = LoggerFactory.getLogger(EngineClusterContext.class);
-    Asset assetRoot;
+    private Asset assetRoot;
+
+
     @NotNull
     private NetworkStatsListener defaultNetworkStatsListener = new NetworkStatsListener() {
 
+        private String procPrefix;
         String host;
         long port;
 
@@ -93,6 +96,11 @@ public class EngineClusterContext extends ClusterContext {
         @Override
         public void onRoundTripLatency(long nanosecondLatency) {
 
+        }
+
+        @Override
+        public void procPrefix(final String procPrefix) {
+            this.procPrefix = procPrefix;
         }
     };
 
@@ -137,5 +145,9 @@ public class EngineClusterContext extends ClusterContext {
         heartbeatIntervalMs(1_000L);
         connectionStrategy(new HostIdConnectionStrategy());
         serverThreadingStrategy(ServerThreadingStrategy.SINGLE_THREADED);
+    }
+
+    public void procPrefix(final String procPrefix) {
+        defaultNetworkStatsListener.procPrefix(procPrefix);
     }
 }

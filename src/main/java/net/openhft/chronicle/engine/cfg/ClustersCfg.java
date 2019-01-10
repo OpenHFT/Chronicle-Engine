@@ -29,12 +29,13 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ClustersCfg extends AbstractMarshallable implements Installable {
     public final Clusters clusters = new Clusters();
+    private String procPrefix;
 
     @NotNull
     @Override
     public ClustersCfg install(@NotNull String path, @NotNull AssetTree assetTree) throws Exception {
         assetTree.root().addView(Clusters.class, clusters);
-        clusters.install(assetTree);
+        clusters.install(assetTree, procPrefix);
         return this;
     }
 
@@ -46,5 +47,9 @@ public class ClustersCfg extends AbstractMarshallable implements Installable {
     @Override
     public void writeMarshallable(@NotNull WireOut wire) {
         clusters.writeMarshallable(wire);
+    }
+
+    public void procPrefix(final String procPrefix) {
+        this.procPrefix = procPrefix;
     }
 }

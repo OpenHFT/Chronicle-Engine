@@ -85,7 +85,7 @@ public class ConfigurationFS implements MountPoint {
     private void processClusters(@NotNull String value) {
         @NotNull Clusters clusters = new Clusters();
         clusters.readMarshallable(TextWire.from(value));
-        clusters.install(assetTree);
+        clusters.install(assetTree, baseDir);
     }
 
     private void processFstab(@NotNull String value) {

@@ -67,11 +67,13 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
     private final Asset asset;
     private final int localIdentifier;
     private final WireNetworkStats wireNetworkStats = new WireNetworkStats();
+
     private QueueView qv;
     private volatile boolean isClosed;
     private EngineWireNetworkContext nc;
     @Nullable
     private Histogram histogram = null;
+    private String procPrefix;
 
     public EngineNetworkStatsListener(Asset asset, int localIdentifier) {
         this.localIdentifier = localIdentifier;
@@ -87,10 +89,10 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
         @NotNull String path = PROC_CONNECTIONS_CLUSTER_THROUGHPUT + localIdentifier;
 
         @NotNull RequestContext requestContext = requestContext(path)
-                .elementType(NetworkStats.class);
+                .elementType(NetworkStats.class).basePath(procPrefix);
 
-        Asset asset = this.asset.root().acquireAsset(requestContext
-                .fullName());
+        if (procPrefix != null)
+            requestContext.basePath(procPrefix + path);
 
         final QueueConfig qConfig = asset.getView(QueueConfig.class);
         if (qConfig == null)
@@ -98,6 +100,7 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
 
         qv = asset.acquireView(QueueView.class, requestContext);
         return qv;
+
     }
 
     @Override
@@ -165,6 +168,11 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
     @Override
     public void onRoundTripLatency(long nanosecondLatency) {
         acquireHistogram().sampleNanos(nanosecondLatency);
+    }
+
+    @Override
+    public void procPrefix(final String procPrefix) {
+        this.procPrefix = procPrefix;
     }
 
     @Nullable

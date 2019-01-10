@@ -59,12 +59,12 @@ public class Clusters extends AbstractMarshallable implements Marshallable, Clos
             wire.writeEventName(entry::getKey).marshallable(entry.getValue());
     }
 
-    public void install(@NotNull AssetTree assetTree) {
+    public void install(@NotNull AssetTree assetTree, final String baseDir) {
         @NotNull final Asset root = assetTree.root();
         root.addView(Clusters.class, this);
 
         clusterMap.values().forEach(v -> {
-            v.assetRoot(root);
+            v.assetRoot(root, baseDir);
             v.install();
         });
 

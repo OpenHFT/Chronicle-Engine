@@ -25,14 +25,17 @@ import org.jetbrains.annotations.NotNull;
 
 public class EngineCluster extends Cluster<HostDetails, EngineClusterContext> {
 
+
     public EngineCluster(String clusterName) {
         super(clusterName);
     }
 
-    void assetRoot(@NotNull Asset assetRoot) {
+    void assetRoot(@NotNull Asset assetRoot, final String baseDir) {
         EngineClusterContext context = clusterContext();
-        if (context != null)
-            context.assetRoot(assetRoot);
+        if (context == null)
+            return;
+        context.assetRoot(assetRoot);
+        context.procPrefix(baseDir);
     }
 
     @NotNull
@@ -40,4 +43,5 @@ public class EngineCluster extends Cluster<HostDetails, EngineClusterContext> {
     protected HostDetails newHostDetails() {
         return new HostDetails();
     }
+
 }
