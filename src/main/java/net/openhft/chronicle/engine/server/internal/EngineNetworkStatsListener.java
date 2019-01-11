@@ -98,7 +98,9 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
         if (qConfig == null)
             asset.addView(QueueConfig.class, new QueueConfig(s -> localIdentifier, false, null, WireType.BINARY));
 
+        requestContext.viewType(QueueView.class);
         qv = asset.acquireView(QueueView.class, requestContext);
+
         return qv;
 
     }
