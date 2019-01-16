@@ -1,4 +1,4 @@
-= Chronicle-Engine Has Moved
+= Chronicle-Engine has moved.
   
 A high performance, low latency, reactive processing framework
 
