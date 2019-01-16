@@ -2,7 +2,7 @@
   
 A high performance, low latency, reactive processing framework
 
-This project has become a licensed project and moved to https://github.com/ChronicleEnterprise/Chronicle-Engine, If you wish to get access to this please contact sales@chronicle.software. All future development will be carried out at this new location, however if you wish to get access to the old code, it exist here:
+This project has become a licensed project and moved to [https://github.com/ChronicleEnterprise/Chronicle-Engine], If you wish to get access to this please contact sales@chronicle.software. All future development will be carried out at this new location, however if you wish to get access to the old code, it exist here:
 
 ---
 $git clone git@github.com:OpenHFT/Chronicle-Engine.git
