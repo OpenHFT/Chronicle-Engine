@@ -9,6 +9,6 @@ $git clone git@github.com:OpenHFT/Chronicle-Engine.git
 $git checkout old-master
 ----
 
-You can continue to use the old version ( in other words the code under old-master ) via the *Apache License, Version 2.0*
+You can continue to use the old version ( in other words the code under old-master ) via the Apache License Version 2.0
 
 If you have an active support contract for chronicle engine, we will grant you access to https://github.com/ChronicleEnterprise/Chronicle-Engine
